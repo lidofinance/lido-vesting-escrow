@@ -1,15 +1,15 @@
 # @version 0.2.16
 """
 @title Vesting Escrow Factory
-@author Curve Finance, Yearn Finance
+@author Curve Finance, Yearn Finance, Lido finance
 @license MIT
-@notice Stores and distributes ERC20 tokens by deploying `VestingEscrowSimple` contracts
+@notice Stores and distributes ERC20 tokens by deploying `VestingEscrowSimple` and `VestingEscrowOptimised` contracts
 """
 
 from vyper.interfaces import ERC20
 
 
-interface VestingEscrowSimple:
+interface VestingEscrow:
     def initialize(
         admin: address,
         token: address,
@@ -26,23 +26,27 @@ event VestingEscrowCreated:
     token: indexed(address)
     recipient: indexed(address)
     escrow: address
+    escrow_type: uint256 # 0 - simple, 1 - optimised
     amount: uint256
     vesting_start: uint256
     vesting_duration: uint256
     cliff_length: uint256
 
 
-target: public(address)
+target_simple: public(address)
+target_optimised: public(address)
 
 @external
-def __init__(target: address):
+def __init__(target_simple: address, target_optimised: address):
     """
     @notice Contract constructor
-    @dev Prior to deployment you must deploy one copy of `VestingEscrowSimple` which
-         is used as a library for vesting contracts deployed by this factory
-    @param target `VestingEscrowSimple` contract address
+    @dev Prior to deployment you must deploy one copy of `VestingEscrowSimple` and `VestingEscrowOptimised` which
+         are used as a library for vesting contracts deployed by this factory
+    @param target_simple `VestingEscrowSimple` contract address
+    @param target_optimised `VestingEscrowOptimised` contract address
     """
-    self.target = target
+    self.target_simple = target_simple
+    self.target_optimised = target_optimised
 
 
 @external
@@ -53,6 +57,7 @@ def deploy_vesting_contract(
     vesting_duration: uint256,
     vesting_start: uint256 = block.timestamp,
     cliff_length: uint256 = 0,
+    escrow_type: uint256 = 0, # use simple escrow by default
 ) -> address:
     """
     @notice Deploy a new vesting contract
@@ -61,12 +66,18 @@ def deploy_vesting_contract(
     @param amount Amount of tokens being vested for `recipient`
     @param vesting_duration Time period over which tokens are released
     @param vesting_start Epoch time when tokens begin to vest
+    @param cliff_length Duration after which the first portion vests
+    @param escrow_type Escrow type to deploy 0 - `VestingEscrowSimple`, 1 - `VestingEscrowOptimised`
     """
     assert cliff_length <= vesting_duration  # dev: incorrect vesting cliff
-    escrow: address = create_forwarder_to(self.target)
+    assert escrow_type in [0,1] # dev: incorrect escrow type
+    if escrow_type == 1: # dev: select target based on escrow type
+        escrow: address = create_forwarder_to(self.target_optimised)
+    else
+        escrow: address = create_forwarder_to(self.target_simple)
     assert ERC20(token).transferFrom(msg.sender, self, amount)  # dev: funding failed
     assert ERC20(token).approve(escrow, amount)  # dev: approve failed
-    VestingEscrowSimple(escrow).initialize(
+    VestingEscrow(escrow).initialize(
         msg.sender,
         token,
         recipient,
@@ -75,5 +86,5 @@ def deploy_vesting_contract(
         vesting_start + vesting_duration,
         cliff_length,
     )
-    log VestingEscrowCreated(msg.sender, token, recipient, escrow, amount, vesting_start, vesting_duration, cliff_length)
+    log VestingEscrowCreated(msg.sender, token, recipient, escrow, escrow_type, amount, vesting_start, vesting_duration, cliff_length)
     return escrow

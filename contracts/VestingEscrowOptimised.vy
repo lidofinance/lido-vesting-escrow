@@ -1,9 +1,9 @@
 # @version 0.2.16
 """
-@title Simple Vesting Escrow
+@title Optimized Vesting Escrow
 @author Curve Finance, Yearn Finance, Lido finance
 @license MIT
-@notice Vests ERC20 tokens for a single address
+@notice Vests ERC20 tokens for a single address with admin able to clawback all unclaimed tokens
 @dev Intended to be deployed many times via `VotingEscrowFactory`
 """
 
@@ -18,6 +18,11 @@ event Claim:
     claimed: uint256
 
 event SuspendAndClawbackUnvested:
+    recipient: indexed(address)
+    beneficiary: address
+    clawbacked: uint256
+
+event SuspendAndClawbackAll:
     recipient: indexed(address)
     beneficiary: address
     clawbacked: uint256
@@ -163,6 +168,21 @@ def suspend_and_clawback_unvested(beneficiary: address = msg.sender):
 
     assert self.token.transfer(self.admin, ruggable)
     log SuspendAndClawbackUnvested(self.recipient, beneficiary, ruggable)
+
+
+@external
+def suspend_and_clawback_all(beneficiary: address = msg.sender):
+    """
+    @notice Disable further flow of tokens and clawback all tokens to beneficiary
+    """
+    assert msg.sender == self.admin  # dev: admin only
+    # NOTE: Rugging more than once is futile
+
+    self.disabled_at = block.timestamp
+    ruggable: uint256 = ERC20(token).balanceOf(self)
+
+    assert self.token.transfer(self.admin, ruggable)
+    log SuspendAndClawbackAll(self.recipient, beneficiary, ruggable)
 
 
 @external

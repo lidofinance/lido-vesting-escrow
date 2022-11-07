@@ -37,7 +37,7 @@ target_simple: public(address)
 target_optimised: public(address)
 
 @external
-def __init__(target_simple: address, target_optimised: address):
+def __init__(target_simple: address, target_optimized: address):
     """
     @notice Contract constructor
     @dev Prior to deployment you must deploy one copy of `VestingEscrowSimple` and `VestingEscrowOptimised` which
@@ -45,8 +45,10 @@ def __init__(target_simple: address, target_optimised: address):
     @param target_simple `VestingEscrowSimple` contract address
     @param target_optimised `VestingEscrowOptimised` contract address
     """
+    assert target_simple != ZERO_ADDRESS # dev: target_simple should not be ZERO_ADDRESS
+    assert target_optimized != ZERO_ADDRESS # dev: target_simple should not be ZERO_ADDRESS
     self.target_simple = target_simple
-    self.target_optimised = target_optimised
+    self.target_optimized = target_optimised
 
 
 @external

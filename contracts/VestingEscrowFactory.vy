@@ -1,15 +1,15 @@
-# @version 0.2.16
+# @version 0.3.7
 """
 @title Vesting Escrow Factory
-@author Curve Finance, Yearn Finance, Lido finance
+@author Curve Finance, Yearn Finance, Lido Finance
 @license MIT
-@notice Stores and distributes ERC20 tokens by deploying `VestingEscrowSimple` and `VestingEscrowOptimised` contracts
+@notice Stores and distributes ERC20 tokens by deploying `VestingEscrowSimple` or `VestingEscrowOptimised` contracts
 """
 
 from vyper.interfaces import ERC20
 
 
-interface VestingEscrow:
+interface IVestingEscrow:
     def initialize(
         admin: address,
         token: address,
@@ -74,12 +74,12 @@ def deploy_vesting_contract(
     assert cliff_length <= vesting_duration  # dev: incorrect vesting cliff
     assert escrow_type in [0,1] # dev: incorrect escrow type
     if escrow_type == 1: # dev: select target based on escrow type
-        escrow: address = create_forwarder_to(self.target_optimised)
+        escrow: address = create_minimal_proxy_to(self.target_optimised)
     else
-        escrow: address = create_forwarder_to(self.target_simple)
+        escrow: address = create_minimal_proxy_to(self.target_simple)
     assert ERC20(token).transferFrom(msg.sender, self, amount)  # dev: funding failed
     assert ERC20(token).approve(escrow, amount)  # dev: approve failed
-    VestingEscrow(escrow).initialize(
+    IVestingEscrow(escrow).initialize(
         msg.sender,
         token,
         recipient,

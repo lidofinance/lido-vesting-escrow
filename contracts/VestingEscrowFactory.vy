@@ -75,7 +75,7 @@ def deploy_vesting_contract(
     assert escrow_type in [0,1] # dev: incorrect escrow type
     if escrow_type == 1: # dev: select target based on escrow type
         escrow: address = create_minimal_proxy_to(self.target_optimised)
-    else
+    else:
         escrow: address = create_minimal_proxy_to(self.target_simple)
     assert ERC20(token).transferFrom(msg.sender, self, amount)  # dev: funding failed
     assert ERC20(token).approve(escrow, amount)  # dev: approve failed

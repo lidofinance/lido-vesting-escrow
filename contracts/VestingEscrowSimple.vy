@@ -240,4 +240,3 @@ def set_delegate():
     """
     assert msg.sender == self.recipient  # dev: recipient only
     assert IDelegation(SNAPSHOT_DELEGATE_CONTRACT_ADDR).setDelegate(0x0, self.recipient) # dev: id=0x0 allows voting at any snapshot space
-    

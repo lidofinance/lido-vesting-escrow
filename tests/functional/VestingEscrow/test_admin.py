@@ -3,12 +3,12 @@ from brownie import ZERO_ADDRESS
 
 
 def test_commit_admin_only(vesting, accounts):
-    with brownie.reverts("dev: admin only"):
+    with brownie.reverts("admin only"):
         vesting.commit_transfer_ownership(accounts[1], {"from": accounts[1]})
 
 
 def test_apply_admin_only(vesting, accounts):
-    with brownie.reverts("dev: future admin only"):
+    with brownie.reverts("future admin only"):
         vesting.apply_transfer_ownership({"from": accounts[1]})
 
 
@@ -27,7 +27,7 @@ def test_apply_transfer_ownership(vesting, accounts):
 
 
 def test_apply_without_commit(vesting, accounts):
-    with brownie.reverts("dev: future admin only"):
+    with brownie.reverts("future admin only"):
         vesting.apply_transfer_ownership({"from": accounts[0]})
 
 

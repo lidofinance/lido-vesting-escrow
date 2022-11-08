@@ -9,8 +9,8 @@ def initial_funding(token, vesting_factory, accounts):
     token.approve(vesting_factory, 10 ** 21, {"from": accounts[0]})
 
 
-def test_approve_fail(accounts, vesting_factory, token):
-    with brownie.reverts("dev: funding failed"):
+def test_funding_fail(accounts, vesting_factory, token):
+    with brownie.reverts(""): # revert is happening in ERC20 code
         vesting_factory.deploy_vesting_contract(
             token,
             accounts[2],
@@ -20,8 +20,9 @@ def test_approve_fail(accounts, vesting_factory, token):
         )
 
 
-def test_target_is_set(vesting_factory, vesting_target):
-    assert vesting_factory.target() == vesting_target
+def test_targets_are_set(vesting_factory, vesting_target_simple, vesting_target_optimized):
+    assert vesting_factory.target_simple() == vesting_target_simple
+    assert vesting_factory.target_optimized() == vesting_target_optimized
 
 
 def test_deploys(accounts, vesting_factory, token):
@@ -88,11 +89,26 @@ def test_cannot_call_init(vesting, accounts, token, start_time, end_time):
         )
 
 
-def test_cannot_init_factory_target(
-    vesting_target, accounts, token, start_time, end_time
+def test_cannot_init_factory_target_simple(
+    vesting_target_simple, accounts, token, start_time, end_time
 ):
-    with brownie.reverts("dev: can only initialize once"):
-        vesting_target.initialize(
+    with brownie.reverts("can only initialize once"):
+        vesting_target_simple.initialize(
+            accounts[0],
+            token,
+            accounts[1],
+            10 ** 20,
+            start_time,
+            end_time,
+            0,
+            {"from": accounts[0]},
+        )
+
+def test_cannot_init_factory_targe_optimized(
+    vesting_target_optimized, accounts, token, start_time, end_time
+):
+    with brownie.reverts("can only initialize once"):
+        vesting_target_optimized.initialize(
             accounts[0],
             token,
             accounts[1],

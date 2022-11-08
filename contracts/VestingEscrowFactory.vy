@@ -45,8 +45,8 @@ def __init__(target_simple: address, target_optimized: address):
     @param target_simple `VestingEscrowSimple` contract address
     @param target_optimized `VestingEscrowOptimised` contract address
     """
-    assert target_simple != ZERO_ADDRESS # dev: target_simple should not be ZERO_ADDRESS
-    assert target_optimized != ZERO_ADDRESS # dev: target_simple should not be ZERO_ADDRESS
+    assert target_simple != ZERO_ADDRESS, "target_simple should not be ZERO_ADDRESS"
+    assert target_optimized != ZERO_ADDRESS, "target_optimized should not be ZERO_ADDRESS"
     self.target_simple = target_simple
     self.target_optimized = target_optimized
 
@@ -71,15 +71,13 @@ def deploy_vesting_contract(
     @param cliff_length Duration after which the first portion vests
     @param escrow_type Escrow type to deploy 0 - `VestingEscrowSimple`, 1 - `VestingEscrowOptimised`
     """
-    assert cliff_length <= vesting_duration  # dev: incorrect vesting cliff
-    assert escrow_type in [0,1] # dev: incorrect escrow type
-    escrow: address = ZERO_ADDRESS
+    assert cliff_length <= vesting_duration, "incorrect vesting cliff"
+    assert escrow_type in [0,1], "incorrect escrow type"
+    escrow: address = create_minimal_proxy_to(self.target_simple)
     if escrow_type == 1: # dev: select target based on escrow type
         escrow = create_minimal_proxy_to(self.target_optimized)
-    else:
-        escrow = create_minimal_proxy_to(self.target_simple)
-    assert ERC20(token).transferFrom(msg.sender, self, amount)  # dev: funding failed
-    assert ERC20(token).approve(escrow, amount)  # dev: approve failed
+    assert ERC20(token).transferFrom(msg.sender, self, amount), "funding failed"
+    assert ERC20(token).approve(escrow, amount), "approve failed"
     IVestingEscrow(escrow).initialize(
         msg.sender,
         token,

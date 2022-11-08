@@ -45,13 +45,18 @@ def end_time(start_time):
 
 
 @pytest.fixture(scope="module")
-def vesting_target(VestingEscrowSimple, accounts):
+def vesting_target_simple(VestingEscrowSimple, accounts):
     yield VestingEscrowSimple.deploy({"from": accounts[0]})
 
 
 @pytest.fixture(scope="module")
-def vesting_factory(VestingEscrowFactory, accounts, vesting_target):
-    yield VestingEscrowFactory.deploy(vesting_target, {"from": accounts[0]})
+def vesting_target_optimized(VestingEscrowOptimized, accounts):
+    yield VestingEscrowOptimized.deploy({"from": accounts[0]})
+
+
+@pytest.fixture(scope="module")
+def vesting_factory(VestingEscrowFactory, accounts, vesting_target_simple, vesting_target_optimized):
+    yield VestingEscrowFactory.deploy(vesting_target_simple, vesting_target_optimized, {"from": accounts[0]})
 
 
 @pytest.fixture(scope="module")

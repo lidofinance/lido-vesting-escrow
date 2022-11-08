@@ -89,7 +89,7 @@ def initialize(
     @param end_time Time until everything should be vested
     @param cliff_length Duration after which the first portion vests
     """
-    assert not self.initialized  # dev: can only initialize once
+    assert not self.initialized, "can only initialize once"
     self.initialized = True
 
     self.token = ERC20(token)
@@ -98,7 +98,7 @@ def initialize(
     self.end_time = end_time
     self.cliff_length = cliff_length
 
-    assert self.token.transferFrom(msg.sender, self, amount)  # dev: could not fund escrow
+    assert self.token.transferFrom(msg.sender, self, amount), "could not fund escrow"
 
     self.recipient = recipient
     self.disabled_at = end_time  # Set to maximum time
@@ -158,7 +158,7 @@ def claim(beneficiary: address = msg.sender, amount: uint256 = MAX_UINT256):
     @param beneficiary Address to transfer claimed tokens to
     @param amount Amount of tokens to claim
     """
-    assert msg.sender == self.recipient  # dev: not recipient
+    assert msg.sender == self.recipient, "not recipient"
 
     claim_period_end: uint256 = min(block.timestamp, self.disabled_at)
     claimable: uint256 = min(self._unclaimed(claim_period_end), amount)
@@ -173,7 +173,7 @@ def suspend_and_clawback_unvested(beneficiary: address = msg.sender):
     """
     @notice Disable further flow of tokens and clawback the unvested part to beneficiary
     """
-    assert msg.sender == self.admin  # dev: admin only
+    assert msg.sender == self.admin, "admin only"
     # NOTE: Rugging more than once is futile
 
     self.disabled_at = block.timestamp
@@ -189,7 +189,7 @@ def commit_transfer_ownership(addr: address):
     @notice Transfer ownership of the contract to `addr`
     @param addr Address to have ownership transferred to
     """
-    assert msg.sender == self.admin  # dev: admin only
+    assert msg.sender == self.admin, "admin only"
     self.future_admin = addr
     log CommitOwnership(addr)
 
@@ -199,7 +199,7 @@ def apply_transfer_ownership():
     """
     @notice Apply pending ownership transfer
     """
-    assert msg.sender == self.future_admin  # dev: future admin only
+    assert msg.sender == self.future_admin, "future admin only"
     self.admin = msg.sender
     self.future_admin = ZERO_ADDRESS
     log ApplyOwnership(msg.sender)
@@ -210,7 +210,7 @@ def renounce_ownership():
     """
     @notice Renounce admin control of the escrow
     """
-    assert msg.sender == self.admin  # dev: admin only
+    assert msg.sender == self.admin, "admin only"
     self.future_admin = ZERO_ADDRESS
     self.admin = ZERO_ADDRESS
     log ApplyOwnership(ZERO_ADDRESS)
@@ -218,7 +218,7 @@ def renounce_ownership():
 
 @external
 def collect_dust(token: address):
-    assert msg.sender == self.recipient  # dev: recipient only
+    assert msg.sender == self.recipient, "recipient only"
     assert (token != self.token.address or block.timestamp > self.disabled_at)
     assert ERC20(token).transfer(self.recipient, ERC20(token).balanceOf(self))
 
@@ -230,7 +230,7 @@ def vote(voteId: uint256, supports: bool):
     @param voteId Id of the vote
     @param supports Support flag true - yea, false - nay
     """
-    assert msg.sender == self.recipient  # dev: recipient only
+    assert msg.sender == self.recipient, "recipient only"
     IVoting(LIDO_VOTING_CONTRACT_ADDR).vote(voteId, supports, False) # dev: third arg is depricated
 
 
@@ -239,5 +239,5 @@ def set_delegate():
     """
     @notice Delegate Snapshot voting power of the locked tokens to recipient 
     """
-    assert msg.sender == self.recipient  # dev: recipient only
+    assert msg.sender == self.recipient, "recipient only"
     IDelegation(SNAPSHOT_DELEGATE_CONTRACT_ADDR).setDelegate(ZERO_BYTES32, self.recipient) # dev: null id allows voting at any snapshot space

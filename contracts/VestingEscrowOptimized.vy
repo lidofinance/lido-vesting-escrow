@@ -48,8 +48,9 @@ event ApplyOwnership:
     admin: address
 
 
-LIDO_VOTING_CONTRACT_ADDR: constant(address) = "0x2e59A20f205bB85a89C53f1936454680651E618e"
-SNAPSHOT_DELEGATE_CONTRACT_ADDR: constant(address) = "0x469788fE6E9E9681C6ebF3bF78e7Fd26Fc015446"
+LIDO_VOTING_CONTRACT_ADDR: constant(address) = 0x2e59A20f205bB85a89C53f1936454680651E618e
+SNAPSHOT_DELEGATE_CONTRACT_ADDR: constant(address) = 0x469788fE6E9E9681C6ebF3bF78e7Fd26Fc015446
+ZERO_BYTES32: constant(bytes32) = 0x0000000000000000000000000000000000000000000000000000000000000000
 
 
 recipient: public(address)
@@ -198,7 +199,7 @@ def suspend_and_clawback_all(beneficiary: address = msg.sender):
     # NOTE: Rugging more than once is futile
 
     self.disabled_at = block.timestamp
-    ruggable: uint256 = ERC20(token).balanceOf(self)
+    ruggable: uint256 = self.token.balanceOf(self)
 
     assert self.token.transfer(self.admin, ruggable)
     log SuspendAndClawbackAll(self.recipient, beneficiary, ruggable)
@@ -236,6 +237,7 @@ def renounce_ownership():
     self.admin = ZERO_ADDRESS
     log ApplyOwnership(ZERO_ADDRESS)
 
+
 @external
 def collect_dust(token: address):
     assert msg.sender == self.recipient  # dev: recipient only
@@ -251,7 +253,7 @@ def vote(voteId: uint256, supports: bool):
     @param supports Support flag true - yea, false - nay
     """
     assert msg.sender == self.recipient  # dev: recipient only
-    assert IVoting(LIDO_VOTING_CONTRACT_ADDR).vote(voteId, supports, false) # dev: third arg is depricated
+    IVoting(LIDO_VOTING_CONTRACT_ADDR).vote(voteId, supports, False) # dev: third arg is depricated
 
 
 @external
@@ -260,5 +262,6 @@ def set_delegate():
     @notice Delegate Snapshot voting power of the locked tokens to recipient 
     """
     assert msg.sender == self.recipient  # dev: recipient only
-    assert IDelegation(SNAPSHOT_DELEGATE_CONTRACT_ADDR).setDelegate(0x0, self.recipient) # dev: id=0x0 allows voting at any snapshot space
-    
+    IDelegation(SNAPSHOT_DELEGATE_CONTRACT_ADDR).setDelegate(
+        ZERO_BYTES32, self.recipient
+    ) # dev: null id allows voting at any snapshot space

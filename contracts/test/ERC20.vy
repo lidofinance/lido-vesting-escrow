@@ -2,7 +2,7 @@
 @notice Mock ERC20 for testing
 """
 
-# @version 0.2.16
+# @version 0.3.7
 
 event Transfer:
     _from: indexed(address)

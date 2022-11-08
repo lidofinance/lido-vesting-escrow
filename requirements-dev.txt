@@ -1,2 +1,2 @@
-black==21.9b0
+black==22.10.0
 eth-brownie>=1.17.0,<2.0.0

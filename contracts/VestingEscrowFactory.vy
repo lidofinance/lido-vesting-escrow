@@ -34,7 +34,7 @@ event VestingEscrowCreated:
 
 
 target_simple: public(address)
-target_optimised: public(address)
+target_optimized: public(address)
 
 @external
 def __init__(target_simple: address, target_optimized: address):
@@ -43,12 +43,12 @@ def __init__(target_simple: address, target_optimized: address):
     @dev Prior to deployment you must deploy one copy of `VestingEscrowSimple` and `VestingEscrowOptimised` which
          are used as a library for vesting contracts deployed by this factory
     @param target_simple `VestingEscrowSimple` contract address
-    @param target_optimised `VestingEscrowOptimised` contract address
+    @param target_optimized `VestingEscrowOptimised` contract address
     """
     assert target_simple != ZERO_ADDRESS # dev: target_simple should not be ZERO_ADDRESS
     assert target_optimized != ZERO_ADDRESS # dev: target_simple should not be ZERO_ADDRESS
     self.target_simple = target_simple
-    self.target_optimized = target_optimised
+    self.target_optimized = target_optimized
 
 
 @external
@@ -73,10 +73,11 @@ def deploy_vesting_contract(
     """
     assert cliff_length <= vesting_duration  # dev: incorrect vesting cliff
     assert escrow_type in [0,1] # dev: incorrect escrow type
+    escrow: address = ZERO_ADDRESS
     if escrow_type == 1: # dev: select target based on escrow type
-        escrow: address = create_minimal_proxy_to(self.target_optimised)
+        escrow = create_minimal_proxy_to(self.target_optimized)
     else:
-        escrow: address = create_minimal_proxy_to(self.target_simple)
+        escrow = create_minimal_proxy_to(self.target_simple)
     assert ERC20(token).transferFrom(msg.sender, self, amount)  # dev: funding failed
     assert ERC20(token).approve(escrow, amount)  # dev: approve failed
     IVestingEscrow(escrow).initialize(

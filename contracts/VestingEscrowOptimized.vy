@@ -3,7 +3,7 @@
 @title Optimized Vesting Escrow
 @author Curve Finance, Yearn Finance, Lido Finance
 @license MIT
-@notice Vests ERC20 tokens for a single address with admin able to clawback all unclaimed tokens
+@notice Vests ERC20 tokens for a single address
 @dev Intended to be deployed many times via `VotingEscrowFactory`
 """
 
@@ -29,6 +29,7 @@ event Fund:
 
 event Claim:
     recipient: indexed(address)
+    beneficiary: address
     claimed: uint256
 
 event SuspendAndClawbackUnvested:
@@ -47,11 +48,14 @@ event CommitOwnership:
 event ApplyOwnership:
     admin: address
 
+event CollectDust:
+    recipient: indexed(address)
+    token: address
+    collected: uint256
 
 LIDO_VOTING_CONTRACT_ADDR: constant(address) = 0x2e59A20f205bB85a89C53f1936454680651E618e
 SNAPSHOT_DELEGATE_CONTRACT_ADDR: constant(address) = 0x469788fE6E9E9681C6ebF3bF78e7Fd26Fc015446
 ZERO_BYTES32: constant(bytes32) = 0x0000000000000000000000000000000000000000000000000000000000000000
-
 
 recipient: public(address)
 token: public(ERC20)
@@ -172,13 +176,14 @@ def claim(beneficiary: address = msg.sender, amount: uint256 = MAX_UINT256):
     self.total_claimed += claimable
 
     assert self.token.transfer(beneficiary, claimable)
-    log Claim(beneficiary, claimable)
+    log Claim(self.recipient, beneficiary, claimable)
 
 
 @external
 def suspend_and_clawback_unvested(beneficiary: address = msg.sender):
     """
-    @notice Disable further flow of tokens and clawback the unvested part to beneficiary
+    @notice Disable further flow of tokens and clawback the unvested part to the beneficiary
+    @param beneficiary Address to clawback tokens to
     """
     assert msg.sender == self.admin, "admin only"
     # NOTE: Rugging more than once is futile
@@ -193,7 +198,8 @@ def suspend_and_clawback_unvested(beneficiary: address = msg.sender):
 @external
 def suspend_and_clawback_all(beneficiary: address = msg.sender):
     """
-    @notice Disable further flow of tokens and clawback all tokens to beneficiary
+    @notice Disable further flow of tokens and clawback all tokens to the beneficiary
+    @param beneficiary Address to clawback tokens to
     """
     assert msg.sender == self.admin, "admin only"
     # NOTE: Rugging more than once is futile
@@ -203,7 +209,6 @@ def suspend_and_clawback_all(beneficiary: address = msg.sender):
 
     assert self.token.transfer(self.admin, ruggable)
     log SuspendAndClawbackAll(self.recipient, beneficiary, ruggable)
-
 
 @external
 def commit_transfer_ownership(addr: address):
@@ -240,15 +245,21 @@ def renounce_ownership():
 
 @external
 def collect_dust(token: address):
+    """
+    @notice Collect non-escrow tokens from the contract or collect leftovers of the escrow tokens once vesting is done
+    @param token Address of the ERC20 token to be collected
+    """
     assert msg.sender == self.recipient, "recipient only"
     assert (token != self.token.address or block.timestamp > self.disabled_at)
-    assert ERC20(token).transfer(self.recipient, ERC20(token).balanceOf(self))
+    collectable: uint256 = ERC20(token).balanceOf(self)
+    assert ERC20(token).transfer(self.recipient, collectable)
+    log CollectDust(self.recipient, token, collectable)
 
 
 @external
 def vote(voteId: uint256, supports: bool):
     """
-    @notice Participate aragon vote using locked tokens
+    @notice Participate Aragon vote using locked and unclaimed tokens
     @param voteId Id of the vote
     @param supports Support flag true - yea, false - nay
     """
@@ -259,7 +270,7 @@ def vote(voteId: uint256, supports: bool):
 @external
 def set_delegate():
     """
-    @notice Delegate Snapshot voting power of the locked tokens to recipient 
+    @notice Delegate Snapshot voting power of the locked and unclaimed tokens to the recipient
     """
     assert msg.sender == self.recipient, "recipient only"
     IDelegation(SNAPSHOT_DELEGATE_CONTRACT_ADDR).setDelegate(ZERO_BYTES32, self.recipient) # dev: null id allows voting at any snapshot space

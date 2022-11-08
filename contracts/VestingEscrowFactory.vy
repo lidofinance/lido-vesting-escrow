@@ -26,7 +26,7 @@ event VestingEscrowCreated:
     token: indexed(address)
     recipient: indexed(address)
     escrow: address
-    escrow_type: uint256 # 0 - simple, 1 - optimised
+    escrow_type: uint256 # 0 - simple, 1 - optimized
     amount: uint256
     vesting_start: uint256
     vesting_duration: uint256

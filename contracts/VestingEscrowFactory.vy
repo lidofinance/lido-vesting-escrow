@@ -3,7 +3,7 @@
 @title Vesting Escrow Factory
 @author Curve Finance, Yearn Finance, Lido Finance
 @license MIT
-@notice Stores and distributes ERC20 tokens by deploying `VestingEscrowSimple` or `VestingEscrowOptimised` contracts
+@notice Stores and distributes ERC20 tokens by deploying `VestingEscrowSimple` or `VestingEscrowFullyRevokable` contracts
 """
 
 from vyper.interfaces import ERC20
@@ -26,7 +26,7 @@ event VestingEscrowCreated:
     token: indexed(address)
     recipient: indexed(address)
     escrow: address
-    escrow_type: uint256 # 0 - simple, 1 - optimized
+    escrow_type: uint256 # 0 - simple, 1 - fully revokable
     amount: uint256
     vesting_start: uint256
     vesting_duration: uint256
@@ -34,21 +34,21 @@ event VestingEscrowCreated:
 
 
 target_simple: public(address)
-target_optimized: public(address)
+target_fully_revokable: public(address)
 
 @external
-def __init__(target_simple: address, target_optimized: address):
+def __init__(target_simple: address, target_fully_revokable: address):
     """
     @notice Contract constructor
-    @dev Prior to deployment you must deploy one copy of `VestingEscrowSimple` and `VestingEscrowOptimised` which
+    @dev Prior to deployment you must deploy one copy of `VestingEscrowSimple` and `VestingEscrowFullyRevokable` which
          are used as a library for vesting contracts deployed by this factory
     @param target_simple `VestingEscrowSimple` contract address
-    @param target_optimized `VestingEscrowOptimised` contract address
+    @param target_fully_revokable `VestingEscrowFullyRevokable` contract address
     """
     assert target_simple != ZERO_ADDRESS, "target_simple should not be ZERO_ADDRESS"
-    assert target_optimized != ZERO_ADDRESS, "target_optimized should not be ZERO_ADDRESS"
+    assert target_fully_revokable != ZERO_ADDRESS, "target_fully_revokable should not be ZERO_ADDRESS"
     self.target_simple = target_simple
-    self.target_optimized = target_optimized
+    self.target_fully_revokable = target_fully_revokable
 
 
 @external
@@ -69,13 +69,15 @@ def deploy_vesting_contract(
     @param vesting_duration Time period over which tokens are released
     @param vesting_start Epoch time when tokens begin to vest
     @param cliff_length Duration after which the first portion vests
-    @param escrow_type Escrow type to deploy 0 - `VestingEscrowSimple`, 1 - `VestingEscrowOptimised`
+    @param escrow_type Escrow type to deploy 0 - `VestingEscrowSimple`, 1 - `VestingEscrowFullyRevokable`
     """
     assert cliff_length <= vesting_duration, "incorrect vesting cliff"
     assert escrow_type in [0,1], "incorrect escrow type"
-    escrow: address = create_minimal_proxy_to(self.target_simple)
+    escrow: address = ZERO_ADDRESS
     if escrow_type == 1: # dev: select target based on escrow type
-        escrow = create_minimal_proxy_to(self.target_optimized)
+        escrow = create_minimal_proxy_to(self.target_fully_revokable)
+    else:
+        escrow = create_minimal_proxy_to(self.target_simple)
     assert ERC20(token).transferFrom(msg.sender, self, amount), "funding failed"
     assert ERC20(token).approve(escrow, amount), "approve failed"
     IVestingEscrow(escrow).initialize(

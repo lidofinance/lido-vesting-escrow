@@ -32,10 +32,10 @@ event Claim:
     beneficiary: address
     claimed: uint256
 
-event SuspendAndClawbackUnvested:
+event RevokeUnvested:
     recipient: indexed(address)
     beneficiary: address
-    clawbacked: uint256
+    revoked: uint256
 
 event CommitOwnership:
     admin: address
@@ -43,14 +43,15 @@ event CommitOwnership:
 event ApplyOwnership:
     admin: address
 
-event CollectDust:
+event ERC20Recovered:
     recipient: indexed(address)
     token: address
-    collected: uint256
+    amount: uint256
 
-LIDO_VOTING_CONTRACT_ADDR: constant(address) = 0x2e59A20f205bB85a89C53f1936454680651E618e
-SNAPSHOT_DELEGATE_CONTRACT_ADDR: constant(address) = 0x469788fE6E9E9681C6ebF3bF78e7Fd26Fc015446
 ZERO_BYTES32: constant(bytes32) = 0x0000000000000000000000000000000000000000000000000000000000000000
+
+LIDO_VOTING_CONTRACT_ADDR: immutable(address)
+SNAPSHOT_DELEGATE_CONTRACT_ADDR: immutable(address)
 
 recipient: public(address)
 token: public(ERC20)
@@ -66,9 +67,16 @@ admin: public(address)
 future_admin: public(address)
 
 @external
-def __init__():
+def __init__(voting_addr: address, snapshot_addr: address):
+    """
+    @notice Initialize source contract implementation.
+    @param voting_addr Address of the Lido Voting contract
+    @param snapshot_addr Address of the Shapshot Delegate contract
+    """
     # ensure that the original contract cannot be initialized
     self.initialized = True
+    LIDO_VOTING_CONTRACT_ADDR = voting_addr
+    SNAPSHOT_DELEGATE_CONTRACT_ADDR = snapshot_addr
 
 
 @external
@@ -175,19 +183,19 @@ def claim(beneficiary: address = msg.sender, amount: uint256 = MAX_UINT256):
 
 
 @external
-def suspend_and_clawback_unvested(beneficiary: address = msg.sender):
+def revoke_unvested(beneficiary: address = msg.sender):
     """
-    @notice Disable further flow of tokens and clawback the unvested part to the beneficiary
-    @param beneficiary Address to clawback tokens to
+    @notice Disable further flow of tokens and revoke the unvested part to the beneficiary
+    @param beneficiary Address to revoke tokens to
     """
     assert msg.sender == self.admin, "admin only"
-    # NOTE: Rugging more than once is futile
+    # NOTE: Revoking more than once is futile
 
     self.disabled_at = block.timestamp
-    ruggable: uint256 = self._locked()
+    revokable: uint256 = self._locked()
 
-    assert self.token.transfer(self.admin, ruggable)
-    log SuspendAndClawbackUnvested(self.recipient, beneficiary, ruggable)
+    assert self.token.transfer(beneficiary, revokable)
+    log RevokeUnvested(self.recipient, beneficiary, revokable)
 
 
 @external
@@ -224,16 +232,16 @@ def renounce_ownership():
 
 
 @external
-def collect_dust(token: address):
+def recover_erc20(token: address):
     """
     @notice Collect non-escrow tokens from the contract or collect leftovers of the escrow tokens once vesting is done
     @param token Address of the ERC20 token to be collected
     """
     assert msg.sender == self.recipient, "recipient only"
     assert (token != self.token.address or block.timestamp > self.disabled_at)
-    collectable: uint256 = ERC20(token).balanceOf(self)
-    assert ERC20(token).transfer(self.recipient, collectable)
-    log CollectDust(self.recipient, token, collectable)
+    recoverable: uint256 = ERC20(token).balanceOf(self)
+    assert ERC20(token).transfer(self.recipient, recoverable)
+    log ERC20Recovered(self.recipient, token, recoverable)
 
 
 @external

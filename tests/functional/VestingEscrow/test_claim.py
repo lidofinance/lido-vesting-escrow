@@ -30,6 +30,13 @@ def test_claim_before_start(vesting, token, accounts, chain, start_time):
     assert token.balanceOf(accounts[1]) == 0
 
 
+def test_claim_after_end(vesting, token, accounts, chain, end_time):
+    chain.sleep(end_time - chain.time() + 100)
+    vesting.claim({"from": accounts[1]})
+
+    assert token.balanceOf(accounts[1]) == 10 ** 20
+
+
 def test_claim_partial(vesting, token, accounts, chain, start_time, end_time):
     chain.sleep(vesting.start_time() - chain.time() + 31337)
     tx = vesting.claim({"from": accounts[1]})

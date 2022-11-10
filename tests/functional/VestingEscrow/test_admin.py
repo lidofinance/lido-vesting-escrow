@@ -12,6 +12,11 @@ def test_apply_admin_only(vesting, accounts):
         vesting.apply_transfer_ownership({"from": accounts[1]})
 
 
+def test_renounce_ownership_only(vesting, accounts):
+    with brownie.reverts("admin only"):
+        vesting.renounce_ownership({"from": accounts[1]})
+
+
 def test_commit_transfer_ownership(vesting, accounts):
     vesting.commit_transfer_ownership(accounts[1], {"from": accounts[0]})
 

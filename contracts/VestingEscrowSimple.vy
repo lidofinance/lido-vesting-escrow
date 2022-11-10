@@ -234,8 +234,8 @@ def renounce_ownership():
 @external
 def recover_erc20(token: address):
     """
-    @notice Collect non-escrow tokens from the contract or collect leftovers of the escrow tokens once vesting is done
-    @param token Address of the ERC20 token to be collected
+    @notice Recover non-escrow tokens from the contract or collect leftovers of the escrow tokens once vesting is done to the recipient address
+    @param token Address of the ERC20 token to be recovered
     """
     assert msg.sender == self.recipient, "recipient only"
     assert (token != self.token.address or block.timestamp > self.disabled_at)
@@ -247,7 +247,7 @@ def recover_erc20(token: address):
 @external
 def vote(voteId: uint256, supports: bool):
     """
-    @notice Participate Aragon vote using locked and unclaimed tokens
+    @notice Participate Aragon vote using all available tokens on the contract's balance
     @param voteId Id of the vote
     @param supports Support flag true - yea, false - nay
     """
@@ -258,7 +258,7 @@ def vote(voteId: uint256, supports: bool):
 @external
 def set_delegate():
     """
-    @notice Delegate Snapshot voting power of the locked and unclaimed tokens to the recipient
+    @notice Delegate Snapshot voting power of all available tokens on the contract's balance
     """
     assert msg.sender == self.recipient, "recipient only"
     IDelegation(SNAPSHOT_DELEGATE_CONTRACT_ADDR).setDelegate(ZERO_BYTES32, self.recipient) # dev: null id allows voting at any snapshot space

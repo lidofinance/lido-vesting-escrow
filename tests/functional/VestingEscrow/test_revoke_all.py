@@ -12,14 +12,16 @@ def test_revoke_unvested_admin_only(vesting, accounts):
 def test_revoke_all(vesting, accounts, token, start_time):
     tx = vesting.revoke_all({"from": accounts[0]})
 
-    assert vesting.disabled_at() == start_time
+    assert vesting.disabled_at() == tx.timestamp
+    assert vesting.unclaimed() == 0
     assert token.balanceOf(accounts[0]) == 10**20
 
 
 def test_revoke_all_to_different_address(vesting, accounts, token, start_time):
     tx = vesting.revoke_all(accounts[2], {"from": accounts[0]})
 
-    assert vesting.disabled_at() == start_time
+    assert vesting.disabled_at() == tx.timestamp
+    assert vesting.unclaimed() == 0
     assert token.balanceOf(accounts[2]) == 10**20
 
 
@@ -52,6 +54,7 @@ def test_revoke_all_partially_ununclaimed(
     tx = vesting.revoke_all({"from": accounts[0]})
     chain.sleep(end_time - chain.time())
     vesting.claim({"from": accounts[1]})
+    assert vesting.unclaimed() == 0
 
     assert token.balanceOf(accounts[1]) == 0
     assert token.balanceOf(accounts[0]) == vesting.total_locked()

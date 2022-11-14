@@ -66,6 +66,7 @@ cliff_length: public(uint256)
 total_locked: public(uint256)
 total_claimed: public(uint256)
 disabled_at: public(uint256)
+is_fully_revoked: public(bool)
 initialized: public(bool)
 
 admin: public(address)
@@ -116,6 +117,7 @@ def initialize(
     self.start_time = start_time
     self.end_time = end_time
     self.cliff_length = cliff_length
+    self.is_fully_revoked = False
 
     assert self.token.transferFrom(msg.sender, self, amount), "could not fund escrow"
 
@@ -141,7 +143,9 @@ def _total_vested_at(time: uint256 = block.timestamp) -> uint256:
 @internal
 @view
 def _unclaimed(time: uint256 = block.timestamp) -> uint256:
-    return self._total_vested_at(time) - self.total_claimed
+    if not self.is_fully_revoked:
+        return self._total_vested_at(time) - self.total_claimed
+    return 0
 
 
 @external
@@ -150,14 +154,14 @@ def unclaimed() -> uint256:
     """
     @notice Get the number of unclaimed, vested tokens for recipient
     """
-    # NOTE: if `rug_pull` is activated, limit by the activation timestamp
+    # NOTE: if `revoke_unvested` is activated, limit by the activation timestamp
     return self._unclaimed(min(block.timestamp, self.disabled_at))
 
 
 @internal
 @view
 def _locked(time: uint256 = block.timestamp) -> uint256:
-    return self.total_locked - self._total_vested_at(time)
+    return min(self.total_locked - self._total_vested_at(time), self.token.balanceOf(self))
 
 
 @external
@@ -212,7 +216,8 @@ def revoke_all(beneficiary: address = msg.sender):
     assert msg.sender == self.admin, "admin only"
     # NOTE: Revoking more than once is futile
 
-    self.disabled_at = self.start_time  # dev: required for correct calculation of locked and unclaimed
+    self.is_fully_revoked = True
+    self.disabled_at = block.timestamp
     revokable: uint256 = self.token.balanceOf(self)
 
     assert self.token.transfer(beneficiary, revokable)

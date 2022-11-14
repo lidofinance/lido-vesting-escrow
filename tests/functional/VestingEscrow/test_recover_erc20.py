@@ -23,7 +23,7 @@ def test_do_not_allow_claim_of_vested_token(
         vesting.recover_erc20(token, {"from": accounts[1]})
 
 
-def test_allow_vested_token_dust_to_be_claim_at_end(
+def test_allow_vested_token_recover_to_be_claim_at_end(
     vesting, token, accounts, chain, end_time
 ):
     chain.sleep(end_time - chain.time() + 1)

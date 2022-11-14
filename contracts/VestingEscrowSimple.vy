@@ -145,7 +145,7 @@ def unclaimed() -> uint256:
     """
     @notice Get the number of unclaimed, vested tokens for recipient
     """
-    # NOTE: if `rug_pull` is activated, limit by the activation timestamp
+    # NOTE: if `revoke_unvested` is activated, limit by the activation timestamp
     return self._unclaimed(min(block.timestamp, self.disabled_at))
 
 

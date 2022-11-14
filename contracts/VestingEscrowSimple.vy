@@ -216,7 +216,7 @@ def apply_transfer_ownership():
     """
     assert msg.sender == self.future_admin, "future admin only"
     self.admin = msg.sender
-    self.future_admin = ZERO_ADDRESS
+    self.future_admin = empty(address)
     log ApplyOwnership(msg.sender)
 
 
@@ -226,9 +226,9 @@ def renounce_ownership():
     @notice Renounce admin control of the escrow
     """
     assert msg.sender == self.admin, "admin only"
-    self.future_admin = ZERO_ADDRESS
-    self.admin = ZERO_ADDRESS
-    log ApplyOwnership(ZERO_ADDRESS)
+    self.future_admin = empty(address)
+    self.admin = empty(address)
+    log ApplyOwnership(empty(address))
 
 
 @external

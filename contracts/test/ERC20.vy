@@ -70,4 +70,4 @@ def approve(_spender : address, _value : uint256) -> bool:
 def _mint_for_testing(_value: uint256):
     self.total_supply += _value
     self.balanceOf[msg.sender] += _value
-    log Transfer(ZERO_ADDRESS, msg.sender, _value)
+    log Transfer(empty(address), msg.sender, _value)

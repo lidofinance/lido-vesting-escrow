@@ -45,8 +45,8 @@ def __init__(target_simple: address, target_fully_revokable: address):
     @param target_simple `VestingEscrowSimple` contract address
     @param target_fully_revokable `VestingEscrowFullyRevokable` contract address
     """
-    assert target_simple != ZERO_ADDRESS, "target_simple should not be ZERO_ADDRESS"
-    assert target_fully_revokable != ZERO_ADDRESS, "target_fully_revokable should not be ZERO_ADDRESS"
+    assert target_simple != empty(address), "target_simple should not be ZERO_ADDRESS"
+    assert target_fully_revokable != empty(address), "target_fully_revokable should not be ZERO_ADDRESS"
     self.target_simple = target_simple
     self.target_fully_revokable = target_fully_revokable
 
@@ -73,7 +73,7 @@ def deploy_vesting_contract(
     """
     assert cliff_length <= vesting_duration, "incorrect vesting cliff"
     assert escrow_type in [0,1], "incorrect escrow type"
-    escrow: address = ZERO_ADDRESS
+    escrow: address = empty(address)
     if escrow_type == 1: # dev: select target based on escrow type
         escrow = create_minimal_proxy_to(self.target_fully_revokable)
     else:

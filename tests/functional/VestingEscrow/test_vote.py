@@ -1,10 +1,10 @@
 import brownie
 
 
-def test_vote(vesting, accounts):
-    vesting.vote(154, True, {"from": accounts[1]})
+def test_vote(vesting, recipient):
+    vesting.vote(154, True, {"from": recipient})
 
 
-def test_vote_non_recipient(vesting, accounts):
+def test_vote_non_recipient(vesting, admin):
     with brownie.reverts("recipient only"):
-        vesting.vote(154, True, {"from": accounts[0]})
+        vesting.vote(154, True, {"from": admin})

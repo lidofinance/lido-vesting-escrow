@@ -2,42 +2,42 @@ import brownie
 from brownie import ZERO_ADDRESS
 
 
-def test_commit_admin_only(vesting, accounts):
+def test_commit_admin_only(vesting, recipient):
     with brownie.reverts("admin only"):
-        vesting.commit_transfer_ownership(accounts[1], {"from": accounts[1]})
+        vesting.commit_transfer_ownership(recipient, {"from": recipient})
 
 
-def test_apply_admin_only(vesting, accounts):
+def test_apply_admin_only(vesting, recipient):
     with brownie.reverts("future admin only"):
-        vesting.apply_transfer_ownership({"from": accounts[1]})
+        vesting.apply_transfer_ownership({"from": recipient})
 
 
-def test_renounce_ownership_only(vesting, accounts):
+def test_renounce_ownership_only(vesting, recipient):
     with brownie.reverts("admin only"):
-        vesting.renounce_ownership({"from": accounts[1]})
+        vesting.renounce_ownership({"from": recipient})
 
 
-def test_commit_transfer_ownership(vesting, accounts):
-    vesting.commit_transfer_ownership(accounts[1], {"from": accounts[0]})
+def test_commit_transfer_ownership(vesting, admin, recipient):
+    vesting.commit_transfer_ownership(recipient, {"from": admin})
 
-    assert vesting.admin() == accounts[0]
-    assert vesting.future_admin() == accounts[1]
-
-
-def test_apply_transfer_ownership(vesting, accounts):
-    vesting.commit_transfer_ownership(accounts[1], {"from": accounts[0]})
-    vesting.apply_transfer_ownership({"from": accounts[1]})
-
-    assert vesting.admin() == accounts[1]
+    assert vesting.admin() == admin
+    assert vesting.future_admin() == recipient
 
 
-def test_apply_without_commit(vesting, accounts):
+def test_apply_transfer_ownership(vesting, admin, recipient):
+    vesting.commit_transfer_ownership(recipient, {"from": admin})
+    vesting.apply_transfer_ownership({"from": recipient})
+
+    assert vesting.admin() == recipient
+
+
+def test_apply_without_commit(vesting, admin):
     with brownie.reverts("future admin only"):
-        vesting.apply_transfer_ownership({"from": accounts[0]})
+        vesting.apply_transfer_ownership({"from": admin})
 
 
-def test_renounce_ownership(vesting, accounts):
-    vesting.renounce_ownership({"from": accounts[0]})
+def test_renounce_ownership(vesting, admin):
+    vesting.renounce_ownership({"from": admin})
 
     assert vesting.admin() == ZERO_ADDRESS
     assert vesting.future_admin() == ZERO_ADDRESS

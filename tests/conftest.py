@@ -11,7 +11,7 @@ def isolation_setup(fn_isolation):
 
 @pytest.fixture(scope="session")
 def balance():
-    return 10 ** 20
+    return 10**20
 
 
 @pytest.fixture(scope="session")
@@ -45,6 +45,16 @@ def delegate(Delegate, admin):
 
 
 @pytest.fixture(scope="module")
+def voting_adapter(VotingAdapter, admin):
+    yield VotingAdapter.deploy({"from": admin})
+
+
+@pytest.fixture(scope="module")
+def voting_adapter_for_update(VotingAdapter, admin):
+    yield VotingAdapter.deploy({"from": admin})
+
+
+@pytest.fixture(scope="module")
 def start_time(chain):
     yield chain.time() + 1000 + 86400 * 365
 
@@ -60,17 +70,41 @@ def vesting_target_simple(VestingEscrowSimple, admin, voting, delegate):
 
 
 @pytest.fixture(scope="module")
-def vesting_target_fully_revokable(VestingEscrowFullyRevokable, admin, voting, delegate):
+def vesting_target_fully_revokable(
+    VestingEscrowFullyRevokable, admin, voting, delegate
+):
     yield VestingEscrowFullyRevokable.deploy(voting, delegate, {"from": admin})
 
 
 @pytest.fixture(scope="module")
-def vesting_factory(VestingEscrowFactory, admin, vesting_target_simple, vesting_target_fully_revokable):
-    yield VestingEscrowFactory.deploy(vesting_target_simple, vesting_target_fully_revokable, {"from": admin})
+def vesting_factory(
+    VestingEscrowFactory,
+    admin,
+    vesting_target_simple,
+    vesting_target_fully_revokable,
+    voting_adapter,
+):
+    yield VestingEscrowFactory.deploy(
+        vesting_target_simple,
+        vesting_target_fully_revokable,
+        voting_adapter,
+        {"from": admin},
+    )
 
 
-@pytest.fixture(scope="module", params=[0,1])
-def vesting(VestingEscrowSimple, VestingEscrowFullyRevokable, admin, recipient, vesting_factory, token, start_time, duration, request, balance):
+@pytest.fixture(scope="module", params=[0, 1])
+def vesting(
+    VestingEscrowSimple,
+    VestingEscrowFullyRevokable,
+    admin,
+    recipient,
+    vesting_factory,
+    token,
+    start_time,
+    duration,
+    request,
+    balance,
+):
     token._mint_for_testing(balance, {"from": admin})
     token.approve(vesting_factory, balance, {"from": admin})
     tx = vesting_factory.deploy_vesting_contract(

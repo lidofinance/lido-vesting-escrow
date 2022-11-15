@@ -1,4 +1,5 @@
 # @version 0.3.7
+
 """
 @title Vesting Escrow Factory
 @author Curve Finance, Yearn Finance, Lido Finance
@@ -18,6 +19,7 @@ interface IVestingEscrow:
         start_time: uint256,
         end_time: uint256,
         cliff_length: uint256,
+        voting_adapter_addr: address,
     ) -> bool: nonpayable
 
 
@@ -26,18 +28,21 @@ event VestingEscrowCreated:
     token: indexed(address)
     recipient: indexed(address)
     escrow: address
-    escrow_type: uint256 # 0 - simple, 1 - fully revokable
+    escrow_type: uint256  # 0 - simple, 1 - fully revokable
     amount: uint256
     vesting_start: uint256
     vesting_duration: uint256
     cliff_length: uint256
+    voting_adapter: address
 
 
 target_simple: public(address)
 target_fully_revokable: public(address)
+default_voting_adapter: public(address)
+
 
 @external
-def __init__(target_simple: address, target_fully_revokable: address):
+def __init__(target_simple: address, target_fully_revokable: address, default_voting_adapter: address):
     """
     @notice Contract constructor
     @dev Prior to deployment you must deploy one copy of `VestingEscrowSimple` and `VestingEscrowFullyRevokable` which
@@ -49,6 +54,7 @@ def __init__(target_simple: address, target_fully_revokable: address):
     assert target_fully_revokable != empty(address), "target_fully_revokable should not be ZERO_ADDRESS"
     self.target_simple = target_simple
     self.target_fully_revokable = target_fully_revokable
+    self.default_voting_adapter = default_voting_adapter
 
 
 @external
@@ -59,7 +65,7 @@ def deploy_vesting_contract(
     vesting_duration: uint256,
     vesting_start: uint256 = block.timestamp,
     cliff_length: uint256 = 0,
-    escrow_type: uint256 = 0, # use simple escrow by default
+    escrow_type: uint256 = 0,  # use simple escrow by default
 ) -> address:
     """
     @notice Deploy a new vesting contract
@@ -72,9 +78,9 @@ def deploy_vesting_contract(
     @param escrow_type Escrow type to deploy 0 - `VestingEscrowSimple`, 1 - `VestingEscrowFullyRevokable`
     """
     assert cliff_length <= vesting_duration, "incorrect vesting cliff"
-    assert escrow_type in [0,1], "incorrect escrow type"
+    assert escrow_type in [0, 1], "incorrect escrow type"
     escrow: address = empty(address)
-    if escrow_type == 1: # dev: select target based on escrow type
+    if escrow_type == 1:  # dev: select target based on escrow type
         escrow = create_minimal_proxy_to(self.target_fully_revokable)
     else:
         escrow = create_minimal_proxy_to(self.target_simple)
@@ -88,6 +94,18 @@ def deploy_vesting_contract(
         vesting_start,
         vesting_start + vesting_duration,
         cliff_length,
+        self.default_voting_adapter,
     )
-    log VestingEscrowCreated(msg.sender, token, recipient, escrow, escrow_type, amount, vesting_start, vesting_duration, cliff_length)
+    log VestingEscrowCreated(
+        msg.sender,
+        token,
+        recipient,
+        escrow,
+        escrow_type,
+        amount,
+        vesting_start,
+        vesting_duration,
+        cliff_length,
+        self.default_voting_adapter,
+    )
     return escrow

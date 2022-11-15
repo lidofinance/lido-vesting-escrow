@@ -130,7 +130,7 @@ def test_init_vars(vesting, admin, recipient, token, start_time, end_time, balan
 
 
 def test_cannot_call_init(
-    vesting, admin, recipient, token, start_time, end_time, balance
+    vesting, admin, recipient, token, start_time, end_time, balance, voting_adapter
 ):
     with brownie.reverts():
         vesting.initialize(
@@ -141,12 +141,20 @@ def test_cannot_call_init(
             start_time,
             end_time,
             0,
+            voting_adapter,
             {"from": admin},
         )
 
 
 def test_cannot_init_factory_target_simple(
-    vesting_target_simple, admin, recipient, token, start_time, end_time, balance
+    vesting_target_simple,
+    admin,
+    recipient,
+    token,
+    start_time,
+    end_time,
+    balance,
+    voting_adapter,
 ):
     with brownie.reverts("can only initialize once"):
         vesting_target_simple.initialize(
@@ -157,6 +165,7 @@ def test_cannot_init_factory_target_simple(
             start_time,
             end_time,
             0,
+            voting_adapter,
             {"from": admin},
         )
 
@@ -169,6 +178,7 @@ def test_cannot_init_factory_targe_fully_revokable(
     start_time,
     end_time,
     balance,
+    voting_adapter,
 ):
     with brownie.reverts("can only initialize once"):
         vesting_target_fully_revokable.initialize(
@@ -179,5 +189,6 @@ def test_cannot_init_factory_targe_fully_revokable(
             start_time,
             end_time,
             0,
+            voting_adapter,
             {"from": admin},
         )

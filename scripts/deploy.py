@@ -7,13 +7,13 @@ VESTING_ESCROWS = [
         "start": 1594972885,
         "cliff": YEAR / 2,
         "recipients": {
-            accounts[1]: 275 * 10 ** 18,
-            accounts[2]: 140 * 10 ** 18,
-            accounts[3]: 60 * 10 ** 18,
-            accounts[4]: 40 * 10 ** 18,
-            accounts[5]: 25 * 10 ** 18,
-            accounts[6]: 13 * 10 ** 18,
-            accounts[7]: 10 * 10 ** 18,
+            accounts[1]: 275 * 10**18,
+            accounts[2]: 140 * 10**18,
+            accounts[3]: 60 * 10**18,
+            accounts[4]: 40 * 10**18,
+            accounts[5]: 25 * 10**18,
+            accounts[6]: 13 * 10**18,
+            accounts[7]: 10 * 10**18,
         },
     }
 ]

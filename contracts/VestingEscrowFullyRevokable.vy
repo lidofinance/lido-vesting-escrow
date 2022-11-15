@@ -1,4 +1,5 @@
 # @version 0.3.7
+
 """
 @title Fully revokable Vesting Escrow
 @author Curve Finance, Yearn Finance, Lido Finance
@@ -8,6 +9,7 @@
 """
 
 from vyper.interfaces import ERC20
+
 
 interface IDelegation:
     def setDelegate(
@@ -23,35 +25,48 @@ interface IVoting:
         _executesIfDecided_deprecated: bool,
     ): nonpayable
 
+
 event Fund:
     recipient: indexed(address)
     amount: uint256
+
 
 event Claim:
     recipient: indexed(address)
     beneficiary: address
     claimed: uint256
 
+
 event RevokeUnvested:
     recipient: indexed(address)
     beneficiary: address
     revoked: uint256
+
 
 event RevokeAll:
     recipient: indexed(address)
     beneficiary: address
     revoked: uint256
 
+
 event CommitOwnership:
     admin: address
 
+
 event ApplyOwnership:
     admin: address
+
 
 event ERC20Recovered:
     recipient: indexed(address)
     token: address
     amount: uint256
+
+
+event VotingAdapterUpdated:
+    recipient: indexed(address)
+    addr: address
+
 
 ZERO_BYTES32: constant(bytes32) = 0x0000000000000000000000000000000000000000000000000000000000000000
 
@@ -68,9 +83,11 @@ total_claimed: public(uint256)
 disabled_at: public(uint256)
 is_fully_revoked: public(bool)
 initialized: public(bool)
+voting_adapter_addr: public(address)
 
 admin: public(address)
 future_admin: public(address)
+
 
 @external
 def __init__(voting_addr: address, snapshot_addr: address):
@@ -86,7 +103,7 @@ def __init__(voting_addr: address, snapshot_addr: address):
 
 
 @external
-@nonreentrant('lock')
+@nonreentrant("lock")
 def initialize(
     admin: address,
     token: address,
@@ -95,6 +112,7 @@ def initialize(
     start_time: uint256,
     end_time: uint256,
     cliff_length: uint256,
+    voting_adapter_addr: address,
 ) -> bool:
     """
     @notice Initialize the contract.
@@ -108,6 +126,7 @@ def initialize(
     @param start_time Epoch time at which token distribution starts
     @param end_time Time until everything should be vested
     @param cliff_length Duration after which the first portion vests
+    @param voting_adapter_addr VotingAdapter address
     """
     assert not self.initialized, "can only initialize once"
     self.initialized = True
@@ -117,7 +136,7 @@ def initialize(
     self.start_time = start_time
     self.end_time = end_time
     self.cliff_length = cliff_length
-    self.is_fully_revoked = False
+    self.voting_adapter_addr = voting_adapter_addr
 
     assert self.token.transferFrom(msg.sender, self, amount), "could not fund escrow"
 
@@ -161,7 +180,10 @@ def unclaimed() -> uint256:
 @internal
 @view
 def _locked(time: uint256 = block.timestamp) -> uint256:
-    return min(self.total_locked - self._total_vested_at(time), self.token.balanceOf(self))
+    return min(
+        self.total_locked - self._total_vested_at(time),
+        self.token.balanceOf(self),
+    )
 
 
 @external
@@ -271,6 +293,17 @@ def recover_erc20(token: address):
 
 
 @external
+def update_voting_adapter(addr: address):
+    """
+    @notice Set new voting_adapter_addr
+    @param addr New VotingAdapter address
+    """
+    assert msg.sender == self.recipient, "recipient only"
+    self.voting_adapter_addr = addr
+    log VotingAdapterUpdated(self.recipient, addr)
+
+
+@external
 def vote(voteId: uint256, supports: bool):
     """
     @notice Participate Aragon vote using all available tokens on the contract's balance
@@ -278,7 +311,11 @@ def vote(voteId: uint256, supports: bool):
     @param supports Support flag true - yea, false - nay
     """
     assert msg.sender == self.recipient, "recipient only"
-    IVoting(LIDO_VOTING_CONTRACT_ADDR).vote(voteId, supports, False) # dev: third arg is depricated
+    raw_call(
+        self.voting_adapter_addr,
+        _abi_encode(LIDO_VOTING_CONTRACT_ADDR, voteId, supports, method_id=method_id("vote(address,uint256,bool)")),
+        is_delegate_call=True,
+    )
 
 
 @external
@@ -287,4 +324,10 @@ def set_delegate():
     @notice Delegate Snapshot voting power of all available tokens on the contract's balance
     """
     assert msg.sender == self.recipient, "recipient only"
-    IDelegation(SNAPSHOT_DELEGATE_CONTRACT_ADDR).setDelegate(ZERO_BYTES32, self.recipient) # dev: null id allows voting at any snapshot space
+    raw_call(
+        self.voting_adapter_addr,
+        _abi_encode(
+            SNAPSHOT_DELEGATE_CONTRACT_ADDR, self.recipient, method_id=method_id("set_delegate(address,address)")
+        ),
+        is_delegate_call=True,
+    )

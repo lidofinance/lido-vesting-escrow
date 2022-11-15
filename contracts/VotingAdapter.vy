@@ -34,7 +34,7 @@ def vote(voting_addr: address, voteId: uint256, supports: bool):
     @param voteId Id of the vote
     @param supports Support flag true - yea, false - nay
     """
-    IVoting(voting_addr).vote(voteId, supports, False)  # dev: third arg is depricated
+    IVoting(voting_addr).vote(voteId, supports, False)  # dev: third arg is deprecated
 
 
 @external

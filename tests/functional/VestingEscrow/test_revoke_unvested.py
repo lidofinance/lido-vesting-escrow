@@ -63,10 +63,11 @@ def test_revoke_unvested_partially_claimed(
 ):
     sleep_time = (end_time - start_time) // 2
     chain.sleep(start_time - chain.time() + sleep_time)
+    chain.mine()
     claim_amount = 10**18
     vesting.claim(recipient, claim_amount, {"from": recipient})
 
-    expected_revoke_amount = 10**20 / 2
+    expected_revoke_amount = vesting.locked({"from": recipient})
     vesting.revoke_unvested({"from": admin})
     assert token.balanceOf(recipient) == claim_amount
     assert token.balanceOf(admin) == expected_revoke_amount

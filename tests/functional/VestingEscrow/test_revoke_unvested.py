@@ -1,4 +1,5 @@
 import brownie
+import math
 
 
 def test_revoke_unvested_admin_only(vesting, recipient):
@@ -59,7 +60,7 @@ def test_revoke_unvested_partially_ununclaimed(
 
 
 def test_revoke_unvested_partially_claimed(
-    vesting, token, admin, recipient, chain, start_time, end_time
+    vesting, token, admin, recipient, chain, start_time, end_time, balance
 ):
     sleep_time = (end_time - start_time) // 2
     chain.sleep(start_time - chain.time() + sleep_time)
@@ -70,4 +71,8 @@ def test_revoke_unvested_partially_claimed(
     expected_revoke_amount = vesting.locked({"from": recipient})
     vesting.revoke_unvested({"from": admin})
     assert token.balanceOf(recipient) == claim_amount
-    assert token.balanceOf(admin) == expected_revoke_amount
+    assert math.isclose(
+        token.balanceOf(admin),
+        expected_revoke_amount,
+        abs_tol=balance / (end_time - start_time) * 1,
+    ) # we use non strict comparison due to the fact that unvested amount is defined based on timestamps

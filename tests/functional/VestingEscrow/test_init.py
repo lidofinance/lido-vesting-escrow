@@ -1,25 +1,19 @@
 import brownie
 
 
-def test_reinit_impossible_from_admin(vesting, admin, token, recipient, voting_adapter):
-    with brownie.reverts("can only initialize once"):
-        vesting.initialize(
-            recipient, token, recipient, 0, 0, 0, 0, voting_adapter, {"from": admin}
-        )
-
-
-def test_reinit_impossible_from_admin(vesting, token, recipient, voting_adapter):
-    with brownie.reverts("can only initialize once"):
-        vesting.initialize(
-            recipient, token, recipient, 0, 0, 0, 0, voting_adapter, {"from": recipient}
-        )
-
-
-def test_reinit_impossible_with_renounce(
-    vesting, admin, recipient, token, voting_adapter
+def test_reinit_impossible_from_owner(
+    activated_vesting, owner, token, recipient, voting_adapter
 ):
-    vesting.renounce_ownership({"from": admin})
     with brownie.reverts("can only initialize once"):
-        vesting.initialize(
-            recipient, token, recipient, 0, 0, 0, 0, voting_adapter, {"from": recipient}
+        activated_vesting.initialize(
+            token, recipient, 0, 0, 0, voting_adapter, {"from": owner}
+        )
+
+
+def test_reinit_impossible_from_not_owner(
+    activated_vesting, token, not_owner, voting_adapter
+):
+    with brownie.reverts("can only initialize once"):
+        activated_vesting.initialize(
+            token, not_owner, 0, 0, 0, voting_adapter, {"from": not_owner}
         )

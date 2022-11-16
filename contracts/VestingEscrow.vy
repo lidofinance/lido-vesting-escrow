@@ -2,7 +2,7 @@
 
 """
 @title Vesting Escrow
-@author Lido Finance
+@author Curve Finance, Yearn Finance, Lido Finance
 @license MIT
 @notice Vests ERC20 tokens for a single address
 @dev Intended to be deployed many times via `VotingEscrowFactory`
@@ -139,11 +139,16 @@ def activate(
     self.owner = owner
     self.manager = manager
 
-    assert self.token.transferFrom(msg.sender, self, amount), "could not fund escrow"
+    assert self.token.transferFrom(
+        msg.sender, self, amount
+    ), "could not fund escrow"
+
+    self.total_locked = amount
 
     log Activated(self.recipient, amount, owner, manager)
 
     return True
+
 
 @external
 @view
@@ -198,7 +203,9 @@ def locked() -> uint256:
 
 
 @external
-def claim(beneficiary: address = msg.sender, amount: uint256 = max_value(uint256)):
+def claim(
+    beneficiary: address = msg.sender, amount: uint256 = max_value(uint256)
+):
     """
     @notice Claim tokens which have vested
     @param beneficiary Address to transfer claimed tokens to
@@ -258,7 +265,6 @@ def change_manager(manager: address):
     log ManagerChanged(manager)
 
 
-
 @external
 def recover_erc20(token: address):
     """
@@ -270,7 +276,6 @@ def recover_erc20(token: address):
     recoverable: uint256 = ERC20(token).balanceOf(self)
     assert ERC20(token).transfer(self.owner, recoverable)
     log ERC20Recovered(token, recoverable)
-
 
 
 @external
@@ -294,7 +299,12 @@ def vote(voteId: uint256, supports: bool):
     self._check_sender_is_recipient()
     raw_call(
         self.voting_adapter_addr,
-        _abi_encode(LIDO_VOTING_CONTRACT_ADDR, voteId, supports, method_id=method_id("vote(address,uint256,bool)")),
+        _abi_encode(
+            LIDO_VOTING_CONTRACT_ADDR,
+            voteId,
+            supports,
+            method_id=method_id("vote(address,uint256,bool)"),
+        ),
         is_delegate_call=True,
     )
 
@@ -308,7 +318,9 @@ def set_delegate():
     raw_call(
         self.voting_adapter_addr,
         _abi_encode(
-            SNAPSHOT_DELEGATE_CONTRACT_ADDR, self.recipient, method_id=method_id("set_delegate(address,address)")
+            SNAPSHOT_DELEGATE_CONTRACT_ADDR,
+            self.recipient,
+            method_id=method_id("set_delegate(address,address)"),
         ),
         is_delegate_call=True,
     )
@@ -318,8 +330,7 @@ def set_delegate():
 def _check_sender_is_owner_or_manager():
     assert (
         msg.sender == self.owner
-        or
-        (msg.sender == self.manager and msg.sender != empty(address))
+        or (msg.sender == self.manager and msg.sender != empty(address))
     ), "msg.sender not owner or manager"
 
 

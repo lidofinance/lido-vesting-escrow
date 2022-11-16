@@ -23,7 +23,9 @@ interface IVoting:
     ): nonpayable
 
 
-ZERO_BYTES32: constant(bytes32) = 0x0000000000000000000000000000000000000000000000000000000000000000
+ZERO_BYTES32: constant(
+    bytes32
+) = 0x0000000000000000000000000000000000000000000000000000000000000000
 
 
 @external
@@ -34,7 +36,9 @@ def vote(voting_addr: address, voteId: uint256, supports: bool):
     @param voteId Id of the vote
     @param supports Support flag true - yea, false - nay
     """
-    IVoting(voting_addr).vote(voteId, supports, False)  # dev: third arg is deprecated
+    IVoting(voting_addr).vote(
+        voteId, supports, False
+    )  # dev: third arg is deprecated
 
 
 @external

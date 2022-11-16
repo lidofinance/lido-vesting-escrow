@@ -23,7 +23,9 @@ def __init__(token: address):
 
 
 @external
-def vote(_voteId: uint256, _supports: bool, _executesIfDecided_deprecated: bool):
+def vote(
+    _voteId: uint256, _supports: bool, _executesIfDecided_deprecated: bool
+):
     sender_balance: uint256 = self.token.balanceOf(msg.sender)
     assert sender_balance > 0, "insufficient balance"
     log CastVote(_voteId, msg.sender, _supports, sender_balance)

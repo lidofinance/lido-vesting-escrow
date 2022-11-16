@@ -1,3 +1,8 @@
 # For testing
 dependencies:
   - OpenZeppelin/openzeppelin-contracts@3.1.0
+
+networks:
+    development:
+        cmd_settings:
+            gas_limit: 20000000

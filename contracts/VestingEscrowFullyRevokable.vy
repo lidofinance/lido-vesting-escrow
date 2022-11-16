@@ -1,7 +1,7 @@
 # @version 0.3.7
 
 """
-@title Fully revokable Vesting Escrow
+@title Vesting Escrow
 @author Curve Finance, Yearn Finance, Lido Finance
 @license MIT
 @notice Vests ERC20 tokens for a single address
@@ -11,24 +11,11 @@
 from vyper.interfaces import ERC20
 
 
-interface IDelegation:
-    def setDelegate(
-        _id: bytes32,
-        _delegate: address,
-    ): nonpayable
-
-
-interface IVoting:
-    def vote(
-        _voteId: uint256,
-        _supports: bool,
-        _executesIfDecided_deprecated: bool,
-    ): nonpayable
-
-
-event Fund:
+event Activated:
     recipient: indexed(address)
     amount: uint256
+    owner: address
+    manager: address
 
 
 event Claim:
@@ -39,26 +26,23 @@ event Claim:
 
 event RevokeUnvested:
     recipient: indexed(address)
-    beneficiary: address
     revoked: uint256
 
 
 event RevokeAll:
     recipient: indexed(address)
-    beneficiary: address
     revoked: uint256
 
 
-event CommitOwnership:
-    admin: address
+event OwnerChanged:
+    owner: address
 
 
-event ApplyOwnership:
-    admin: address
+event ManagerChanged:
+    manager: address
 
 
 event ERC20Recovered:
-    recipient: indexed(address)
     token: address
     amount: uint256
 
@@ -67,8 +51,6 @@ event VotingAdapterUpdated:
     recipient: indexed(address)
     addr: address
 
-
-ZERO_BYTES32: constant(bytes32) = 0x0000000000000000000000000000000000000000000000000000000000000000
 
 LIDO_VOTING_CONTRACT_ADDR: immutable(address)
 SNAPSHOT_DELEGATE_CONTRACT_ADDR: immutable(address)
@@ -83,10 +65,11 @@ total_claimed: public(uint256)
 disabled_at: public(uint256)
 is_fully_revoked: public(bool)
 initialized: public(bool)
+activated: public(bool)
 voting_adapter_addr: public(address)
 
-admin: public(address)
-future_admin: public(address)
+owner: public(address)
+manager: public(address)
 
 
 @external
@@ -98,6 +81,8 @@ def __init__(voting_addr: address, snapshot_addr: address):
     """
     # ensure that the original contract cannot be initialized
     self.initialized = True
+    # ensure that the original contract cannot be activated
+    self.activated = True
     LIDO_VOTING_CONTRACT_ADDR = voting_addr
     SNAPSHOT_DELEGATE_CONTRACT_ADDR = snapshot_addr
 
@@ -105,10 +90,8 @@ def __init__(voting_addr: address, snapshot_addr: address):
 @external
 @nonreentrant("lock")
 def initialize(
-    admin: address,
     token: address,
     recipient: address,
-    amount: uint256,
     start_time: uint256,
     end_time: uint256,
     cliff_length: uint256,
@@ -119,10 +102,8 @@ def initialize(
     @dev This function is separate from `__init__` because of the factory pattern
          used in `VestingEscrowFactory.deploy_vesting_contract`. It may be called
          once per deployment.
-    @param admin Admin address
     @param token Address of the ERC20 token being distributed
     @param recipient Address to vest tokens for
-    @param amount Amount of tokens being vested for `recipient`
     @param start_time Epoch time at which token distribution starts
     @param end_time Time until everything should be vested
     @param cliff_length Duration after which the first portion vests
@@ -132,20 +113,56 @@ def initialize(
     self.initialized = True
 
     self.token = ERC20(token)
-    self.admin = admin
     self.start_time = start_time
     self.end_time = end_time
     self.cliff_length = cliff_length
-    self.voting_adapter_addr = voting_adapter_addr
-
-    assert self.token.transferFrom(msg.sender, self, amount), "could not fund escrow"
-
     self.recipient = recipient
     self.disabled_at = end_time  # Set to maximum time
-    self.total_locked = amount
-    log Fund(recipient, amount)
+    self.voting_adapter_addr = voting_adapter_addr
 
     return True
+
+
+@external
+@nonreentrant("lock")
+def activate(
+    amount: uint256,
+    owner: address,
+    manager: address,
+) -> bool:
+    """
+    @notice Fund and activate the contract. Requires amount of the token to be approved to vesting address
+    @dev This function is separate from `initialize` because we need to separate vesting creation and funing.
+         It may be called only once.
+    @param amount Address of the ERC20 token being distributed
+    @param owner Address of the vesting owner
+    @param manager Address of the vesting manager
+    """
+    assert not self.activated, "can only activate once"
+    self.activated = True
+
+    assert owner != empty(address), "zero_address owner"
+    self.owner = owner
+    self.manager = manager
+
+    assert self.token.transferFrom(
+        msg.sender, self, amount
+    ), "could not fund escrow"
+
+    self.total_locked = amount
+
+    log Activated(self.recipient, amount, owner, manager)
+
+    return True
+
+
+@external
+@view
+def get_token() -> address:
+    """
+    @notice Get vesting token address
+    """
+    return self.token.address
 
 
 @internal
@@ -192,18 +209,21 @@ def locked() -> uint256:
     """
     @notice Get the number of locked tokens for recipient
     """
-    # NOTE: if `rug_pull` is activated, limit by the activation timestamp
+    # NOTE: if `revoke_unvested` is activated, limit by the activation timestamp
     return self._locked(min(block.timestamp, self.disabled_at))
 
 
 @external
-def claim(beneficiary: address = msg.sender, amount: uint256 = max_value(uint256)):
+def claim(
+    beneficiary: address = msg.sender, amount: uint256 = max_value(uint256)
+):
     """
     @notice Claim tokens which have vested
     @param beneficiary Address to transfer claimed tokens to
     @param amount Amount of tokens to claim
     """
-    assert msg.sender == self.recipient, "not recipient"
+    self._check_sender_is_recipient()
+    self._check_activated()
 
     claim_period_end: uint256 = min(block.timestamp, self.disabled_at)
     claimable: uint256 = min(self._unclaimed(claim_period_end), amount)
@@ -214,93 +234,86 @@ def claim(beneficiary: address = msg.sender, amount: uint256 = max_value(uint256
 
 
 @external
-def revoke_unvested(beneficiary: address = msg.sender):
+def revoke_unvested():
     """
-    @notice Disable further flow of tokens and revoke the unvested part to the beneficiary
-    @param beneficiary Address to revoke tokens to
+    @notice Disable further flow of tokens and revoke the unvested part to owner
     """
-    assert msg.sender == self.admin, "admin only"
+    self._check_sender_is_owner_or_manager()
     # NOTE: Revoking more than once is futile
 
     self.disabled_at = block.timestamp
     revokable: uint256 = self._locked()
 
-    assert self.token.transfer(beneficiary, revokable)
-    log RevokeUnvested(self.recipient, beneficiary, revokable)
+    assert self.token.transfer(self.owner, revokable)
+    log RevokeUnvested(self.recipient, revokable)
 
 
 @external
-def revoke_all(beneficiary: address = msg.sender):
+def revoke_all():
     """
-    @notice Disable further flow of tokens and revoke all tokens to the beneficiary
-    @param beneficiary Address to revoke tokens to
+    @notice Disable further flow of tokens and revoke all tokens to owner
     """
-    assert msg.sender == self.admin, "admin only"
+    self._check_sender_is_owner()
     # NOTE: Revoking more than once is futile
 
     self.is_fully_revoked = True
     self.disabled_at = block.timestamp
     revokable: uint256 = self.token.balanceOf(self)
 
-    assert self.token.transfer(beneficiary, revokable)
-    log RevokeAll(self.recipient, beneficiary, revokable)
+    assert self.token.transfer(self.owner, revokable)
+    log RevokeAll(self.recipient, revokable)
 
 
 @external
-def commit_transfer_ownership(addr: address):
+def change_owner(owner: address):
     """
-    @notice Transfer ownership of the contract to `addr`
-    @param addr Address to have ownership transferred to
+    @notice Change contract owner.
+    @param owner Address of the new owner. Must be non-zero and
+           not same as the current owner.
     """
-    assert msg.sender == self.admin, "admin only"
-    self.future_admin = addr
-    log CommitOwnership(addr)
+    self._check_sender_is_owner()
+    assert owner != empty(address), "zero owner address"
+
+    self.owner = owner
+    log OwnerChanged(owner)
 
 
 @external
-def apply_transfer_ownership():
+def change_manager(manager: address):
     """
-    @notice Apply pending ownership transfer
+    @notice Set contract manager.
+            Can update manager if it is already set.
+            Can be called only by the owner.
+    @param manager Address of the new manager
     """
-    assert msg.sender == self.future_admin, "future admin only"
-    self.admin = msg.sender
-    self.future_admin = empty(address)
-    log ApplyOwnership(msg.sender)
+    self._check_sender_is_owner()
 
-
-@external
-def renounce_ownership():
-    """
-    @notice Renounce admin control of the escrow
-    """
-    assert msg.sender == self.admin, "admin only"
-    self.future_admin = empty(address)
-    self.admin = empty(address)
-    log ApplyOwnership(empty(address))
+    self.manager = manager
+    log ManagerChanged(manager)
 
 
 @external
 def recover_erc20(token: address):
     """
-    @notice Recover non-escrow tokens from the contract or collect leftovers of the escrow tokens once vesting is done to the recipient address
+    @notice Recover non-escrow tokens to owner
     @param token Address of the ERC20 token to be recovered
     """
-    assert msg.sender == self.recipient, "recipient only"
-    assert (token != self.token.address or block.timestamp > self.disabled_at)
+    self._check_sender_is_owner_or_manager()
+    assert token != self.token.address, "non-escrow token only"
     recoverable: uint256 = ERC20(token).balanceOf(self)
-    assert ERC20(token).transfer(self.recipient, recoverable)
-    log ERC20Recovered(self.recipient, token, recoverable)
+    assert ERC20(token).transfer(self.owner, recoverable)
+    log ERC20Recovered(token, recoverable)
 
 
 @external
-def update_voting_adapter(addr: address):
+def update_voting_adapter(voting_adapter_addr: address):
     """
     @notice Set new voting_adapter_addr
-    @param addr New VotingAdapter address
+    @param voting_adapter_addr New VotingAdapter address
     """
-    assert msg.sender == self.recipient, "recipient only"
-    self.voting_adapter_addr = addr
-    log VotingAdapterUpdated(self.recipient, addr)
+    self._check_sender_is_recipient()
+    self.voting_adapter_addr = voting_adapter_addr
+    log VotingAdapterUpdated(self.recipient, voting_adapter_addr)
 
 
 @external
@@ -310,10 +323,15 @@ def vote(voteId: uint256, supports: bool):
     @param voteId Id of the vote
     @param supports Support flag true - yea, false - nay
     """
-    assert msg.sender == self.recipient, "recipient only"
+    self._check_sender_is_recipient()
     raw_call(
         self.voting_adapter_addr,
-        _abi_encode(LIDO_VOTING_CONTRACT_ADDR, voteId, supports, method_id=method_id("vote(address,uint256,bool)")),
+        _abi_encode(
+            LIDO_VOTING_CONTRACT_ADDR,
+            voteId,
+            supports,
+            method_id=method_id("vote(address,uint256,bool)"),
+        ),
         is_delegate_call=True,
     )
 
@@ -323,11 +341,36 @@ def set_delegate():
     """
     @notice Delegate Snapshot voting power of all available tokens on the contract's balance
     """
-    assert msg.sender == self.recipient, "recipient only"
+    self._check_sender_is_recipient()
     raw_call(
         self.voting_adapter_addr,
         _abi_encode(
-            SNAPSHOT_DELEGATE_CONTRACT_ADDR, self.recipient, method_id=method_id("set_delegate(address,address)")
+            SNAPSHOT_DELEGATE_CONTRACT_ADDR,
+            self.recipient,
+            method_id=method_id("set_delegate(address,address)"),
         ),
         is_delegate_call=True,
     )
+
+
+@internal
+def _check_sender_is_owner_or_manager():
+    assert (
+        msg.sender == self.owner
+        or (msg.sender == self.manager and msg.sender != empty(address))
+    ), "msg.sender not owner or manager"
+
+
+@internal
+def _check_sender_is_owner():
+    assert msg.sender == self.owner, "msg.sender not owner"
+
+
+@internal
+def _check_sender_is_recipient():
+    assert msg.sender == self.recipient, "msg.sender not recipient"
+
+
+@internal
+def _check_activated():
+    assert self.activated, "not activated"

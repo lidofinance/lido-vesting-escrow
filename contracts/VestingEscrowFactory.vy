@@ -2,7 +2,7 @@
 
 """
 @title Vesting Escrow Factory
-@author Lido Finance
+@author Curve Finance, Yearn Finance, Lido Finance
 @license MIT
 @notice Stores and distributes ERC20 tokens by deploying `VestingEscrow` or `VestingEscrowFullyRevokable` contracts
 """
@@ -30,8 +30,8 @@ interface IVestingEscrow:
 
 
 struct EscrowAmount:
-    escrow: address
-    amount: uint256
+        escrow: address
+        amount: uint256
 
 
 event VestingEscrowCreated:
@@ -44,6 +44,7 @@ event VestingEscrowCreated:
     vesting_duration: uint256
     cliff_length: uint256
     voting_adapter: address
+
 
 event VestingEscrowActivated:
     escrow: indexed(address)
@@ -58,7 +59,11 @@ default_voting_adapter: public(address)
 
 
 @external
-def __init__(target_simple: address, target_fully_revokable: address, default_voting_adapter: address):
+def __init__(
+    target_simple: address,
+    target_fully_revokable: address,
+    default_voting_adapter: address,
+):
     """
     @notice Contract constructor
     @dev Prior to deployment you must deploy one copy of `VestingEscrowSimple` and `VestingEscrowFullyRevokable` which
@@ -66,8 +71,12 @@ def __init__(target_simple: address, target_fully_revokable: address, default_vo
     @param target_simple `VestingEscrow` contract address
     @param target_fully_revokable `VestingEscrowFullyRevokable` contract address
     """
-    assert target_simple != empty(address), "target_simple should not be ZERO_ADDRESS"
-    assert target_fully_revokable != empty(address), "target_fully_revokable should not be ZERO_ADDRESS"
+    assert target_simple != empty(
+        address
+    ), "target_simple should not be ZERO_ADDRESS"
+    assert target_fully_revokable != empty(
+        address
+    ), "target_fully_revokable should not be ZERO_ADDRESS"
     self.target_simple = target_simple
     self.target_fully_revokable = target_fully_revokable
     self.default_voting_adapter = default_voting_adapter
@@ -168,5 +177,6 @@ def activate_vesting_contracts(
     @param manager Address of the initial escrow manager
     """
     for escrow_ammount in escrows_ammounts:
-        self._activate_vesting_contract(escrow_ammount.escrow, escrow_ammount.amount, manager)
-    
+        self._activate_vesting_contract(
+            escrow_ammount.escrow, escrow_ammount.amount, manager
+        )

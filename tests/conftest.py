@@ -15,13 +15,33 @@ def balance():
 
 
 @pytest.fixture(scope="session")
-def admin(accounts):
+def owner(accounts):
     return accounts[0]
 
 
 @pytest.fixture(scope="session")
-def recipient(accounts):
+def manager(accounts):
     return accounts[1]
+
+
+@pytest.fixture(scope="session")
+def recipient(accounts):
+    return accounts[2]
+
+
+@pytest.fixture(scope="session")
+def random_guy(accounts):
+    return accounts[3]
+
+
+@pytest.fixture(scope="session", params=["manager", "recipient", "random_guy"])
+def not_owner(manager, recipient, random_guy, request):
+    if request.param == "manager":
+        return manager
+    if request.param == "recipient":
+        return recipient
+    if request.param == "random_guy":
+        return random_guy
 
 
 @pytest.fixture(scope="session")
@@ -35,23 +55,23 @@ def token(ERC20, accounts):
 
 
 @pytest.fixture(scope="module")
-def voting(Voting, token, admin):
-    yield Voting.deploy(token, {"from": admin})
+def voting(Voting, token, owner):
+    yield Voting.deploy(token, {"from": owner})
 
 
 @pytest.fixture(scope="module")
-def delegate(Delegate, admin):
-    yield Delegate.deploy({"from": admin})
+def delegate(Delegate, owner):
+    yield Delegate.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
-def voting_adapter(VotingAdapter, admin):
-    yield VotingAdapter.deploy({"from": admin})
+def voting_adapter(VotingAdapter, owner):
+    yield VotingAdapter.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
-def voting_adapter_for_update(VotingAdapter, admin):
-    yield VotingAdapter.deploy({"from": admin})
+def voting_adapter_for_update(VotingAdapter, owner):
+    yield VotingAdapter.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
@@ -65,21 +85,21 @@ def end_time(start_time, duration):
 
 
 @pytest.fixture(scope="module")
-def vesting_target_simple(VestingEscrowSimple, admin, voting, delegate):
-    yield VestingEscrowSimple.deploy(voting, delegate, {"from": admin})
+def vesting_target_simple(VestingEscrow, owner, voting, delegate):
+    yield VestingEscrow.deploy(voting, delegate, {"from": owner})
 
 
 @pytest.fixture(scope="module")
 def vesting_target_fully_revokable(
-    VestingEscrowFullyRevokable, admin, voting, delegate
+    VestingEscrowFullyRevokable, owner, voting, delegate
 ):
-    yield VestingEscrowFullyRevokable.deploy(voting, delegate, {"from": admin})
+    yield VestingEscrowFullyRevokable.deploy(voting, delegate, {"from": owner})
 
 
 @pytest.fixture(scope="module")
 def vesting_factory(
     VestingEscrowFactory,
-    admin,
+    owner,
     vesting_target_simple,
     vesting_target_fully_revokable,
     voting_adapter,
@@ -88,36 +108,103 @@ def vesting_factory(
         vesting_target_simple,
         vesting_target_fully_revokable,
         voting_adapter,
-        {"from": admin},
+        {"from": owner},
     )
 
 
-@pytest.fixture(scope="module", params=[0, 1])
-def vesting(
-    VestingEscrowSimple,
+@pytest.fixture(
+    scope="module",
+    params=[pytest.param(0, id="simple"), pytest.param(1, id="fully_revocable")],
+)
+def deployed_vesting(
+    VestingEscrow,
     VestingEscrowFullyRevokable,
-    admin,
     recipient,
     vesting_factory,
     token,
     start_time,
     duration,
+    owner,
     request,
-    balance,
 ):
-    token._mint_for_testing(balance, {"from": admin})
-    token.approve(vesting_factory, balance, {"from": admin})
     tx = vesting_factory.deploy_vesting_contract(
         token,
         recipient,
-        balance,
         duration,  # duration
         start_time,
         0,  # cliff
         request.param,
-        {"from": admin},
+        {"from": owner},
     )
     if request.param == 1:
         yield VestingEscrowFullyRevokable.at(tx.new_contracts[0])
     else:
-        yield VestingEscrowSimple.at(tx.new_contracts[0])
+        yield VestingEscrow.at(tx.new_contracts[0])
+
+
+@pytest.fixture(scope="module")
+def ya_deployed_vesting(
+    VestingEscrow,
+    recipient,
+    vesting_factory,
+    token,
+    start_time,
+    duration,
+    owner,
+):
+    tx = vesting_factory.deploy_vesting_contract(
+        token,
+        recipient,
+        duration,  # duration
+        start_time,
+        0,  # cliff
+        {"from": owner},
+    )
+
+    yield VestingEscrow.at(tx.new_contracts[0])
+
+
+@pytest.fixture(scope="module")
+def hundred_deployed_vestings(
+    VestingEscrow,
+    recipient,
+    vesting_factory,
+    token,
+    start_time,
+    duration,
+    owner,
+):
+    vestings = []
+    for i in range(100):
+        tx = vesting_factory.deploy_vesting_contract(
+            token,
+            recipient,
+            duration,  # duration
+            start_time,
+            0,  # cliff
+            {"from": owner},
+        )
+
+        vestings.append(VestingEscrow.at(tx.new_contracts[0]))
+
+    return vestings
+
+
+@pytest.fixture(scope="module")
+def activated_vesting(
+    deployed_vesting,
+    vesting_factory,
+    owner,
+    manager,
+    balance,
+    token,
+):
+    token._mint_for_testing(balance, {"from": owner})
+    token.approve(vesting_factory, balance, {"from": owner})
+    vesting_factory.activate_vesting_contract(
+        deployed_vesting.address,
+        balance,
+        manager,
+        {"from": owner},
+    )
+    yield deployed_vesting

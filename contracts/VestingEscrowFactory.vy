@@ -168,7 +168,7 @@ def activate_vesting_contract(
 
 @external
 def activate_vesting_contracts(
-    escrows_ammounts: DynArray[EscrowAmount, 100],
+    escrows_amounts: DynArray[EscrowAmount, 100],
     manager: address = empty(address),
 ):
     """
@@ -176,7 +176,7 @@ def activate_vesting_contracts(
     @param escrows_ammounts Array of EscrowAmount
     @param manager Address of the initial escrow manager
     """
-    for escrow_ammount in escrows_ammounts:
+    for escrow_amount in escrows_amounts:
         self._activate_vesting_contract(
-            escrow_ammount.escrow, escrow_ammount.amount, manager
+            escrow_amount.escrow, escrow_amount.amount, manager
         )

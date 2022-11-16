@@ -173,7 +173,7 @@ def activate_vesting_contracts(
 ):
     """
     @notice Fund and activate multiple deployed vesting escrows
-    @param escrows_ammounts Array of EscrowAmount
+    @param escrows_amounts Array of EscrowAmount
     @param manager Address of the initial escrow manager
     """
     for escrow_amount in escrows_amounts:

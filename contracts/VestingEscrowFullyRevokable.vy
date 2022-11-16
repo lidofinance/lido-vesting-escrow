@@ -48,7 +48,6 @@ event ERC20Recovered:
 
 
 event VotingAdapterUpdated:
-    recipient: indexed(address)
     addr: address
 
 
@@ -313,7 +312,7 @@ def update_voting_adapter(voting_adapter_addr: address):
     """
     self._check_sender_is_recipient()
     self.voting_adapter_addr = voting_adapter_addr
-    log VotingAdapterUpdated(self.recipient, voting_adapter_addr)
+    log VotingAdapterUpdated(voting_adapter_addr)
 
 
 @external

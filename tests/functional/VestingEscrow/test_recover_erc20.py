@@ -4,7 +4,7 @@ import pytest
 
 @pytest.fixture
 def token2(ERC20, owner):
-    yield ERC20.deploy("XYZ", "XYZ", 18, {"from": owner})
+    return ERC20.deploy("XYZ", "XYZ", 18, {"from": owner})
 
 
 def test_claim_non_vested_token(activated_vesting, token2, owner, balance):

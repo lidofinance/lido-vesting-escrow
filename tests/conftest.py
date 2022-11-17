@@ -46,54 +46,54 @@ def not_owner(manager, recipient, random_guy, request):
 
 @pytest.fixture(scope="session")
 def duration():
-    yield int(3 * YEAR)
+    return int(3 * YEAR)
 
 
 @pytest.fixture(scope="module")
 def token(ERC20, accounts):
-    yield ERC20.deploy("Lido Token", "LFI", 18, {"from": accounts[0]})
+    return ERC20.deploy("Lido Token", "LFI", 18, {"from": accounts[0]})
 
 
 @pytest.fixture(scope="module")
 def voting(Voting, token, owner):
-    yield Voting.deploy(token, {"from": owner})
+    return Voting.deploy(token, {"from": owner})
 
 
 @pytest.fixture(scope="module")
 def delegate(Delegate, owner):
-    yield Delegate.deploy({"from": owner})
+    return Delegate.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
 def voting_adapter(VotingAdapter, owner):
-    yield VotingAdapter.deploy({"from": owner})
+    return VotingAdapter.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
 def voting_adapter_for_update(VotingAdapter, owner):
-    yield VotingAdapter.deploy({"from": owner})
+    return VotingAdapter.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
 def start_time(chain):
-    yield chain.time() + 1000 + 86400 * 365
+    return chain.time() + 1000 + 86400 * 365
 
 
 @pytest.fixture(scope="module")
 def end_time(start_time, duration):
-    yield int(start_time + duration)
+    return int(start_time + duration)
 
 
 @pytest.fixture(scope="module")
 def vesting_target_simple(VestingEscrow, owner, voting, delegate):
-    yield VestingEscrow.deploy(voting, delegate, {"from": owner})
+    return VestingEscrow.deploy(voting, delegate, {"from": owner})
 
 
 @pytest.fixture(scope="module")
 def vesting_target_fully_revokable(
     VestingEscrowFullyRevokable, owner, voting, delegate
 ):
-    yield VestingEscrowFullyRevokable.deploy(voting, delegate, {"from": owner})
+    return VestingEscrowFullyRevokable.deploy(voting, delegate, {"from": owner})
 
 
 @pytest.fixture(scope="module")
@@ -104,7 +104,7 @@ def vesting_factory(
     vesting_target_fully_revokable,
     voting_adapter,
 ):
-    yield VestingEscrowFactory.deploy(
+    return VestingEscrowFactory.deploy(
         vesting_target_simple,
         vesting_target_fully_revokable,
         voting_adapter,
@@ -137,9 +137,9 @@ def deployed_vesting(
         {"from": owner},
     )
     if request.param == 1:
-        yield VestingEscrowFullyRevokable.at(tx.new_contracts[0])
+        return VestingEscrowFullyRevokable.at(tx.new_contracts[0])
     else:
-        yield VestingEscrow.at(tx.new_contracts[0])
+        return VestingEscrow.at(tx.new_contracts[0])
 
 
 @pytest.fixture(scope="module")
@@ -161,7 +161,7 @@ def ya_deployed_vesting(
         {"from": owner},
     )
 
-    yield VestingEscrow.at(tx.new_contracts[0])
+    return VestingEscrow.at(tx.new_contracts[0])
 
 
 @pytest.fixture(scope="module")
@@ -207,4 +207,4 @@ def activated_vesting(
         manager,
         {"from": owner},
     )
-    yield deployed_vesting
+    return deployed_vesting

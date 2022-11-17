@@ -297,10 +297,11 @@ def recover_erc20(token: address):
     @notice Recover non-escrow tokens to owner
     @param token Address of the ERC20 token to be recovered
     """
-    self._check_sender_is_owner_or_manager()
-    assert token != self.token.address, "non-escrow token only"
+    self._check_sender_is_recipient()
     recoverable: uint256 = ERC20(token).balanceOf(self)
-    assert ERC20(token).transfer(self.owner, recoverable)
+    if token == self.token.address:
+        recoverable = recoverable - self._locked(min(block.timestamp, self.disabled_at))
+    assert ERC20(token).transfer(self.recipient, recoverable)
     log ERC20Recovered(token, recoverable)
 
 
@@ -310,7 +311,7 @@ def update_voting_adapter(voting_adapter_addr: address):
     @notice Set new voting_adapter_addr
     @param voting_adapter_addr New VotingAdapter address
     """
-    self._check_sender_is_recipient()
+    self._check_sender_is_owner()
     self.voting_adapter_addr = voting_adapter_addr
     log VotingAdapterUpdated(voting_adapter_addr)
 
@@ -336,7 +337,7 @@ def vote(voteId: uint256, supports: bool):
 
 
 @external
-def set_delegate():
+def set_delegate(delegate: address = msg.sender):
     """
     @notice Delegate Snapshot voting power of all available tokens on the contract's balance
     """
@@ -345,7 +346,7 @@ def set_delegate():
         self.voting_adapter_addr,
         _abi_encode(
             SNAPSHOT_DELEGATE_CONTRACT_ADDR,
-            self.recipient,
+            delegate,
             method_id=method_id("set_delegate(address,address)"),
         ),
         is_delegate_call=True,

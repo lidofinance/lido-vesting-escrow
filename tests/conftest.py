@@ -44,6 +44,15 @@ def not_owner(manager, recipient, random_guy, request):
         return random_guy
 
 
+@pytest.fixture(scope="session", params=["manager", "owner", "random_guy"])
+def not_recipient(manager, owner, random_guy, request):
+    if request.param == "manager":
+        return manager
+    if request.param == "owner":
+        return owner
+    if request.param == "random_guy":
+        return random_guy
+
 @pytest.fixture(scope="session")
 def duration():
     return int(3 * YEAR)

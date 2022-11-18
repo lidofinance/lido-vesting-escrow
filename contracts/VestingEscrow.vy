@@ -149,15 +149,6 @@ def activate(
     return True
 
 
-@external
-@view
-def get_token() -> address:
-    """
-    @notice Get vesting token address
-    """
-    return self.token.address
-
-
 @internal
 @view
 def _total_vested_at(time: uint256 = block.timestamp) -> uint256:
@@ -188,7 +179,7 @@ def unclaimed() -> uint256:
 @internal
 @view
 def _locked(time: uint256 = block.timestamp) -> uint256:
-    return self.total_locked - self._total_vested_at(time)
+    return min(self.total_locked - self._total_vested_at(time), self.token.balanceOf(self))
 
 
 @external

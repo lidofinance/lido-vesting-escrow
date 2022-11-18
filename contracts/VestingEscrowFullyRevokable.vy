@@ -155,15 +155,6 @@ def activate(
     return True
 
 
-@external
-@view
-def get_token() -> address:
-    """
-    @notice Get vesting token address
-    """
-    return self.token.address
-
-
 @internal
 @view
 def _total_vested_at(time: uint256 = block.timestamp) -> uint256:

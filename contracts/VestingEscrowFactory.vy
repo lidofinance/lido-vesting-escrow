@@ -26,7 +26,7 @@ interface IVestingEscrow:
         manager: address,
     ) -> bool: nonpayable
 
-    def get_token() -> address: view
+    def token() -> address: view
 
 
 struct EscrowAmount:
@@ -135,7 +135,7 @@ def _activate_vesting_contract(
     amount: uint256,
     manager: address = empty(address),
 ):
-    token: address = IVestingEscrow(escrow).get_token()
+    token: address = IVestingEscrow(escrow).token()
     assert ERC20(token).transferFrom(msg.sender, self, amount), "funding failed"
     assert ERC20(token).approve(escrow, amount), "approve failed"
     IVestingEscrow(escrow).activate(

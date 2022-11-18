@@ -1,7 +1,9 @@
 import brownie
 
 
-def test_update_voting_adapter(activated_vesting, owner, recipient, voting_adapter_for_update):
+def test_update_voting_adapter(
+    activated_vesting, owner, recipient, voting_adapter_for_update
+):
     tx = activated_vesting.update_voting_adapter(
         voting_adapter_for_update, {"from": owner}
     )

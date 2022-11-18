@@ -291,7 +291,9 @@ def recover_erc20(token: address):
     self._check_sender_is_recipient()
     recoverable: uint256 = ERC20(token).balanceOf(self)
     if token == self.token.address:
-        recoverable = recoverable - self._locked(min(block.timestamp, self.disabled_at))
+        recoverable = recoverable - self._locked(
+            min(block.timestamp, self.disabled_at)
+        )
     assert ERC20(token).transfer(self.recipient, recoverable)
     log ERC20Recovered(token, recoverable)
 

@@ -20,7 +20,9 @@ def test_claim_of_locked_tokens(activated_vesting, token, recipient):
     assert token.balanceOf(recipient) == 0
 
 
-def test_claim_of_additional_vesting_tokens(activated_vesting, token, recipient, balance):
+def test_claim_of_additional_vesting_tokens(
+    activated_vesting, token, recipient, balance
+):
     token._mint_for_testing(balance, {"from": recipient})
     token.transfer(activated_vesting, balance, {"from": recipient})
     assert token.balanceOf(recipient) == 0

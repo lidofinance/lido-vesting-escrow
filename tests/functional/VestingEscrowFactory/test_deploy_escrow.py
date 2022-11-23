@@ -19,7 +19,9 @@ def test_deploy_simple(owner, recipient, vesting_factory, token, balance):
     assert tx.return_value == tx.new_contracts[0]
 
 
-def test_deploy_fully_revokable(owner, recipient, balance, vesting_factory, token, start_time):
+def test_deploy_fully_revokable(
+    owner, recipient, balance, vesting_factory, token, start_time
+):
     tx = vesting_factory.deploy_vesting_contract(
         token,
         balance,
@@ -77,7 +79,9 @@ def test_start_and_duration(
     assert escrow.end_time() == start_time + 86400 * 700
 
 
-def test_invalid_cliff_duration(owner, recipient, balance, chain, vesting_factory, token):
+def test_invalid_cliff_duration(
+    owner, recipient, balance, chain, vesting_factory, token
+):
     start_time = chain.time() + 100
     duration = 86400 * 700
     cliff_time = start_time + duration
@@ -126,7 +130,9 @@ def test_invalid_amount(owner, recipient, chain, vesting_factory, token):
         )
 
 
-def test_init_vars(deployed_vesting, recipient, owner, manager, balance, token, start_time, end_time):
+def test_init_vars(
+    deployed_vesting, recipient, owner, manager, balance, token, start_time, end_time
+):
     assert deployed_vesting.token() == token
     assert deployed_vesting.recipient() == recipient
     assert deployed_vesting.start_time() == start_time
@@ -138,9 +144,16 @@ def test_init_vars(deployed_vesting, recipient, owner, manager, balance, token, 
     assert deployed_vesting.initialized() == True
 
 
-
 def test_cannot_call_init(
-    deployed_vesting, owner, recipient, manager, token, balance, start_time, end_time, voting_adapter
+    deployed_vesting,
+    owner,
+    recipient,
+    manager,
+    token,
+    balance,
+    start_time,
+    end_time,
+    voting_adapter,
 ):
     with brownie.reverts():
         deployed_vesting.initialize(

@@ -83,11 +83,14 @@ def deploy_vesting_contract(
     """
     @notice Deploy a new vesting contract without funding. Funding and activationa should be done separately
     @param token Address of the ERC20 token being distributed
+    @param amount Amount of the tokens to be vested after fundings
     @param recipient Address to vest tokens for
+    @param owner Address of the escrow owner
     @param vesting_duration Time period over which tokens are released
     @param vesting_start Epoch time when tokens begin to vest
     @param cliff_length Duration after which the first portion vests
     @param escrow_type Escrow type to deploy 0 - `VestingEscrow`, 1 - `VestingEscrowFullyRevokable`
+    @param manager Address of the escrow manager
     """
     assert owner != empty(address), "zero_address owner"
     assert amount != 0, "zero amount"

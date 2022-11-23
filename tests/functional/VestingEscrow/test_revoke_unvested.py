@@ -15,6 +15,7 @@ def test_revoke_unvested(activated_vesting, owner):
     tx = activated_vesting.revoke_unvested({"from": owner})
 
     assert activated_vesting.disabled_at() == tx.timestamp
+    assert activated_vesting.locked() == 0
 
 
 def test_revoke_unvested_from_manager(activated_vesting, manager):

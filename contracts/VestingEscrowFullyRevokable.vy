@@ -132,7 +132,7 @@ def initialize(
 @nonreentrant("lock")
 def activate() -> bool:
     """
-    @notice Activate the contract. Requires amount of the token to be transfered to vesting address
+    @notice Activate the contract. Requires amount of the token to be transfered to vesting address prior to call
     @dev This function is separate from `initialize` because we need to separate vesting creation and funing.
          It may be called only once.
     """
@@ -160,8 +160,11 @@ def _total_vested_at(time: uint256 = block.timestamp) -> uint256:
 @internal
 @view
 def _unclaimed(time: uint256 = block.timestamp) -> uint256:
-    if not self.is_fully_revoked:
-        return self._total_vested_at(time) - self.total_claimed
+    if not self.is_fully_revoked and self.activated:
+        return min(
+            self._total_vested_at(time) - self.total_claimed,
+            self.token.balanceOf(self),
+        )
     return 0
 
 
@@ -178,10 +181,12 @@ def unclaimed() -> uint256:
 @internal
 @view
 def _locked(time: uint256 = block.timestamp) -> uint256:
-    return min(
-        self.total_locked - self._total_vested_at(time),
-        self.token.balanceOf(self),
-    )
+    if not self.is_fully_revoked and self.activated:
+        return min(
+            self.total_locked - self._total_vested_at(time),
+            self.token.balanceOf(self),
+        )
+    return 0
 
 
 @external
@@ -220,6 +225,7 @@ def revoke_unvested():
     @notice Disable further flow of tokens and revoke the unvested part to owner
     """
     self._check_sender_is_owner_or_manager()
+    self._check_activated()
     # NOTE: Revoking more than once is futile
 
     self.disabled_at = block.timestamp
@@ -235,6 +241,7 @@ def revoke_all():
     @notice Disable further flow of tokens and revoke all tokens to owner
     """
     self._check_sender_is_owner()
+    self._check_activated()
     # NOTE: Revoking more than once is futile
 
     self.is_fully_revoked = True
@@ -277,13 +284,13 @@ def change_manager(manager: address):
 @external
 def recover_erc20(token: address):
     """
-    @notice Recover non-escrow tokens to owner
+    @notice Recover ERC20 tokens to recipient
     @param token Address of the ERC20 token to be recovered
     """
     self._check_sender_is_recipient()
-    recoverable: uint256 = ERC20(token).balanceOf(self)
     if token == self.token.address:
-        recoverable = recoverable - (self.total_locked - self.total_claimed)
+        assert block.timestamp > self.disabled_at, "recover vesting token before end"
+    recoverable: uint256 = ERC20(token).balanceOf(self)
     assert ERC20(token).transfer(self.recipient, recoverable)
     log ERC20Recovered(token, recoverable)
 

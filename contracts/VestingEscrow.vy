@@ -265,7 +265,9 @@ def recover_erc20(token: address):
     """
     self._check_sender_is_recipient()
     if token == self.token.address:
-        assert block.timestamp > self.disabled_at, "recover vesting token before end"
+        assert (
+            block.timestamp > self.disabled_at
+        ), "recover vesting token before end"
     recoverable: uint256 = ERC20(token).balanceOf(self)
     assert ERC20(token).transfer(self.recipient, recoverable)
     log ERC20Recovered(token, recoverable)

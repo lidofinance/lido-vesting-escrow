@@ -157,12 +157,34 @@ def deployed_vesting(
         return VestingEscrow.at(tx.new_contracts[0])
 
 
+@pytest.fixture(scope="module")
+def funded_vesting(
+    deployed_vesting,
+    owner,
+    balance,
+    token,
+):
+    token._mint_for_testing(balance, {"from": owner})
+    token.transfer(deployed_vesting, balance, {"from": owner})
+    return deployed_vesting
+
+
+@pytest.fixture(scope="module")
+def activated_vesting(
+    funded_vesting,
+    recipient,
+):
+    funded_vesting.activate({"from": recipient})
+    return funded_vesting
+
+
 @pytest.fixture(
     scope="module",
     params=[pytest.param(0, id="simple"), pytest.param(1, id="fully_revocable")],
 )
 def ya_deployed_vesting(
     VestingEscrow,
+    VestingEscrowFullyRevokable,
     recipient,
     vesting_factory,
     token,
@@ -186,18 +208,19 @@ def ya_deployed_vesting(
         {"from": recipient},
     )
 
-    return VestingEscrow.at(tx.new_contracts[0])
+    if request.param == 1:
+        return VestingEscrowFullyRevokable.at(tx.new_contracts[0])
+    else:
+        return VestingEscrow.at(tx.new_contracts[0])
 
 
 @pytest.fixture(scope="module")
-def activated_vesting(
-    deployed_vesting,
+def ya_funded_vesting(
+    ya_deployed_vesting,
     owner,
     balance,
     token,
-    recipient,
 ):
     token._mint_for_testing(balance, {"from": owner})
-    token.transfer(deployed_vesting, balance, {"from": owner})
-    deployed_vesting.activate({"from": recipient})
-    return deployed_vesting
+    token.transfer(ya_deployed_vesting, balance, {"from": owner})
+    return ya_deployed_vesting

@@ -13,11 +13,13 @@ def test_revoke_all_owner_only(activated_vesting, not_owner):
         activated_vesting.revoke_all({"from": not_owner})
 
 
+
 def test_revoke_all(activated_vesting, owner, token):
     tx = activated_vesting.revoke_all({"from": owner})
 
     assert activated_vesting.disabled_at() == tx.timestamp
     assert activated_vesting.unclaimed() == 0
+    assert activated_vesting.locked() == 0
     assert token.balanceOf(owner) == 10**20
 
 

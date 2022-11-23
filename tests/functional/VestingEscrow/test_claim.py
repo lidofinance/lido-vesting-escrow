@@ -1,3 +1,5 @@
+import brownie
+
 def test_claim_full(activated_vesting, token, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
     activated_vesting.claim({"from": recipient})
@@ -21,6 +23,12 @@ def test_claim_beneficiary(
     activated_vesting.claim(random_guy, {"from": recipient})
 
     assert token.balanceOf(random_guy) == balance
+
+
+def test_claim_not_activated(ya_deployed_vesting, recipient, chain, end_time):
+    chain.sleep(end_time - chain.time())
+    with brownie.reverts("not activated"):
+        ya_deployed_vesting.claim({"from": recipient})
 
 
 def test_claim_before_start(activated_vesting, token, recipient, chain, start_time):

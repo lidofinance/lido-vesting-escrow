@@ -7,6 +7,11 @@ def test_revoke_unvested_owner_or_manager_only(activated_vesting, recipient):
         activated_vesting.revoke_unvested({"from": recipient})
 
 
+def test_revoke_unvested_owner_or_manager_only(ya_funded_vesting, owner):
+    with brownie.reverts("not activated"):
+        ya_funded_vesting.revoke_unvested({"from": owner})
+
+
 def test_disabled_at_is_initially_end_time(activated_vesting):
     assert activated_vesting.disabled_at() == activated_vesting.end_time()
 

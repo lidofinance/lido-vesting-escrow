@@ -21,11 +21,24 @@ def test_claim_of_locked_tokens(activated_vesting, token, recipient):
 
 
 def test_claim_of_additional_vesting_tokens(
-    activated_vesting, token, recipient, balance
+    activated_vesting, token, recipient, balance, chain, end_time
 ):
     token._mint_for_testing(balance, {"from": recipient})
     token.transfer(activated_vesting, balance, {"from": recipient})
     assert token.balanceOf(recipient) == 0
+    chain.sleep(end_time - chain.time() - 86400)
+    activated_vesting.recover_erc20(token, {"from": recipient})
+    assert token.balanceOf(recipient) == balance
+
+
+def test_claim_of_additional_vesting_tokens_after_claim(
+    activated_vesting, token, recipient, balance, chain, end_time, random_guy
+):
+    token._mint_for_testing(balance, {"from": recipient})
+    token.transfer(activated_vesting, balance, {"from": recipient})
+    assert token.balanceOf(recipient) == 0
+    chain.sleep(end_time - chain.time() - 86400)
+    activated_vesting.claim(random_guy, {"from": recipient})
     activated_vesting.recover_erc20(token, {"from": recipient})
     assert token.balanceOf(recipient) == balance
 

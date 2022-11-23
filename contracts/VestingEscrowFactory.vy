@@ -13,44 +13,30 @@ from vyper.interfaces import ERC20
 interface IVestingEscrow:
     def initialize(
         token: address,
+        amount: uint256,
         recipient: address,
+        owner: address,
+        manager: address,
         start_time: uint256,
         end_time: uint256,
         cliff_length: uint256,
         voting_adapter_addr: address,
     ) -> bool: nonpayable
 
-    def activate(
-        amount: uint256,
-        owner: address,
-        manager: address,
-    ) -> bool: nonpayable
-
-    def token() -> address: view
-
-
-struct EscrowAmount:
-        escrow: address
-        amount: uint256
-
 
 event VestingEscrowCreated:
     creator: indexed(address)
     token: indexed(address)
+    amount: uint256
     recipient: indexed(address)
+    owner: address
+    manager: address
     escrow: address
     escrow_type: uint256  # 0 - simple, 1 - fully revokable
     vesting_start: uint256
     vesting_duration: uint256
     cliff_length: uint256
     voting_adapter: address
-
-
-event VestingEscrowActivated:
-    escrow: indexed(address)
-    amount: uint256
-    owner: indexed(address)
-    manager: indexed(address)
 
 
 target_simple: public(address)
@@ -85,14 +71,17 @@ def __init__(
 @external
 def deploy_vesting_contract(
     token: address,
+    amount: uint256,
     recipient: address,
+    owner: address,
     vesting_duration: uint256,
     vesting_start: uint256 = block.timestamp,
     cliff_length: uint256 = 0,
     escrow_type: uint256 = 0,  # use simple escrow by default
+    manager: address = empty(address),
 ) -> address:
     """
-    @notice Deploy a new vesting contract without funding. Funding should be done separately
+    @notice Deploy a new vesting contract without funding. Funding and activationa should be done separately
     @param token Address of the ERC20 token being distributed
     @param recipient Address to vest tokens for
     @param vesting_duration Time period over which tokens are released
@@ -100,6 +89,8 @@ def deploy_vesting_contract(
     @param cliff_length Duration after which the first portion vests
     @param escrow_type Escrow type to deploy 0 - `VestingEscrow`, 1 - `VestingEscrowFullyRevokable`
     """
+    assert owner != empty(address), "zero_address owner"
+    assert amount != 0, "zero amount"
     assert cliff_length <= vesting_duration, "incorrect vesting cliff"
     assert escrow_type in [0, 1], "incorrect escrow type"
     escrow: address = empty(address)
@@ -109,7 +100,10 @@ def deploy_vesting_contract(
         escrow = create_minimal_proxy_to(self.target_simple)
     IVestingEscrow(escrow).initialize(
         token,
+        amount,
         recipient,
+        owner,
+        manager,
         vesting_start,
         vesting_start + vesting_duration,
         cliff_length,
@@ -118,7 +112,10 @@ def deploy_vesting_contract(
     log VestingEscrowCreated(
         msg.sender,
         token,
+        amount,
         recipient,
+        owner,
+        manager,
         escrow,
         escrow_type,
         vesting_start,
@@ -127,56 +124,3 @@ def deploy_vesting_contract(
         self.default_voting_adapter,
     )
     return escrow
-
-
-@internal
-def _activate_vesting_contract(
-    escrow: address,
-    amount: uint256,
-    manager: address = empty(address),
-):
-    token: address = IVestingEscrow(escrow).token()
-    assert ERC20(token).transferFrom(msg.sender, self, amount), "funding failed"
-    assert ERC20(token).approve(escrow, amount), "approve failed"
-    IVestingEscrow(escrow).activate(
-        amount,
-        msg.sender,
-        manager,
-    )
-    log VestingEscrowActivated(
-        escrow,
-        amount,
-        msg.sender,
-        manager,
-    )
-
-
-@external
-def activate_vesting_contract(
-    escrow: address,
-    amount: uint256,
-    manager: address = empty(address),
-):
-    """
-    @notice Fund and activate deployed vesting escrow
-    @param escrow Address of the deployed vesting escrow
-    @param amount Amount of tokens to fund escrow
-    @param manager Address of the initial escrow manager
-    """
-    self._activate_vesting_contract(escrow, amount, manager)
-
-
-@external
-def activate_vesting_contracts(
-    escrows_amounts: DynArray[EscrowAmount, 100],
-    manager: address = empty(address),
-):
-    """
-    @notice Fund and activate multiple deployed vesting escrows
-    @param escrows_amounts Array of EscrowAmount
-    @param manager Address of the initial escrow manager
-    """
-    for escrow_amount in escrows_amounts:
-        self._activate_vesting_contract(
-            escrow_amount.escrow, escrow_amount.amount, manager
-        )

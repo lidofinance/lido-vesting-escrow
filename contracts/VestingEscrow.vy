@@ -13,9 +13,6 @@ from vyper.interfaces import ERC20
 
 event Activated:
     recipient: indexed(address)
-    amount: uint256
-    owner: address
-    manager: address
 
 
 event Claim:
@@ -84,7 +81,10 @@ def __init__(voting_addr: address, snapshot_addr: address):
 @nonreentrant("lock")
 def initialize(
     token: address,
+    amount: uint256,
     recipient: address,
+    owner: address,
+    manager: address,
     start_time: uint256,
     end_time: uint256,
     cliff_length: uint256,
@@ -96,7 +96,10 @@ def initialize(
          used in `VestingEscrowFactory.deploy_vesting_contract`. It may be called
          once per deployment.
     @param token Address of the ERC20 token being distributed
+    @param amount Address of the ERC20 token to be controleed by escrow
     @param recipient Address to vest tokens for
+    @param owner Address of the vesting owner
+    @param manager Address of the vesting manager
     @param start_time Epoch time at which token distribution starts
     @param end_time Time until everything should be vested
     @param cliff_length Duration after which the first portion vests
@@ -105,7 +108,10 @@ def initialize(
     assert not self.initialized, "can only initialize once"
     self.initialized = True
 
+    self.owner = owner
+    self.manager = manager
     self.token = ERC20(token)
+    self.total_locked = amount
     self.start_time = start_time
     self.end_time = end_time
     self.cliff_length = cliff_length
@@ -118,33 +124,18 @@ def initialize(
 
 @external
 @nonreentrant("lock")
-def activate(
-    amount: uint256,
-    owner: address,
-    manager: address,
-) -> bool:
+def activate() -> bool:
     """
-    @notice Fund and activate the contract. Requires amount of the token to be approved to vesting address
+    @notice Activate the contract. Requires amount of the token to be transfered to vesting address
     @dev This function is separate from `initialize` because we need to separate vesting creation and funing.
          It may be called only once.
-    @param amount Address of the ERC20 token being distributed
-    @param owner Address of the vesting owner
-    @param manager Address of the vesting manager
     """
     assert not self.activated, "can only activate once"
     self.activated = True
 
-    assert owner != empty(address), "zero_address owner"
-    self.owner = owner
-    self.manager = manager
+    assert self.token.balanceOf(self) >= self.total_locked, "not enough funds"
 
-    assert self.token.transferFrom(
-        msg.sender, self, amount
-    ), "could not fund escrow"
-
-    self.total_locked = amount
-
-    log Activated(self.recipient, amount, owner, manager)
+    log Activated(self.recipient)
 
     return True
 
@@ -267,9 +258,7 @@ def recover_erc20(token: address):
     self._check_sender_is_recipient()
     recoverable: uint256 = ERC20(token).balanceOf(self)
     if token == self.token.address:
-        recoverable = recoverable - self._locked(
-            min(block.timestamp, self.disabled_at)
-        )
+        recoverable = recoverable - (self.total_locked - self.total_claimed)
     assert ERC20(token).transfer(self.recipient, recoverable)
     log ERC20Recovered(token, recoverable)
 

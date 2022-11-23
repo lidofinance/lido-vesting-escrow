@@ -1,12 +1,8 @@
-import brownie
-from brownie import ZERO_ADDRESS
-
-
-def test_reactivate_impossible_from_admin(activated_vesting, balance, owner):
-    with brownie.reverts("can only activate once"):
-        activated_vesting.activate(
-            balance,
-            owner,
-            ZERO_ADDRESS,
-            {"from": owner},
-        )
+def test_activate_event(deployed_vesting, owner, token, recipient, balance):
+    token._mint_for_testing(balance, {"from": owner})
+    token.transfer(deployed_vesting, balance, {"from": owner})
+    tx = deployed_vesting.activate(
+        {"from": recipient},
+    )
+    assert len(tx.events) == 1
+    assert tx.events[0]["recipient"] == recipient

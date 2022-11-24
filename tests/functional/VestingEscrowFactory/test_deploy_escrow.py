@@ -2,6 +2,10 @@ import brownie
 from brownie import ZERO_ADDRESS
 import pytest
 
+@pytest.fixture()
+def initial_funding(token, balance, vesting_factory, owner):
+    token._mint_for_testing(balance, {"from": owner})
+    token.approve(vesting_factory, balance, {"from": owner})
 
 def test_targets_are_set(
     vesting_factory, vesting_target_simple, vesting_target_fully_revokable
@@ -10,6 +14,7 @@ def test_targets_are_set(
     assert vesting_factory.target_fully_revokable() == vesting_target_fully_revokable
 
 
+@pytest.mark.usefixtures("initial_funding")
 def test_deploy_simple(owner, recipient, vesting_factory, token, balance):
     tx = vesting_factory.deploy_vesting_contract(
         token, balance, recipient, owner, 86400 * 365, {"from": owner}
@@ -19,6 +24,7 @@ def test_deploy_simple(owner, recipient, vesting_factory, token, balance):
     assert tx.return_value == tx.new_contracts[0]
 
 
+@pytest.mark.usefixtures("initial_funding")
 def test_deploy_fully_revokable(
     owner, recipient, balance, vesting_factory, token, start_time
 ):
@@ -38,6 +44,7 @@ def test_deploy_fully_revokable(
     assert tx.return_value == tx.new_contracts[0]
 
 
+@pytest.mark.usefixtures("initial_funding")
 @pytest.mark.parametrize("type", [2, 154])
 def test_deploy_invalid_type(
     owner, recipient, balance, vesting_factory, token, start_time, type
@@ -56,6 +63,7 @@ def test_deploy_invalid_type(
         )
 
 
+@pytest.mark.usefixtures("initial_funding")
 def test_start_and_duration(
     VestingEscrow, owner, recipient, balance, chain, vesting_factory, token
 ):
@@ -114,22 +122,6 @@ def test_invalid_owner(owner, recipient, balance, chain, vesting_factory, token)
         )
 
 
-def test_invalid_amount(owner, recipient, chain, vesting_factory, token):
-    start_time = chain.time() + 100
-    duration = 86400 * 700
-    with brownie.reverts("zero amount"):
-        vesting_factory.deploy_vesting_contract(
-            token,
-            0,
-            recipient,
-            owner,
-            duration,
-            start_time,
-            0,
-            {"from": owner},
-        )
-
-
 def test_init_vars(
     deployed_vesting, recipient, owner, manager, balance, token, start_time, end_time
 ):
@@ -140,7 +132,6 @@ def test_init_vars(
     assert deployed_vesting.owner() == owner
     assert deployed_vesting.manager() == manager
     assert deployed_vesting.total_locked() == balance
-    assert deployed_vesting.activated() == False
     assert deployed_vesting.initialized() == True
 
 

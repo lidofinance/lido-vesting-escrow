@@ -41,14 +41,14 @@ event VestingEscrowCreated:
 
 target_simple: public(address)
 target_fully_revokable: public(address)
-default_voting_adapter: public(address)
+voting_adapter: public(address)
 
 
 @external
 def __init__(
     target_simple: address,
     target_fully_revokable: address,
-    default_voting_adapter: address,
+    voting_adapter: address,
 ):
     """
     @notice Contract constructor
@@ -56,6 +56,7 @@ def __init__(
          are used as a library for vesting contracts deployed by this factory
     @param target_simple `VestingEscrow` contract address
     @param target_fully_revokable `VestingEscrowFullyRevokable` contract address
+    @param voting_adapter Address of the Lido Voting Adapter
     """
     assert target_simple != empty(
         address
@@ -65,7 +66,7 @@ def __init__(
     ), "target_fully_revokable should not be ZERO_ADDRESS"
     self.target_simple = target_simple
     self.target_fully_revokable = target_fully_revokable
-    self.default_voting_adapter = default_voting_adapter
+    self.voting_adapter = voting_adapter
 
 
 @external
@@ -93,7 +94,6 @@ def deploy_vesting_contract(
     @param manager Address of the escrow manager
     """
     assert owner != empty(address), "zero_address owner"
-    assert amount != 0, "zero amount"
     assert cliff_length <= vesting_duration, "incorrect vesting cliff"
     assert escrow_type in [0, 1], "incorrect escrow type"
     escrow: address = empty(address)
@@ -101,6 +101,8 @@ def deploy_vesting_contract(
         escrow = create_minimal_proxy_to(self.target_fully_revokable)
     else:
         escrow = create_minimal_proxy_to(self.target_simple)
+    assert ERC20(token).transferFrom(msg.sender, self, amount)  # dev: funding failed
+    assert ERC20(token).approve(escrow, amount)  # dev: approve failed
     IVestingEscrow(escrow).initialize(
         token,
         amount,
@@ -110,7 +112,7 @@ def deploy_vesting_contract(
         vesting_start,
         vesting_start + vesting_duration,
         cliff_length,
-        self.default_voting_adapter,
+        self.voting_adapter,
     )
     log VestingEscrowCreated(
         msg.sender,
@@ -124,6 +126,6 @@ def deploy_vesting_contract(
         vesting_start,
         vesting_duration,
         cliff_length,
-        self.default_voting_adapter,
+        self.voting_adapter,
     )
     return escrow

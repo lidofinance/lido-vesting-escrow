@@ -139,6 +139,8 @@ def deployed_vesting(
     request,
     balance,
 ):
+    token._mint_for_testing(balance, {"from": owner})
+    token.approve(vesting_factory, balance, {"from": owner})
     tx = vesting_factory.deploy_vesting_contract(
         token,
         balance,
@@ -149,33 +151,12 @@ def deployed_vesting(
         0,  # cliff
         request.param,
         manager,
-        {"from": recipient},
+        {"from": owner},
     )
     if request.param == 1:
         return VestingEscrowFullyRevokable.at(tx.new_contracts[0])
     else:
         return VestingEscrow.at(tx.new_contracts[0])
-
-
-@pytest.fixture(scope="module")
-def funded_vesting(
-    deployed_vesting,
-    owner,
-    balance,
-    token,
-):
-    token._mint_for_testing(balance, {"from": owner})
-    token.transfer(deployed_vesting, balance, {"from": owner})
-    return deployed_vesting
-
-
-@pytest.fixture(scope="module")
-def activated_vesting(
-    funded_vesting,
-    recipient,
-):
-    funded_vesting.activate({"from": recipient})
-    return funded_vesting
 
 
 @pytest.fixture(
@@ -195,6 +176,8 @@ def ya_deployed_vesting(
     manager,
     request,
 ):
+    token._mint_for_testing(balance, {"from": owner})
+    token.approve(vesting_factory, balance, {"from": owner})
     tx = vesting_factory.deploy_vesting_contract(
         token,
         balance,
@@ -205,7 +188,7 @@ def ya_deployed_vesting(
         0,  # cliff
         request.param,
         manager,
-        {"from": recipient},
+        {"from": owner},
     )
 
     if request.param == 1:
@@ -213,14 +196,3 @@ def ya_deployed_vesting(
     else:
         return VestingEscrow.at(tx.new_contracts[0])
 
-
-@pytest.fixture(scope="module")
-def ya_funded_vesting(
-    ya_deployed_vesting,
-    owner,
-    balance,
-    token,
-):
-    token._mint_for_testing(balance, {"from": owner})
-    token.transfer(ya_deployed_vesting, balance, {"from": owner})
-    return ya_deployed_vesting

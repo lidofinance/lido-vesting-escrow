@@ -8,51 +8,51 @@ pytestmark = [
 ]
 
 
-def test_revoke_all_owner_only(activated_vesting, not_owner):
+def test_revoke_all_owner_only(deployed_vesting, not_owner):
     with brownie.reverts("msg.sender not owner"):
-        activated_vesting.revoke_all({"from": not_owner})
+        deployed_vesting.revoke_all({"from": not_owner})
 
 
 
-def test_revoke_all(activated_vesting, owner, token):
-    tx = activated_vesting.revoke_all({"from": owner})
+def test_revoke_all(deployed_vesting, owner, token):
+    tx = deployed_vesting.revoke_all({"from": owner})
 
-    assert activated_vesting.disabled_at() == tx.timestamp
-    assert activated_vesting.unclaimed() == 0
-    assert activated_vesting.locked() == 0
+    assert deployed_vesting.disabled_at() == tx.timestamp
+    assert deployed_vesting.unclaimed() == 0
+    assert deployed_vesting.locked() == 0
     assert token.balanceOf(owner) == 10**20
 
 
 def test_revoke_all_after_end_time(
-    activated_vesting, token, owner, recipient, chain, end_time
+    deployed_vesting, token, owner, recipient, chain, end_time
 ):
     chain.sleep(end_time - chain.time())
-    activated_vesting.revoke_all({"from": owner})
-    activated_vesting.claim({"from": recipient})
+    deployed_vesting.revoke_all({"from": owner})
+    deployed_vesting.claim({"from": recipient})
 
     assert token.balanceOf(owner) == 10**20
     assert token.balanceOf(recipient) == 0
 
 
 def test_revoke_all_before_start_time(
-    activated_vesting, token, owner, recipient, chain, end_time
+    deployed_vesting, token, owner, recipient, chain, end_time
 ):
-    activated_vesting.revoke_all({"from": owner})
+    deployed_vesting.revoke_all({"from": owner})
     chain.sleep(end_time - chain.time())
-    activated_vesting.claim({"from": recipient})
+    deployed_vesting.claim({"from": recipient})
 
     assert token.balanceOf(recipient) == 0
-    assert token.balanceOf(owner) == activated_vesting.total_locked()
+    assert token.balanceOf(owner) == deployed_vesting.total_locked()
 
 
 def test_revoke_all_partially_ununclaimed(
-    activated_vesting, token, owner, recipient, chain, start_time, end_time
+    deployed_vesting, token, owner, recipient, chain, start_time, end_time
 ):
     chain.sleep(start_time - chain.time() + 31337)
-    tx = activated_vesting.revoke_all({"from": owner})
+    tx = deployed_vesting.revoke_all({"from": owner})
     chain.sleep(end_time - chain.time())
-    activated_vesting.claim({"from": recipient})
-    assert activated_vesting.unclaimed() == 0
+    deployed_vesting.claim({"from": recipient})
+    assert deployed_vesting.unclaimed() == 0
 
     assert token.balanceOf(recipient) == 0
-    assert token.balanceOf(owner) == activated_vesting.total_locked()
+    assert token.balanceOf(owner) == deployed_vesting.total_locked()

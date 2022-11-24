@@ -7,49 +7,72 @@ def token2(ERC20, owner):
     return ERC20.deploy("XYZ", "XYZ", 18, {"from": owner})
 
 
-def test_claim_non_vested_token(activated_vesting, token2, recipient, balance):
+def test_claim_non_vested_token(deployed_vesting, token2, recipient, balance):
     token2._mint_for_testing(balance, {"from": recipient})
-    token2.transfer(activated_vesting, balance, {"from": recipient})
+    token2.transfer(deployed_vesting, balance, {"from": recipient})
 
-    activated_vesting.recover_erc20(token2, {"from": recipient})
+    deployed_vesting.recover_erc20(token2, {"from": recipient})
     assert token2.balanceOf(recipient) == balance
 
 
-def test_claim_of_locked_tokens_before_end(
-    activated_vesting, token, recipient, chain, end_time
+def test_claim_of_locked_tokens(
+    deployed_vesting, token, recipient
 ):
-    chain.sleep(end_time - chain.time() - 1)
-    with brownie.reverts("recover vesting token before end"):
-        activated_vesting.recover_erc20(token, {"from": recipient})
+    deployed_vesting.recover_erc20(token, {"from": recipient})
+    assert token.balanceOf(recipient) == 0
+
+
+def test_claim_of_extra_locked_tokens(
+    deployed_vesting, token, recipient, owner
+):
+    extra = 10 ** 17
+    token._mint_for_testing(extra, {"from": owner})
+    token.transfer(deployed_vesting, extra, {"from": owner})
+    deployed_vesting.recover_erc20(token, {"from": recipient})
+    assert token.balanceOf(recipient) == extra
+
+
+def test_claim_of_extra_locked_tokens_partially_claimed(
+    deployed_vesting, token, recipient, owner, random_guy, chain, end_time
+):
+    extra = 10 ** 17
+    claim_amount = 3 * extra
+    token._mint_for_testing(extra, {"from": owner})
+    token.transfer(deployed_vesting, extra, {"from": owner})
+    chain.sleep(end_time - chain.time() + 1)
+    deployed_vesting.claim(random_guy, claim_amount, {"from": recipient})
+    deployed_vesting.recover_erc20(token, {"from": recipient})
+    assert token.balanceOf(random_guy) == claim_amount
+    assert token.balanceOf(recipient) == extra
 
 
 def test_claim_of_locked_tokens_after_end(
-    activated_vesting, token, recipient, chain, end_time, balance
+    deployed_vesting, token, recipient, chain, end_time, balance
 ):
     chain.sleep(end_time - chain.time() + 1)
-    activated_vesting.recover_erc20(token, {"from": recipient})
-    assert token.balanceOf(recipient) == balance
-    assert activated_vesting.locked() == 0
-    assert activated_vesting.unclaimed() == 0
+    deployed_vesting.recover_erc20(token, {"from": recipient})
+    assert token.balanceOf(recipient) == 0
+    assert deployed_vesting.locked() == 0
+    assert deployed_vesting.unclaimed() == balance
 
 
-def test_claim_of_locked_tokens_after_end_unclaimed(
-    activated_vesting, token, recipient, chain, end_time, balance, random_guy
+def test_claim_of_locked_tokens_after_end_partially_claimed(
+    deployed_vesting, token, recipient, chain, end_time, balance, random_guy
 ):
     chain.sleep(end_time - chain.time() + 1)
     claim_amount = 10**17
-    activated_vesting.claim(random_guy, claim_amount, {"from": recipient})
-    activated_vesting.recover_erc20(token, {"from": recipient})
-    assert token.balanceOf(recipient) == balance - claim_amount
-    assert activated_vesting.locked() == 0
-    assert activated_vesting.unclaimed() == 0
+    deployed_vesting.claim(random_guy, claim_amount, {"from": recipient})
+    deployed_vesting.recover_erc20(token, {"from": recipient})
+    assert token.balanceOf(recipient) == 0
+    assert deployed_vesting.locked() == 0
+    assert deployed_vesting.unclaimed() == balance - claim_amount
 
 
-def test_claim_non_vested_token_not_recipient(activated_vesting, token, not_recipient):
+def test_claim_non_vested_token_not_recipient(deployed_vesting, token, not_recipient):
     with brownie.reverts("msg.sender not recipient"):
-        activated_vesting.recover_erc20(token, {"from": not_recipient})
+        deployed_vesting.recover_erc20(token, {"from": not_recipient})
 
 
-def test_claim_vested_token_not_recipient(activated_vesting, token2, not_recipient):
+def test_claim_vested_token_not_recipient(deployed_vesting, token2, not_recipient):
     with brownie.reverts("msg.sender not recipient"):
-        activated_vesting.recover_erc20(token2, {"from": not_recipient})
+        deployed_vesting.recover_erc20(token2, {"from": not_recipient})

@@ -3,10 +3,10 @@ from brownie import ZERO_ADDRESS
 
 
 def test_reinit_impossible_from_owner(
-    activated_vesting, owner, token, recipient, voting_adapter, balance
+    deployed_vesting, owner, token, recipient, voting_adapter, balance
 ):
     with brownie.reverts("can only initialize once"):
-        activated_vesting.initialize(
+        deployed_vesting.initialize(
             token,
             balance,
             recipient,
@@ -21,10 +21,10 @@ def test_reinit_impossible_from_owner(
 
 
 def test_reinit_impossible_from_not_owner(
-    activated_vesting, token, not_owner, voting_adapter, owner, balance
+    deployed_vesting, token, not_owner, voting_adapter, owner, balance
 ):
     with brownie.reverts("can only initialize once"):
-        activated_vesting.initialize(
+        deployed_vesting.initialize(
             token,
             balance,
             not_owner,

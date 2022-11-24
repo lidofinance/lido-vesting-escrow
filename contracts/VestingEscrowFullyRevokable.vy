@@ -11,8 +11,9 @@
 from vyper.interfaces import ERC20
 
 
-event Activated:
+event Fund:
     recipient: indexed(address)
+    amount: uint256
 
 
 event Claim:
@@ -44,9 +45,6 @@ event ERC20Recovered:
     amount: uint256
 
 
-event VotingAdapterUpdated:
-    addr: address
-
 
 LIDO_VOTING_CONTRACT_ADDR: immutable(address)
 SNAPSHOT_DELEGATE_CONTRACT_ADDR: immutable(address)
@@ -56,12 +54,12 @@ token: public(ERC20)
 start_time: public(uint256)
 end_time: public(uint256)
 cliff_length: public(uint256)
+voting_adapter_addr: public(address)
 total_locked: public(uint256)
+
 total_claimed: public(uint256)
 disabled_at: public(uint256)
 initialized: public(bool)
-activated: public(bool)
-voting_adapter_addr: public(address)
 is_fully_revoked: public(bool)
 
 owner: public(address)
@@ -77,8 +75,6 @@ def __init__(voting_addr: address, snapshot_addr: address):
     """
     # ensure that the original contract cannot be initialized
     self.initialized = True
-    # ensure that the original contract cannot be activated
-    self.activated = True
     LIDO_VOTING_CONTRACT_ADDR = voting_addr
     SNAPSHOT_DELEGATE_CONTRACT_ADDR = snapshot_addr
 
@@ -117,33 +113,20 @@ def initialize(
     self.owner = owner
     self.manager = manager
     self.token = ERC20(token)
-    self.total_locked = amount
     self.start_time = start_time
     self.end_time = end_time
     self.cliff_length = cliff_length
+
+    assert self.token.transferFrom(msg.sender, self, amount), "could not fund escrow"
+    
+    self.total_locked = amount
     self.recipient = recipient
     self.disabled_at = end_time  # Set to maximum time
     self.voting_adapter_addr = voting_adapter_addr
+    log Fund(recipient, amount)
 
     return True
 
-
-@external
-@nonreentrant("lock")
-def activate() -> bool:
-    """
-    @notice Activate the contract. Requires amount of the token to be transfered to vesting address prior to call
-    @dev This function is separate from `initialize` because we need to separate vesting creation and funing.
-         It may be called only once.
-    """
-    assert not self.activated, "can only activate once"
-    self.activated = True
-
-    assert self.token.balanceOf(self) >= self.total_locked, "not enough funds"
-
-    log Activated(self.recipient)
-
-    return True
 
 
 @internal
@@ -160,12 +143,9 @@ def _total_vested_at(time: uint256 = block.timestamp) -> uint256:
 @internal
 @view
 def _unclaimed(time: uint256 = block.timestamp) -> uint256:
-    if not self.is_fully_revoked and self.activated:
-        return min(
-            self._total_vested_at(time) - self.total_claimed,
-            self.token.balanceOf(self),
-        )
-    return 0
+    if self.is_fully_revoked:
+        return 0
+    return self._total_vested_at(time) - self.total_claimed
 
 
 @external
@@ -181,12 +161,9 @@ def unclaimed() -> uint256:
 @internal
 @view
 def _locked(time: uint256 = block.timestamp) -> uint256:
-    if not self.is_fully_revoked and self.activated:
-        return min(
-            self.total_locked - self._total_vested_at(time),
-            self.token.balanceOf(self),
-        )
-    return 0
+    if time >= self.disabled_at:
+        return 0
+    return self.total_locked - self._total_vested_at(time)
 
 
 @external
@@ -195,7 +172,6 @@ def locked() -> uint256:
     """
     @notice Get the number of locked tokens for recipient
     """
-    # NOTE: if `revoke_unvested` is activated, limit by the activation timestamp
     return self._locked(min(block.timestamp, self.disabled_at))
 
 
@@ -209,7 +185,6 @@ def claim(
     @param amount Amount of tokens to claim
     """
     self._check_sender_is_recipient()
-    self._check_activated()
 
     claim_period_end: uint256 = min(block.timestamp, self.disabled_at)
     claimable: uint256 = min(self._unclaimed(claim_period_end), amount)
@@ -225,11 +200,10 @@ def revoke_unvested():
     @notice Disable further flow of tokens and revoke the unvested part to owner
     """
     self._check_sender_is_owner_or_manager()
-    self._check_activated()
     # NOTE: Revoking more than once is futile
 
-    self.disabled_at = block.timestamp
     revokable: uint256 = self._locked()
+    self.disabled_at = block.timestamp
 
     assert self.token.transfer(self.owner, revokable)
     log RevokeUnvested(self.recipient, revokable)
@@ -241,7 +215,6 @@ def revoke_all():
     @notice Disable further flow of tokens and revoke all tokens to owner
     """
     self._check_sender_is_owner()
-    self._check_activated()
     # NOTE: Revoking more than once is futile
 
     self.is_fully_revoked = True
@@ -288,24 +261,11 @@ def recover_erc20(token: address):
     @param token Address of the ERC20 token to be recovered
     """
     self._check_sender_is_recipient()
-    if token == self.token.address:
-        assert (
-            block.timestamp > self.disabled_at
-        ), "recover vesting token before end"
     recoverable: uint256 = ERC20(token).balanceOf(self)
+    if token == self.token.address:
+        recoverable -= self._locked() + self._unclaimed()
     assert ERC20(token).transfer(self.recipient, recoverable)
     log ERC20Recovered(token, recoverable)
-
-
-@external
-def update_voting_adapter(voting_adapter_addr: address):
-    """
-    @notice Set new voting_adapter_addr
-    @param voting_adapter_addr New VotingAdapter address
-    """
-    self._check_sender_is_owner()
-    self.voting_adapter_addr = voting_adapter_addr
-    log VotingAdapterUpdated(voting_adapter_addr)
 
 
 @external
@@ -362,7 +322,3 @@ def _check_sender_is_owner():
 def _check_sender_is_recipient():
     assert msg.sender == self.recipient, "msg.sender not recipient"
 
-
-@internal
-def _check_activated():
-    assert self.activated, "not activated"

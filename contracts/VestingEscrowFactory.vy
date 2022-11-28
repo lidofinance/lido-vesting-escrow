@@ -39,9 +39,16 @@ event VestingEscrowCreated:
     voting_adapter: address
 
 
+event ERC20Recovered:
+    token: address
+    amount: uint256
+
+
+
 target_simple: public(address)
 target_fully_revokable: public(address)
 voting_adapter: public(address)
+owner: public(address)
 
 
 @external
@@ -67,6 +74,7 @@ def __init__(
     self.target_simple = target_simple
     self.target_fully_revokable = target_fully_revokable
     self.voting_adapter = voting_adapter
+    self.owner = msg.sender
 
 
 @external
@@ -129,3 +137,15 @@ def deploy_vesting_contract(
         self.voting_adapter,
     )
     return escrow
+
+
+@external
+def recover_erc20(token: address):
+    """
+    @notice Recover ERC20 tokens to owner
+    @param token Address of the ERC20 token to be recovered
+    """
+    assert msg.sender == self.owner, "msg.sender not owner"
+    recoverable: uint256 = ERC20(token).balanceOf(self)
+    assert ERC20(token).transfer(self.owner, recoverable)
+    log ERC20Recovered(token, recoverable)

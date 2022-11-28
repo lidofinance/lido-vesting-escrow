@@ -68,11 +68,11 @@ def test_claim_of_locked_tokens_after_end_partially_claimed(
     assert deployed_vesting.unclaimed() == balance - claim_amount
 
 
-def test_claim_non_vested_token_not_recipient(deployed_vesting, token, not_recipient):
+def test_claim_vested_token_not_recipient(deployed_vesting, token, not_recipient):
     with brownie.reverts("msg.sender not recipient"):
         deployed_vesting.recover_erc20(token, {"from": not_recipient})
 
 
-def test_claim_vested_token_not_recipient(deployed_vesting, token2, not_recipient):
+def test_claim_non_vested_token_not_recipient(deployed_vesting, token2, not_recipient):
     with brownie.reverts("msg.sender not recipient"):
         deployed_vesting.recover_erc20(token2, {"from": not_recipient})

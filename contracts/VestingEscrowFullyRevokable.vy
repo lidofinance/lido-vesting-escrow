@@ -305,6 +305,24 @@ def set_delegate(delegate: address = msg.sender):
     )
 
 
+@external
+def delegate(delegate_contract: address, delegate: address = msg.sender):
+    """
+    @notice Delegate voting power of all available tokens on the contract's balance
+    """
+    self._check_sender_is_recipient()
+    raw_call(
+        self.voting_adapter_addr,
+        _abi_encode(
+            delegate_contract,
+            delegate,
+            method_id=method_id("delegate(address,address)"),
+        ),
+        is_delegate_call=True,
+    )
+
+
+
 @internal
 def _check_sender_is_owner_or_manager():
     assert (

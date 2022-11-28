@@ -49,3 +49,11 @@ def set_delegate(delegate_contract_addr: address, delegate: address):
     IDelegation(delegate_contract_addr).setDelegate(
         ZERO_BYTES32, delegate
     )  # dev: null id allows voting at any snapshot space
+
+
+@external
+def delegate(delegate_contract_addr: address, delegate: address):
+    """
+    @notice Delegate voting power of all available tokens
+    """
+    assert False, "not implemented"

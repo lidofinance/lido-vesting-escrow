@@ -40,7 +40,6 @@ event ERC20Recovered:
     amount: uint256
 
 
-
 LIDO_VOTING_CONTRACT_ADDR: immutable(address)
 SNAPSHOT_DELEGATE_CONTRACT_ADDR: immutable(address)
 
@@ -111,8 +110,10 @@ def initialize(
     self.end_time = end_time
     self.cliff_length = cliff_length
 
-    assert self.token.transferFrom(msg.sender, self, amount), "could not fund escrow"
-    
+    assert self.token.transferFrom(
+        msg.sender, self, amount
+    ), "could not fund escrow"
+
     self.total_locked = amount
     self.recipient = recipient
     self.disabled_at = end_time  # Set to maximum time
@@ -120,7 +121,6 @@ def initialize(
     log Fund(recipient, amount)
 
     return True
-
 
 
 @internal
@@ -313,4 +313,3 @@ def _check_sender_is_owner():
 @internal
 def _check_sender_is_recipient():
     assert msg.sender == self.recipient, "msg.sender not recipient"
-

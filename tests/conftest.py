@@ -195,4 +195,3 @@ def ya_deployed_vesting(
         return VestingEscrowFullyRevokable.at(tx.new_contracts[0])
     else:
         return VestingEscrow.at(tx.new_contracts[0])
-

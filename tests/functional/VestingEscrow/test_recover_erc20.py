@@ -15,17 +15,13 @@ def test_claim_non_vested_token(deployed_vesting, token2, recipient, balance):
     assert token2.balanceOf(recipient) == balance
 
 
-def test_claim_of_locked_tokens(
-    deployed_vesting, token, recipient
-):
+def test_claim_of_locked_tokens(deployed_vesting, token, recipient):
     deployed_vesting.recover_erc20(token, {"from": recipient})
     assert token.balanceOf(recipient) == 0
 
 
-def test_claim_of_extra_locked_tokens(
-    deployed_vesting, token, recipient, owner
-):
-    extra = 10 ** 17
+def test_claim_of_extra_locked_tokens(deployed_vesting, token, recipient, owner):
+    extra = 10**17
     token._mint_for_testing(extra, {"from": owner})
     token.transfer(deployed_vesting, extra, {"from": owner})
     deployed_vesting.recover_erc20(token, {"from": recipient})
@@ -35,7 +31,7 @@ def test_claim_of_extra_locked_tokens(
 def test_claim_of_extra_locked_tokens_partially_claimed(
     deployed_vesting, token, recipient, owner, random_guy, chain, end_time
 ):
-    extra = 10 ** 17
+    extra = 10**17
     claim_amount = 3 * extra
     token._mint_for_testing(extra, {"from": owner})
     token.transfer(deployed_vesting, extra, {"from": owner})

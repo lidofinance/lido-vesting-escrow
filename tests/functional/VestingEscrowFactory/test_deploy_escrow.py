@@ -2,10 +2,12 @@ import brownie
 from brownie import ZERO_ADDRESS
 import pytest
 
+
 @pytest.fixture()
 def initial_funding(token, balance, vesting_factory, owner):
     token._mint_for_testing(balance, {"from": owner})
     token.approve(vesting_factory, balance, {"from": owner})
+
 
 def test_targets_are_set(
     vesting_factory, vesting_target_simple, vesting_target_fully_revokable

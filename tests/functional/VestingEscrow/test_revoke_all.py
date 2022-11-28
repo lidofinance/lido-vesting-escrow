@@ -13,7 +13,6 @@ def test_revoke_all_owner_only(deployed_vesting, not_owner):
         deployed_vesting.revoke_all({"from": not_owner})
 
 
-
 def test_revoke_all(deployed_vesting, owner, token):
     tx = deployed_vesting.revoke_all({"from": owner})
 

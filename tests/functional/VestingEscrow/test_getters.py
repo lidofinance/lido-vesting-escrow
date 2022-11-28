@@ -7,4 +7,3 @@ def test_locked_unclaimed(chain, deployed_vesting, end_time):
     assert deployed_vesting.unclaimed() == deployed_vesting.total_locked()
     deployed_vesting.claim({"from": deployed_vesting.recipient()})
     assert deployed_vesting.unclaimed() == 0
-

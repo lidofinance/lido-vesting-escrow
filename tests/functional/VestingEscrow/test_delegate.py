@@ -1,6 +1,7 @@
 import brownie
 from brownie import ZERO_ADDRESS
 
+
 def test_set_delegate(deployed_vesting, recipient):
     with brownie.reverts("not implemented"):
         deployed_vesting.delegate(ZERO_ADDRESS, {"from": recipient})

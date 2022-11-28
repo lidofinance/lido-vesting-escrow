@@ -15,6 +15,7 @@ def test_claim_non_vested_token(vesting_factory, token2, owner, balance, random_
     assert token2.balanceOf(owner) == balance
     assert token2.balanceOf(vesting_factory) == 0
 
+
 def test_claim_vested_token(vesting_factory, token, owner, balance, random_guy):
     token._mint_for_testing(balance, {"from": random_guy})
     token.transfer(vesting_factory, balance, {"from": random_guy})

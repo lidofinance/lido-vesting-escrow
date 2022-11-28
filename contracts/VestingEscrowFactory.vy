@@ -44,7 +44,6 @@ event ERC20Recovered:
     amount: uint256
 
 
-
 target_simple: public(address)
 target_fully_revokable: public(address)
 voting_adapter: public(address)
@@ -109,7 +108,9 @@ def deploy_vesting_contract(
         escrow = create_minimal_proxy_to(self.target_fully_revokable)
     else:
         escrow = create_minimal_proxy_to(self.target_simple)
-    assert ERC20(token).transferFrom(msg.sender, self, amount)  # dev: funding failed
+    assert ERC20(token).transferFrom(
+        msg.sender, self, amount
+    )  # dev: funding failed
     assert ERC20(token).approve(escrow, amount)  # dev: approve failed
     IVestingEscrow(escrow).initialize(
         token,

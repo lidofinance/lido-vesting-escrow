@@ -1,5 +1,6 @@
 import brownie
 
+
 def test_claim_full(deployed_vesting, token, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
     deployed_vesting.claim({"from": recipient})
@@ -39,9 +40,7 @@ def test_claim_after_end(deployed_vesting, token, recipient, chain, end_time, ba
     assert token.balanceOf(recipient) == balance
 
 
-def test_claim_partial(
-    deployed_vesting, token, recipient, chain, start_time, end_time
-):
+def test_claim_partial(deployed_vesting, token, recipient, chain, start_time, end_time):
     chain.sleep(deployed_vesting.start_time() - chain.time() + 31337)
     tx = deployed_vesting.claim({"from": recipient})
     expected_amount = (

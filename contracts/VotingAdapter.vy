@@ -31,7 +31,7 @@ ZERO_BYTES32: constant(
 @external
 def vote(voting_addr: address, voteId: uint256, supports: bool):
     """
-    @notice Cast vote. || Only for delegate calls
+    @notice Cast vote.
     @param voting_addr Address of the voting contrat
     @param voteId Id of the vote
     @param supports Support flag true - yea, false - nay
@@ -45,6 +45,8 @@ def vote(voting_addr: address, voteId: uint256, supports: bool):
 def set_delegate(delegate_contract_addr: address, delegate: address):
     """
     @notice Delegate Snapshot voting power of all available tokens
+    @param delegate_contract_addr Address of the Snapshot delegation contrat
+    @param delegate Address of the delegate
     """
     IDelegation(delegate_contract_addr).setDelegate(
         ZERO_BYTES32, delegate
@@ -55,5 +57,7 @@ def set_delegate(delegate_contract_addr: address, delegate: address):
 def delegate(delegate_contract_addr: address, delegate: address):
     """
     @notice Delegate voting power of all available tokens
+    @param delegate_contract_addr Address of the delegation contrat
+    @param delegate Address of the delegate
     """
     assert False, "not implemented"

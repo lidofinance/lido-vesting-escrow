@@ -91,7 +91,7 @@ def initialize(
          used in `VestingEscrowFactory.deploy_vesting_contract`. It may be called
          once per deployment.
     @param token Address of the ERC20 token being distributed
-    @param amount Address of the ERC20 token to be controleed by escrow
+    @param amount Amount of the ERC20 token to be controleed by escrow
     @param recipient Address to vest tokens for
     @param owner Address of the vesting owner
     @param manager Address of the vesting manager
@@ -205,8 +205,7 @@ def revoke_unvested():
 def change_owner(owner: address):
     """
     @notice Change contract owner.
-    @param owner Address of the new owner. Must be non-zero and
-           not same as the current owner.
+    @param owner Address of the new owner. Must be non-zero.
     """
     self._check_sender_is_owner()
     assert owner != empty(address), "zero owner address"

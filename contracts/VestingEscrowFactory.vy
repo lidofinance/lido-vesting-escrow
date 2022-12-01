@@ -144,7 +144,6 @@ def recover_erc20(token: address):
     @notice Recover ERC20 tokens to owner
     @param token Address of the ERC20 token to be recovered
     """
-    assert msg.sender == self.owner, "msg.sender not owner"
     recoverable: uint256 = ERC20(token).balanceOf(self)
     assert ERC20(token).transfer(self.owner, recoverable)
     log ERC20Recovered(token, recoverable)

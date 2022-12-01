@@ -18,21 +18,3 @@ def test_reinit_impossible_from_owner(
             voting_adapter,
             {"from": owner},
         )
-
-
-def test_reinit_impossible_from_not_owner(
-    deployed_vesting, token, not_owner, voting_adapter, owner, balance
-):
-    with brownie.reverts("can only initialize once"):
-        deployed_vesting.initialize(
-            token,
-            balance,
-            not_owner,
-            owner,
-            ZERO_ADDRESS,
-            0,
-            0,
-            0,
-            voting_adapter,
-            {"from": not_owner},
-        )

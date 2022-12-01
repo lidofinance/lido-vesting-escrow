@@ -89,7 +89,7 @@ def deploy_vesting_contract(
     manager: address = empty(address),
 ) -> address:
     """
-    @notice Deploy a new vesting contract without funding. Funding and activationa should be done separately
+    @notice Deploy and fund a new vesting contract
     @param token Address of the ERC20 token being distributed
     @param amount Amount of the tokens to be vested after fundings
     @param recipient Address to vest tokens for

@@ -15,11 +15,6 @@ def test_set_delegate_to_custom_delegate(deployed_vesting, recipient, random_guy
     assert tx.events[0]["delegate"] == random_guy
 
 
-def test_set_delegate_from_owner_fail(deployed_vesting, owner):
+def test_set_delegate_from_not_recipient_fail(deployed_vesting, not_recipient):
     with brownie.reverts("msg.sender not recipient"):
-        deployed_vesting.set_delegate({"from": owner})
-
-
-def test_set_delegate_from_manager_fail(deployed_vesting, manager):
-    with brownie.reverts("msg.sender not recipient"):
-        deployed_vesting.set_delegate({"from": manager})
+        deployed_vesting.set_delegate({"from": not_recipient})

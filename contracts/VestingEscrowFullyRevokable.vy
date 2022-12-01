@@ -1,7 +1,7 @@
 # @version 0.3.7
 
 """
-@title Fully Revokable Vesting Escrow 
+@title Fully Revokable Vesting Escrow
 @author Curve Finance, Yearn Finance, Lido Finance
 @license MIT
 @notice Vests ERC20 tokens for a single address

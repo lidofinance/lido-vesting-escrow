@@ -59,6 +59,11 @@ def duration():
     return int(3 * YEAR)
 
 
+@pytest.fixture(scope="session")
+def cliff():
+    return int(1 * YEAR)
+
+
 @pytest.fixture(scope="module")
 def token(ERC20, accounts):
     return ERC20.deploy("Lido Token", "LFI", 18, {"from": accounts[0]})
@@ -146,7 +151,7 @@ def deployed_vesting(
         balance,
         recipient,
         owner,
-        duration,  # duration
+        duration,
         start_time,
         0,  # cliff
         request.param,
@@ -183,7 +188,7 @@ def ya_deployed_vesting(
         balance,
         recipient,
         owner,
-        duration,  # duration
+        duration,
         start_time,
         0,  # cliff
         request.param,
@@ -191,6 +196,44 @@ def ya_deployed_vesting(
         {"from": owner},
     )
 
+    if request.param == 1:
+        return VestingEscrowFullyRevokable.at(tx.new_contracts[0])
+    else:
+        return VestingEscrow.at(tx.new_contracts[0])
+
+
+@pytest.fixture(
+    scope="module",
+    params=[pytest.param(0, id="simple"), pytest.param(1, id="fully_revocable")],
+)
+def deployed_vesting_with_cliff(
+    VestingEscrow,
+    VestingEscrowFullyRevokable,
+    recipient,
+    vesting_factory,
+    token,
+    start_time,
+    duration,
+    cliff,
+    owner,
+    manager,
+    request,
+    balance,
+):
+    token._mint_for_testing(balance, {"from": owner})
+    token.approve(vesting_factory, balance, {"from": owner})
+    tx = vesting_factory.deploy_vesting_contract(
+        token,
+        balance,
+        recipient,
+        owner,
+        duration,
+        start_time,
+        cliff,
+        request.param,
+        manager,
+        {"from": owner},
+    )
     if request.param == 1:
         return VestingEscrowFullyRevokable.at(tx.new_contracts[0])
     else:

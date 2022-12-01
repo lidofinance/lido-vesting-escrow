@@ -11,11 +11,12 @@ def test_disabled_at_is_initially_end_time(deployed_vesting):
     assert deployed_vesting.disabled_at() == deployed_vesting.end_time()
 
 
-def test_revoke_unvested(deployed_vesting, owner):
+def test_revoke_unvested(deployed_vesting, owner, token, balance):
     tx = deployed_vesting.revoke_unvested({"from": owner})
 
     assert deployed_vesting.disabled_at() == tx.timestamp
     assert deployed_vesting.locked() == 0
+    assert token.balanceOf(owner) == balance
 
 
 def test_revoke_unvested_from_manager(deployed_vesting, manager):

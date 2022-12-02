@@ -45,8 +45,9 @@ event ERC20Recovered:
     amount: uint256
 
 
-LIDO_VOTING_CONTRACT_ADDR: immutable(address)
-SNAPSHOT_DELEGATE_CONTRACT_ADDR: immutable(address)
+event ETHRecovered:
+    amount: uint256
+
 
 recipient: public(address)
 token: public(ERC20)
@@ -66,16 +67,12 @@ manager: public(address)
 
 
 @external
-def __init__(voting_addr: address, snapshot_addr: address):
+def __init__():
     """
     @notice Initialize source contract implementation.
-    @param voting_addr Address of the Lido Voting contract
-    @param snapshot_addr Address of the Shapshot Delegate contract
     """
     # ensure that the original contract cannot be initialized
     self.initialized = True
-    LIDO_VOTING_CONTRACT_ADDR = voting_addr
-    SNAPSHOT_DELEGATE_CONTRACT_ADDR = snapshot_addr
 
 
 @external
@@ -254,21 +251,47 @@ def change_manager(manager: address):
 
 
 @external
-def recover_erc20(token: address):
+def revoke_ownership():
+    """
+    @notice Revoke contract owner and manager
+    """
+    self._check_sender_is_owner()
+
+    self.manager = empty(address)
+    self.owner = empty(address)
+
+    log ManagerChanged(empty(address))
+    log OwnerChanged(empty(address))
+
+
+@external
+def recover_erc20(token: address, amount: uint256):
     """
     @notice Recover ERC20 tokens to recipient
     @param token Address of the ERC20 token to be recovered
     """
-    self._check_sender_is_recipient()
-    recoverable: uint256 = ERC20(token).balanceOf(self)
+    recoverable: uint256 = amount
     if token == self.token.address:
-        recoverable -= self._locked() + self._unclaimed()
+        available: uint256 = ERC20(token).balanceOf(self) - (
+            self._locked() + self._unclaimed()
+        )
+        recoverable = min(recoverable, available)
     assert ERC20(token).transfer(self.recipient, recoverable)
     log ERC20Recovered(token, recoverable)
 
 
 @external
-def vote(voteId: uint256, supports: bool):
+def recover_ether():
+    """
+    @notice Recover Ether to recipient
+    """
+    amount: uint256 = self.balance
+    send(self.recipient, amount)
+    log ETHRecovered(amount)
+
+
+@external
+def aragon_vote(voteId: uint256, supports: bool):
     """
     @notice Participate Aragon vote using all available tokens on the contract's balance
     @param voteId Id of the vote
@@ -278,44 +301,43 @@ def vote(voteId: uint256, supports: bool):
     raw_call(
         self.voting_adapter_addr,
         _abi_encode(
-            LIDO_VOTING_CONTRACT_ADDR,
             voteId,
             supports,
-            method_id=method_id("vote(address,uint256,bool)"),
+            method_id=method_id("aragon_vote(uint256,bool)"),
         ),
         is_delegate_call=True,
     )
 
 
 @external
-def set_delegate(delegate: address = msg.sender):
+def snapshot_set_delegate(delegate: address = msg.sender):
     """
     @notice Delegate Snapshot voting power of all available tokens on the contract's balance
+    @param delegate Address of the delegate
     """
     self._check_sender_is_recipient()
     raw_call(
         self.voting_adapter_addr,
         _abi_encode(
-            SNAPSHOT_DELEGATE_CONTRACT_ADDR,
             delegate,
-            method_id=method_id("set_delegate(address,address)"),
+            method_id=method_id("snapshot_set_delegate(address)"),
         ),
         is_delegate_call=True,
     )
 
 
 @external
-def delegate(delegate_contract: address, delegate: address = msg.sender):
+def delegate(delegate: address = msg.sender):
     """
     @notice Delegate voting power of all available tokens on the contract's balance
+    @param delegate Address of the delegate
     """
     self._check_sender_is_recipient()
     raw_call(
         self.voting_adapter_addr,
         _abi_encode(
-            delegate_contract,
             delegate,
-            method_id=method_id("delegate(address,address)"),
+            method_id=method_id("delegate(address)"),
         ),
         is_delegate_call=True,
     )

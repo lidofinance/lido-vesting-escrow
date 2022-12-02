@@ -1,4 +1,5 @@
 import pytest
+from brownie import ZERO_ADDRESS
 
 WEEK = 7 * 24 * 60 * 60  # seconds
 YEAR = 365.25 * 24 * 60 * 60  # seconds
@@ -12,6 +13,11 @@ def isolation_setup(fn_isolation):
 @pytest.fixture(scope="session")
 def balance():
     return 10**20
+
+
+@pytest.fixture(scope="session")
+def one_eth():
+    return 10**18
 
 
 @pytest.fixture(scope="session")
@@ -87,18 +93,18 @@ def voting(Voting, token, owner):
 
 
 @pytest.fixture(scope="module")
-def delegate(Delegate, owner):
+def snapshot_delegate(Delegate, owner):
     return Delegate.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
-def voting_adapter(VotingAdapter, owner):
-    return VotingAdapter.deploy({"from": owner})
+def voting_adapter(VotingAdapter, owner, voting, snapshot_delegate):
+    return VotingAdapter.deploy(voting, snapshot_delegate, ZERO_ADDRESS, {"from": owner})
 
 
 @pytest.fixture(scope="module")
-def voting_adapter_for_update(VotingAdapter, owner):
-    return VotingAdapter.deploy({"from": owner})
+def destructible(SelfDestructible, owner):
+    return SelfDestructible.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
@@ -112,15 +118,15 @@ def end_time(start_time, duration):
 
 
 @pytest.fixture(scope="module")
-def vesting_target_simple(VestingEscrow, owner, voting, delegate):
-    return VestingEscrow.deploy(voting, delegate, {"from": owner})
+def vesting_target_simple(VestingEscrow, owner):
+    return VestingEscrow.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
 def vesting_target_fully_revokable(
-    VestingEscrowFullyRevokable, owner, voting, delegate
+    VestingEscrowFullyRevokable, owner
 ):
-    return VestingEscrowFullyRevokable.deploy(voting, delegate, {"from": owner})
+    return VestingEscrowFullyRevokable.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
@@ -129,11 +135,16 @@ def vesting_factory(
     owner,
     vesting_target_simple,
     vesting_target_fully_revokable,
+    manager,
+    token,
     voting_adapter,
 ):
     return VestingEscrowFactory.deploy(
         vesting_target_simple,
         vesting_target_fully_revokable,
+        token,
+        owner,
+        manager,
         voting_adapter,
         {"from": owner},
     )
@@ -152,22 +163,18 @@ def deployed_vesting(
     start_time,
     duration,
     owner,
-    manager,
     request,
     balance,
 ):
     token._mint_for_testing(balance, {"from": owner})
     token.approve(vesting_factory, balance, {"from": owner})
     tx = vesting_factory.deploy_vesting_contract(
-        token,
         balance,
         recipient,
-        owner,
         duration,
         start_time,
         0,  # cliff
         request.param,
-        manager,
         {"from": owner},
     )
     if request.param == 1:
@@ -190,22 +197,18 @@ def deployed_vesting_with_cliff(
     duration,
     cliff,
     owner,
-    manager,
     request,
     balance,
 ):
     token._mint_for_testing(balance, {"from": owner})
     token.approve(vesting_factory, balance, {"from": owner})
     tx = vesting_factory.deploy_vesting_contract(
-        token,
         balance,
         recipient,
-        owner,
         duration,
         start_time,
         cliff,
         request.param,
-        manager,
         {"from": owner},
     )
     if request.param == 1:

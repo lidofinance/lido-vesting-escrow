@@ -1,7 +1,6 @@
 import brownie
-from brownie import ZERO_ADDRESS
 
 
-def test_delegate(voting_adapter, recipient, delegate):
+def test_delegate(voting_adapter, recipient):
     with brownie.reverts("not implemented"):
-        tx = voting_adapter.delegate(ZERO_ADDRESS, delegate, {"from": recipient})
+        tx = voting_adapter.delegate(recipient, {"from": recipient})

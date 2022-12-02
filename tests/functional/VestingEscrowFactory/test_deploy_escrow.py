@@ -9,17 +9,20 @@ def initial_funding(token, balance, vesting_factory, owner):
     token.approve(vesting_factory, balance, {"from": owner})
 
 
-def test_targets_are_set(
-    vesting_factory, vesting_target_simple, vesting_target_fully_revokable
+def test_params_are_set(
+    vesting_factory, vesting_target_simple, vesting_target_fully_revokable, token, owner, manager
 ):
     assert vesting_factory.target_simple() == vesting_target_simple
     assert vesting_factory.target_fully_revokable() == vesting_target_fully_revokable
+    assert vesting_factory.token() == token
+    assert vesting_factory.owner() == owner
+    assert vesting_factory.manager() == manager
 
 
 @pytest.mark.usefixtures("initial_funding")
-def test_deploy_simple(owner, recipient, vesting_factory, token, balance):
+def test_deploy_simple(owner, recipient, vesting_factory, balance):
     tx = vesting_factory.deploy_vesting_contract(
-        token, balance, recipient, owner, 86400 * 365, {"from": owner}
+        balance, recipient, 86400 * 365, {"from": owner}
     )
 
     assert len(tx.new_contracts) == 1
@@ -28,13 +31,11 @@ def test_deploy_simple(owner, recipient, vesting_factory, token, balance):
 
 @pytest.mark.usefixtures("initial_funding")
 def test_deploy_fully_revokable(
-    owner, recipient, balance, vesting_factory, token, start_time
+    owner, recipient, balance, vesting_factory, start_time
 ):
     tx = vesting_factory.deploy_vesting_contract(
-        token,
         balance,
         recipient,
-        owner,
         86400 * 365,
         start_time,
         0,
@@ -49,14 +50,12 @@ def test_deploy_fully_revokable(
 @pytest.mark.usefixtures("initial_funding")
 @pytest.mark.parametrize("type", [2, 154])
 def test_deploy_invalid_type(
-    owner, recipient, balance, vesting_factory, token, start_time, type
+    owner, recipient, balance, vesting_factory, start_time, type
 ):
     with brownie.reverts("incorrect escrow type"):
         vesting_factory.deploy_vesting_contract(
-            token,
             balance,
             recipient,
-            owner,
             86400 * 365,
             start_time,
             0,
@@ -67,15 +66,13 @@ def test_deploy_invalid_type(
 
 @pytest.mark.usefixtures("initial_funding")
 def test_start_and_duration(
-    VestingEscrow, owner, recipient, balance, chain, vesting_factory, token
+    VestingEscrow, owner, recipient, balance, chain, vesting_factory
 ):
     start_time = chain.time() + 100
 
     tx = vesting_factory.deploy_vesting_contract(
-        token,
         balance,
         recipient,
-        owner,
         86400 * 700,
         start_time,
         {"from": owner},
@@ -90,36 +87,18 @@ def test_start_and_duration(
 
 
 def test_invalid_cliff_duration(
-    owner, recipient, balance, chain, vesting_factory, token
+    owner, recipient, balance, chain, vesting_factory
 ):
     start_time = chain.time() + 100
     duration = 86400 * 700
     cliff_time = start_time + duration
     with brownie.reverts("incorrect vesting cliff"):
         vesting_factory.deploy_vesting_contract(
-            token,
             balance,
             recipient,
-            owner,
             duration,
             start_time,
             cliff_time,
-            {"from": owner},
-        )
-
-
-def test_invalid_owner(owner, recipient, balance, chain, vesting_factory, token):
-    start_time = chain.time() + 100
-    duration = 86400 * 700
-    with brownie.reverts("zero_address owner"):
-        vesting_factory.deploy_vesting_contract(
-            token,
-            balance,
-            recipient,
-            ZERO_ADDRESS,
-            duration,
-            start_time,
-            0,
             {"from": owner},
         )
 

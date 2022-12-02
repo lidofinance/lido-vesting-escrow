@@ -20,7 +20,9 @@ def test_recover_locked_tokens(deployed_vesting, token, recipient, balance):
     assert token.balanceOf(recipient) == 0
 
 
-def test_recover_extra_locked_tokens(deployed_vesting, token, recipient, owner, balance):
+def test_recover_extra_locked_tokens(
+    deployed_vesting, token, recipient, owner, balance
+):
     extra = 10**17
     token._mint_for_testing(extra, {"from": owner})
     token.transfer(deployed_vesting, extra, {"from": owner})
@@ -64,7 +66,9 @@ def test_recover_locked_tokens_after_end_partially_claimed(
     assert deployed_vesting.unclaimed() == balance - claim_amount
 
 
-def test_recover_ether(deployed_vesting, anyone, recipient, random_guy, one_eth, destructible):
+def test_recover_ether(
+    deployed_vesting, anyone, recipient, random_guy, one_eth, destructible
+):
     random_guy.transfer(destructible, one_eth)
     destructible.destruct(deployed_vesting)
     assert deployed_vesting.balance() == one_eth

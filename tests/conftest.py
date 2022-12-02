@@ -99,7 +99,9 @@ def snapshot_delegate(Delegate, owner):
 
 @pytest.fixture(scope="module")
 def voting_adapter(VotingAdapter, owner, voting, snapshot_delegate):
-    return VotingAdapter.deploy(voting, snapshot_delegate, ZERO_ADDRESS, {"from": owner})
+    return VotingAdapter.deploy(
+        voting, snapshot_delegate, ZERO_ADDRESS, {"from": owner}
+    )
 
 
 @pytest.fixture(scope="module")
@@ -123,9 +125,7 @@ def vesting_target_simple(VestingEscrow, owner):
 
 
 @pytest.fixture(scope="module")
-def vesting_target_fully_revokable(
-    VestingEscrowFullyRevokable, owner
-):
+def vesting_target_fully_revokable(VestingEscrowFullyRevokable, owner):
     return VestingEscrowFullyRevokable.deploy({"from": owner})
 
 

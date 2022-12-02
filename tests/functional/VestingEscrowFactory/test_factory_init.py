@@ -41,6 +41,7 @@ def test_init_fail_on_zero_simple_target(
             {"from": owner},
         )
 
+
 def test_init_fail_on_zero_token(
     owner,
     VestingEscrowFactory,
@@ -60,6 +61,7 @@ def test_init_fail_on_zero_token(
             voting_adapter,
             {"from": owner},
         )
+
 
 def test_init_fail_on_zero_owner(
     owner,

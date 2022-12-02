@@ -10,7 +10,12 @@ def initial_funding(token, balance, vesting_factory, owner):
 
 
 def test_params_are_set(
-    vesting_factory, vesting_target_simple, vesting_target_fully_revokable, token, owner, manager
+    vesting_factory,
+    vesting_target_simple,
+    vesting_target_fully_revokable,
+    token,
+    owner,
+    manager,
 ):
     assert vesting_factory.target_simple() == vesting_target_simple
     assert vesting_factory.target_fully_revokable() == vesting_target_fully_revokable
@@ -30,9 +35,7 @@ def test_deploy_simple(owner, recipient, vesting_factory, balance):
 
 
 @pytest.mark.usefixtures("initial_funding")
-def test_deploy_fully_revokable(
-    owner, recipient, balance, vesting_factory, start_time
-):
+def test_deploy_fully_revokable(owner, recipient, balance, vesting_factory, start_time):
     tx = vesting_factory.deploy_vesting_contract(
         balance,
         recipient,
@@ -86,9 +89,7 @@ def test_start_and_duration(
     assert escrow.end_time() == start_time + 86400 * 700
 
 
-def test_invalid_cliff_duration(
-    owner, recipient, balance, chain, vesting_factory
-):
+def test_invalid_cliff_duration(owner, recipient, balance, chain, vesting_factory):
     start_time = chain.time() + 100
     duration = 86400 * 700
     cliff_time = start_time + duration

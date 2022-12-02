@@ -115,7 +115,9 @@ def deploy_vesting_contract(
         escrow = create_minimal_proxy_to(self.target_fully_revokable)
     else:
         escrow = create_minimal_proxy_to(self.target_simple)
-    assert ERC20(self.token).transferFrom(msg.sender, self, amount), "funding failed"
+    assert ERC20(self.token).transferFrom(
+        msg.sender, self, amount
+    ), "funding failed"
     assert ERC20(self.token).approve(escrow, amount), "approve failed"
     IVestingEscrow(escrow).initialize(
         self.token,

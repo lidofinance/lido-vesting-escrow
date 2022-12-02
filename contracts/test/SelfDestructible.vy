@@ -10,6 +10,7 @@
 def __default__():
     pass
 
+
 @external
 def destruct(recipient: address):
     selfdestruct(recipient)

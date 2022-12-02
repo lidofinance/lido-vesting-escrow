@@ -48,7 +48,6 @@ def test_init_fail_on_zero_token(
     vesting_target_simple,
     vesting_target_fully_revokable,
     voting_adapter,
-    token,
     manager,
 ):
     with brownie.reverts("zero token"):

@@ -1,5 +1,5 @@
 import pytest
-from brownie import ZERO_ADDRESS
+from brownie import ZERO_ADDRESS, Contract
 
 WEEK = 7 * 24 * 60 * 60  # seconds
 YEAR = 365.25 * 24 * 60 * 60  # seconds
@@ -99,6 +99,13 @@ def snapshot_delegate(Delegate, owner):
 
 @pytest.fixture(scope="module")
 def voting_adapter(VotingAdapter, owner, voting, snapshot_delegate):
+    return VotingAdapter.deploy(
+        voting, snapshot_delegate, ZERO_ADDRESS, {"from": owner}
+    )
+
+
+@pytest.fixture(scope="module")
+def voting_adapter_for_update(VotingAdapter, owner, voting, snapshot_delegate):
     return VotingAdapter.deploy(
         voting, snapshot_delegate, ZERO_ADDRESS, {"from": owner}
     )

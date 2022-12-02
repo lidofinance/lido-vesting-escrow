@@ -36,7 +36,7 @@ event VestingEscrowCreated:
     vesting_start: uint256
     vesting_duration: uint256
     cliff_length: uint256
-    voting_adapter: address
+    factory: address
 
 
 event ERC20Recovered:
@@ -128,7 +128,7 @@ def deploy_vesting_contract(
         vesting_start,
         vesting_start + vesting_duration,
         cliff_length,
-        self.voting_adapter,
+        self,
     )
     log VestingEscrowCreated(
         msg.sender,
@@ -142,7 +142,7 @@ def deploy_vesting_contract(
         vesting_start,
         vesting_duration,
         cliff_length,
-        self.voting_adapter,
+        self,
     )
     return escrow
 
@@ -165,3 +165,18 @@ def recover_ether():
     amount: uint256 = self.balance
     send(self.owner, amount)
     log ETHRecovered(amount)
+
+
+@external
+def update_voting_adapter(voting_adapter: address):
+    """
+    @notice Update voting_adapter to be used by vestings
+    @param voting_adapter Address of the new VotingAdapter implementation
+    """
+    self._check_sender_is_owner()
+    self.voting_adapter = voting_adapter
+
+
+@internal
+def _check_sender_is_owner():
+    assert msg.sender == self.owner, "msg.sender not owner"

@@ -10,6 +10,9 @@
 
 from vyper.interfaces import ERC20
 
+interface IVestingEscrowFactory:
+    def voting_adapter() -> address: nonpayable
+
 
 event Fund:
     recipient: indexed(address)
@@ -49,7 +52,7 @@ token: public(ERC20)
 start_time: public(uint256)
 end_time: public(uint256)
 cliff_length: public(uint256)
-voting_adapter_addr: public(address)
+factory: public(address)
 total_locked: public(uint256)
 
 total_claimed: public(uint256)
@@ -80,7 +83,7 @@ def initialize(
     start_time: uint256,
     end_time: uint256,
     cliff_length: uint256,
-    voting_adapter_addr: address,
+    factory: address,
 ) -> bool:
     """
     @notice Initialize the contract.
@@ -95,7 +98,7 @@ def initialize(
     @param start_time Epoch time at which token distribution starts
     @param end_time Time until everything should be vested
     @param cliff_length Duration after which the first portion vests
-    @param voting_adapter_addr VotingAdapter address
+    @param factory Address of the parent factory
     """
     assert not self.initialized, "can only initialize once"
     self.initialized = True
@@ -114,7 +117,7 @@ def initialize(
     self.total_locked = amount
     self.recipient = recipient
     self.disabled_at = end_time  # Set to maximum time
-    self.voting_adapter_addr = voting_adapter_addr
+    self.factory = factory
     log Fund(recipient, amount)
 
     return True
@@ -274,7 +277,7 @@ def aragon_vote(voteId: uint256, supports: bool):
     """
     self._check_sender_is_recipient()
     raw_call(
-        self.voting_adapter_addr,
+        IVestingEscrowFactory(self.factory).voting_adapter(),
         _abi_encode(
             voteId,
             supports,
@@ -292,7 +295,7 @@ def snapshot_set_delegate(delegate: address = msg.sender):
     """
     self._check_sender_is_recipient()
     raw_call(
-        self.voting_adapter_addr,
+        IVestingEscrowFactory(self.factory).voting_adapter(),
         _abi_encode(
             delegate,
             method_id=method_id("snapshot_set_delegate(address)"),
@@ -309,7 +312,7 @@ def delegate(delegate: address = msg.sender):
     """
     self._check_sender_is_recipient()
     raw_call(
-        self.voting_adapter_addr,
+        IVestingEscrowFactory(self.factory).voting_adapter(),
         _abi_encode(
             delegate,
             method_id=method_id("delegate(address)"),

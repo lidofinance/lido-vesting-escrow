@@ -10,6 +10,7 @@
 
 from vyper.interfaces import ERC20
 
+
 interface IVestingEscrowFactory:
     def voting_adapter() -> address: nonpayable
 

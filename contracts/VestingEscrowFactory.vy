@@ -48,6 +48,10 @@ event ETHRecovered:
     amount: uint256
 
 
+event VotingAdapterUpgraded:
+    voting_adapter: address
+
+
 target_simple: public(address)
 target_fully_revokable: public(address)
 token: public(address)
@@ -175,6 +179,7 @@ def update_voting_adapter(voting_adapter: address):
     """
     self._check_sender_is_owner()
     self.voting_adapter = voting_adapter
+    log VotingAdapterUpgraded(voting_adapter)
 
 
 @internal

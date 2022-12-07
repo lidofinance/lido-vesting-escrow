@@ -1,5 +1,6 @@
-import brownie
 import math
+
+import brownie
 
 
 def test_revoke_unvested_owner_or_manager_only(deployed_vesting, recipient):
@@ -26,9 +27,7 @@ def test_revoke_unvested_from_manager(deployed_vesting, manager):
     assert deployed_vesting.locked() == 0
 
 
-def test_revoke_unvested_after_end_time(
-    deployed_vesting, token, owner, recipient, chain, end_time, balance
-):
+def test_revoke_unvested_after_end_time(deployed_vesting, token, owner, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
     deployed_vesting.revoke_unvested({"from": owner})
     deployed_vesting.claim({"from": recipient})
@@ -37,9 +36,7 @@ def test_revoke_unvested_after_end_time(
     assert token.balanceOf(owner) == 0
 
 
-def test_revoke_unvested_before_start_time(
-    deployed_vesting, token, owner, recipient, chain, end_time
-):
+def test_revoke_unvested_before_start_time(deployed_vesting, token, owner, recipient, chain, end_time):
     deployed_vesting.revoke_unvested({"from": owner})
     chain.sleep(end_time - chain.time())
     deployed_vesting.claim({"from": recipient})
@@ -48,9 +45,7 @@ def test_revoke_unvested_before_start_time(
     assert token.balanceOf(owner) == deployed_vesting.total_locked()
 
 
-def test_revoke_unvested_partially_ununclaimed(
-    deployed_vesting, token, owner, recipient, chain, start_time, end_time
-):
+def test_revoke_unvested_partially_ununclaimed(deployed_vesting, token, owner, recipient, chain, start_time, end_time):
     chain.sleep(start_time - chain.time() + 31337)
     tx = deployed_vesting.revoke_unvested({"from": owner})
     chain.sleep(end_time - chain.time())

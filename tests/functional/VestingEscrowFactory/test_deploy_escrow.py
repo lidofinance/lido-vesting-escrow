@@ -1,6 +1,6 @@
 import brownie
-from brownie import ZERO_ADDRESS
 import pytest
+from brownie import ZERO_ADDRESS
 
 
 @pytest.fixture()
@@ -26,9 +26,7 @@ def test_params_are_set(
 
 @pytest.mark.usefixtures("initial_funding")
 def test_deploy_simple(owner, recipient, vesting_factory, balance):
-    tx = vesting_factory.deploy_vesting_contract(
-        balance, recipient, 86400 * 365, {"from": owner}
-    )
+    tx = vesting_factory.deploy_vesting_contract(balance, recipient, 86400 * 365, {"from": owner})
 
     assert len(tx.new_contracts) == 1
     assert tx.return_value == tx.new_contracts[0]
@@ -52,9 +50,7 @@ def test_deploy_fully_revokable(owner, recipient, balance, vesting_factory, star
 
 @pytest.mark.usefixtures("initial_funding")
 @pytest.mark.parametrize("type", [2, 154])
-def test_deploy_invalid_type(
-    owner, recipient, balance, vesting_factory, start_time, type
-):
+def test_deploy_invalid_type(owner, recipient, balance, vesting_factory, start_time, type):
     with brownie.reverts("incorrect escrow type"):
         vesting_factory.deploy_vesting_contract(
             balance,
@@ -68,9 +64,7 @@ def test_deploy_invalid_type(
 
 
 @pytest.mark.usefixtures("initial_funding")
-def test_start_and_duration(
-    VestingEscrow, owner, recipient, balance, chain, vesting_factory
-):
+def test_start_and_duration(VestingEscrow, owner, recipient, balance, chain, vesting_factory):
     start_time = chain.time() + 100
 
     tx = vesting_factory.deploy_vesting_contract(
@@ -104,9 +98,7 @@ def test_invalid_cliff_duration(owner, recipient, balance, chain, vesting_factor
         )
 
 
-def test_init_vars(
-    deployed_vesting, recipient, owner, manager, balance, token, start_time, end_time
-):
+def test_init_vars(deployed_vesting, recipient, owner, manager, balance, token, start_time, end_time):
     assert deployed_vesting.token() == token
     assert deployed_vesting.recipient() == recipient
     assert deployed_vesting.start_time() == start_time

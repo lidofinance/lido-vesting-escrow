@@ -1,11 +1,7 @@
 import brownie
 import pytest
 
-pytestmark = [
-    pytest.mark.parametrize(
-        "deployed_vesting", [pytest.param(1, id="fully_revocable")], indirect=True
-    )
-]
+pytestmark = [pytest.mark.parametrize("deployed_vesting", [pytest.param(1, id="fully_revocable")], indirect=True)]
 
 
 def test_revoke_all_owner_only(deployed_vesting, not_owner):
@@ -22,9 +18,7 @@ def test_revoke_all(deployed_vesting, owner, token, balance):
     assert token.balanceOf(owner) == balance
 
 
-def test_revoke_all_after_end_time(
-    deployed_vesting, token, owner, recipient, chain, end_time, balance
-):
+def test_revoke_all_after_end_time(deployed_vesting, token, owner, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
     deployed_vesting.revoke_all({"from": owner})
     deployed_vesting.claim({"from": recipient})
@@ -33,9 +27,7 @@ def test_revoke_all_after_end_time(
     assert token.balanceOf(recipient) == 0
 
 
-def test_revoke_all_before_start_time(
-    deployed_vesting, token, owner, recipient, chain, end_time, balance
-):
+def test_revoke_all_before_start_time(deployed_vesting, token, owner, recipient, chain, end_time, balance):
     deployed_vesting.revoke_all({"from": owner})
     chain.sleep(end_time - chain.time())
     deployed_vesting.claim({"from": recipient})

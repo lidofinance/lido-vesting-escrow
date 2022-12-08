@@ -92,3 +92,7 @@ def deploy_factory():
         log.info(f"The current network '{network.show_active()}' is not 'mainnet'. Source publication skipped")
 
     log.note("All deployed metadata saved to", f"./deployed-{network.show_active()}.json")
+
+
+def deploy_vestings():
+    pass

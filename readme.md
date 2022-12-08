@@ -17,23 +17,91 @@ A deeply modified version of [Yearn Vesting Escrow](https://github.com/banteg/ye
 ## Contracts
 
 - [`VestingEscrowFactory`](contracts/VestingEscrowFactory.vy): Factory to deploy many simplified vesting contracts
-- [`VestingEscrowSimple`](contracts/VestingEscrowSimple.vy): Simplified vesting contract that holds tokens for a single beneficiary
+- [`VestingEscrow`](contracts/VestingEscrow.vy): Simplified vesting contract that holds tokens for a single beneficiary
 - [`VestingEscrowFullyRevokable`](contracts/VestingEscrowFullyRevokable.vy): Fully revocable vesting contract that holds tokens for a single beneficiary
 - [`VotingAdapter`](contracts/VotingAdapter.vy): Middleware for voting with tokens under vesting
 
-## Usage
+## Setup
 
-```python
-$ brownie console --network mainnet
-funder = accounts.load(name)
-factory = VestingEscrowFactory.at('address_of_the_deployed_VestingEscrowFactory', owner=funder)
-factory.deploy_vesting_contract(token, recipient, amount, vesting_duration, vesting_start, cliff_length)
+```shell
+poetry shell
+poetry install
+
+export WEB3_INFURA_PROJECT_ID=<your infura project id>
+export ETHERSCAN_TOKEN=<your etherscan api key>
 ```
 
-## Ethereum mainnet deployment
+## Configuration
 
-TBD
+The default deployment parameters are set in [`vesting_initial_params.py`]. The following parameters are can be set:
 
-## Ethereum Goerly testnet deployment
+- `TOKEN` address of the token to be vested with the deployed vesting contracts
 
-TBD
+- `OWNER` address that will be assigned as an owner of the factory and all deployed vestings
+
+- `MANAGER` address that will be assigned as a manager of all deployed vestings
+
+- `ARAGON_VOTING` address of the Lido Aragon voting contract
+
+- `SNAPSHOT_DELEGATION` address of the snapshot voting contract
+
+- `DELEGATION` address of the voting delegation contract. Not implemented ATM we recommend using `0x0000000000000000000000000000000000000000` now
+
+Example content of `vesting_initial_params.py`:
+
+```py
+# LDO
+TOKEN = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"
+
+# Lido Agent
+OWNER = "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c"
+
+# TRP committee multisig
+MANAGER = "0x0000000000000000000000000000000000000000"
+
+# Lido Aragon voting
+ARAGON_VOTING = "0x2e59A20f205bB85a89C53f1936454680651E618e"
+
+# Snapshot delegating contract
+SNAPSHOT_DELEGATION = "0x469788fE6E9E9681C6ebF3bF78e7Fd26Fc015446"
+
+# Voting delegation contract address. ZERO for now
+DELEGATION = "0x0000000000000000000000000000000000000000"
+```
+
+## Run tests
+
+It' better to run local mainnet fork node in separate terminal window.
+
+```shell
+brownie console --network mainnet-fork
+```
+
+Then run all tests
+
+```shell
+brownie test -s --disable-warnings
+```
+
+## Deployment
+
+Make sure your account is imported to Brownie: `brownie accounts list`.
+
+Make sure you have exported or set id directly:
+
+```yaml
+DEPLOYER=deployer # deployer account alias
+```
+
+To deploy `VestingEscrowFactory` and all supplementary contracts run deploy script and follow the wizard:
+
+```shell
+DEPLOYER=deployer brownie run --network mainnet main deploy_factory
+```
+
+Deploy of the `VestingEscrow` and VestingEscrowFullyRevokable is permissionless, any account can deploy fund vesting escrow.
+
+After script finishes, all deployed metadata will be saved to file `./deployed-{NETWORK}.json`, i.e. `deployed-mainnet.json`.
+
+Deploy script is stateful, so it safe to start several times. To deploy from scratch, simply delete the `./deployed-{NETWORK}.json` before running it.
+

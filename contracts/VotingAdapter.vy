@@ -80,15 +80,18 @@ def delegate(delegate: address):
     """
     assert False, "not implemented"
 
+
 @external
 @view
 def voting_contract_addr() -> address:
     return VOTING_CONTRACT_ADDR
 
+
 @external
 @view
 def snapshot_delegate_contract_addr() -> address:
     return SNAPSHOT_DELEGATE_CONTRACT_ADDR
+
 
 @external
 @view

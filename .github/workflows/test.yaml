@@ -19,6 +19,9 @@ jobs:
         with:
           node-version: "16"
 
+      - name: Install ganache
+        run: npm install -g ganache-cli
+
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -41,6 +44,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "16"
+
+      - name: Install ganache
+        run: npm install -g ganache-cli
 
       - uses: actions/setup-python@v4
         with:

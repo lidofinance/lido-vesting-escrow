@@ -13,30 +13,37 @@ from vyper.interfaces import ERC20
 
 interface IVestingEscrowFactory:
     def voting_adapter() -> address: nonpayable
+    def owner() -> address: nonpayable
+    def manager() -> address: nonpayable
 
 
-event Fund:
+event VestingEscrowInitialized:
+    factory: indexed(address)
     recipient: indexed(address)
+    token: indexed(address)
     amount: uint256
+    start_time: uint256
+    end_time: uint256
+    cliff_length: uint256
+    is_fully_revokable: bool
 
 
 event Claim:
     recipient: indexed(address)
-    beneficiary: address
+    beneficiary: indexed(address)
     claimed: uint256
 
 
-event RevokeUnvested:
+event UnvestedTokensRevoked:
+    recoverer: indexed(address)
     recipient: indexed(address)
     revoked: uint256
 
 
-event OwnerChanged:
-    owner: address
-
-
-event ManagerChanged:
-    manager: address
+event VestingFullyRevoked:
+    recoverer: indexed(address)
+    recipient: indexed(address)
+    revoked: uint256
 
 
 event ERC20Recovered:
@@ -49,19 +56,18 @@ event ETHRecovered:
 
 
 recipient: public(address)
-token: public(ERC20)
+token: public(address)
 start_time: public(uint256)
 end_time: public(uint256)
 cliff_length: public(uint256)
 factory: public(address)
 total_locked: public(uint256)
+is_fully_revokable: public(bool)
 
 total_claimed: public(uint256)
 disabled_at: public(uint256)
 initialized: public(bool)
-
-owner: public(address)
-manager: public(address)
+is_fully_revoked: public(bool)
 
 
 @external
@@ -79,11 +85,10 @@ def initialize(
     token: address,
     amount: uint256,
     recipient: address,
-    owner: address,
-    manager: address,
     start_time: uint256,
     end_time: uint256,
     cliff_length: uint256,
+    is_fully_revokable: bool,
     factory: address,
 ) -> bool:
     """
@@ -94,8 +99,6 @@ def initialize(
     @param token Address of the ERC20 token being distributed
     @param amount Amount of the ERC20 token to be controleed by escrow
     @param recipient Address to vest tokens for
-    @param owner Address of the vesting owner
-    @param manager Address of the vesting manager
     @param start_time Epoch time at which token distribution starts
     @param end_time Time until everything should be vested
     @param cliff_length Duration after which the first portion vests
@@ -104,22 +107,28 @@ def initialize(
     assert not self.initialized, "can only initialize once"
     self.initialized = True
 
-    self.owner = owner
-    self.manager = manager
-    self.token = ERC20(token)
+    self.token = token
+    self.is_fully_revokable = is_fully_revokable
     self.start_time = start_time
     self.end_time = end_time
     self.cliff_length = cliff_length
 
-    assert self.token.transferFrom(
-        msg.sender, self, amount
-    ), "could not fund escrow"
+    self._safe_transfer_from(token, msg.sender, self, amount)
 
     self.total_locked = amount
     self.recipient = recipient
     self.disabled_at = end_time  # Set to maximum time
     self.factory = factory
-    log Fund(recipient, amount)
+    log VestingEscrowInitialized(
+        factory,
+        recipient,
+        token,
+        amount,
+        start_time,
+        end_time,
+        cliff_length,
+        is_fully_revokable,
+    )
 
     return True
 
@@ -138,6 +147,8 @@ def _total_vested_at(time: uint256 = block.timestamp) -> uint256:
 @internal
 @view
 def _unclaimed(time: uint256 = block.timestamp) -> uint256:
+    if self.is_fully_revoked:
+        return 0
     return self._total_vested_at(time) - self.total_claimed
 
 
@@ -183,7 +194,7 @@ def claim(
     claimable: uint256 = min(self._unclaimed(claim_period_end), amount)
     self.total_claimed += claimable
 
-    assert self.token.transfer(beneficiary, claimable)
+    self._safe_transfer(self.token, beneficiary, claimable)
     log Claim(self.recipient, beneficiary, claimable)
 
 
@@ -198,49 +209,27 @@ def revoke_unvested():
     revokable: uint256 = self._locked()
     self.disabled_at = block.timestamp
 
-    assert self.token.transfer(self.owner, revokable)
-    log RevokeUnvested(self.recipient, revokable)
+    self._safe_transfer(self.token, self._owner(), revokable)
+    log UnvestedTokensRevoked(msg.sender, self.recipient, revokable)
 
 
 @external
-def change_owner(owner: address):
+def revoke_all():
     """
-    @notice Change contract owner.
-    @param owner Address of the new owner. Must be non-zero.
-    """
-    self._check_sender_is_owner()
-    assert owner != empty(address), "zero owner address"
-
-    self.owner = owner
-    log OwnerChanged(owner)
-
-
-@external
-def change_manager(manager: address):
-    """
-    @notice Set contract manager.
-            Can update manager if it is already set.
-            Can be called only by the owner.
-    @param manager Address of the new manager
+    @notice Disable further flow of tokens and revoke all tokens to owner
     """
     self._check_sender_is_owner()
+    assert self.is_fully_revokable, "not allowed for ordinary vesting"
 
-    self.manager = manager
-    log ManagerChanged(manager)
+    # NOTE: Revoking more than once is futile
 
+    self.is_fully_revoked = True
+    self.disabled_at = block.timestamp
+    # NOTE: do not revoke extra tokens
+    revokable: uint256 = self.total_locked - self.total_claimed
 
-@external
-def revoke_ownership():
-    """
-    @notice Revoke contract owner and manager
-    """
-    self._check_sender_is_owner()
-
-    self.manager = empty(address)
-    self.owner = empty(address)
-
-    log ManagerChanged(empty(address))
-    log OwnerChanged(empty(address))
+    self._safe_transfer(self.token, self._owner(), revokable)
+    log VestingFullyRevoked(msg.sender, self.recipient, revokable)
 
 
 @external
@@ -250,13 +239,14 @@ def recover_erc20(token: address, amount: uint256):
     @param token Address of the ERC20 token to be recovered
     """
     recoverable: uint256 = amount
-    if token == self.token.address:
+    if token == self.token:
         available: uint256 = ERC20(token).balanceOf(self) - (
             self._locked() + self._unclaimed()
         )
         recoverable = min(recoverable, available)
-    assert ERC20(token).transfer(self.recipient, recoverable)
-    log ERC20Recovered(token, recoverable)
+    if recoverable > 0:
+        self._safe_transfer(token, self.recipient, recoverable)
+        log ERC20Recovered(token, recoverable)
 
 
 @external
@@ -265,76 +255,138 @@ def recover_ether():
     @notice Recover Ether to recipient
     """
     amount: uint256 = self.balance
-    send(self.recipient, amount)
+    self._safe_send_ether(self.recipient, amount)
     log ETHRecovered(amount)
 
 
 @external
-def aragon_vote(voteId: uint256, supports: bool):
+def aragon_vote(abi_encoded_params: Bytes[1000]):
     """
     @notice Participate Aragon vote using all available tokens on the contract's balance
-    @param voteId Id of the vote
-    @param supports Support flag true - yea, false - nay
+    @param abi_encoded_params Abi encoded data for call. Can be obtained from VotingAdapter.encode_aragon_vote_calldata
     """
     self._check_sender_is_recipient()
     raw_call(
         IVestingEscrowFactory(self.factory).voting_adapter(),
         _abi_encode(
-            voteId,
-            supports,
-            method_id=method_id("aragon_vote(uint256,bool)"),
+            abi_encoded_params,
+            method_id=method_id("aragon_vote(bytes)"),
         ),
         is_delegate_call=True,
     )
 
 
 @external
-def snapshot_set_delegate(delegate: address = msg.sender):
+def snapshot_set_delegate(abi_encoded_params: Bytes[1000]):
     """
     @notice Delegate Snapshot voting power of all available tokens on the contract's balance
-    @param delegate Address of the delegate
+    @param abi_encoded_params Abi encoded data for call. Can be obtained from VotingAdapter.encode_snapshot_set_delegate_calldata
     """
     self._check_sender_is_recipient()
     raw_call(
         IVestingEscrowFactory(self.factory).voting_adapter(),
         _abi_encode(
-            delegate,
-            method_id=method_id("snapshot_set_delegate(address)"),
+            abi_encoded_params,
+            method_id=method_id("snapshot_set_delegate(bytes)"),
         ),
         is_delegate_call=True,
     )
 
 
 @external
-def delegate(delegate: address = msg.sender):
+def delegate(abi_encoded_params: Bytes[1000]):
     """
     @notice Delegate voting power of all available tokens on the contract's balance
-    @param delegate Address of the delegate
+    @param abi_encoded_params Abi encoded data for call. Can be obtained from VotingAdapter.encode_delegate_calldata
     """
     self._check_sender_is_recipient()
     raw_call(
         IVestingEscrowFactory(self.factory).voting_adapter(),
         _abi_encode(
-            delegate,
-            method_id=method_id("delegate(address)"),
+            abi_encoded_params,
+            method_id=method_id("delegate(bytes)"),
         ),
         is_delegate_call=True,
     )
+
+
+@internal
+def _owner() -> address:
+    return IVestingEscrowFactory(self.factory).owner()
+
+
+@internal
+def _manager() -> address:
+    return IVestingEscrowFactory(self.factory).manager()
 
 
 @internal
 def _check_sender_is_owner_or_manager():
     assert (
-        msg.sender == self.owner
-        or (msg.sender == self.manager and msg.sender != empty(address))
+        msg.sender == self._owner() or msg.sender == self._manager()
     ), "msg.sender not owner or manager"
 
 
 @internal
 def _check_sender_is_owner():
-    assert msg.sender == self.owner, "msg.sender not owner"
+    assert msg.sender == self._owner(), "msg.sender not owner"
 
 
 @internal
 def _check_sender_is_recipient():
     assert msg.sender == self.recipient, "msg.sender not recipient"
+
+
+@internal
+def _safe_transfer(_token: address, _to: address, _value: uint256):
+    """
+    @notice
+        Used to solve Vyper SafeERC20 issue
+        https://github.com/vyperlang/vyper/issues/2202
+    """
+    _response: Bytes[32] = raw_call(
+        _token,
+        concat(
+            method_id("transfer(address,uint256)"),
+            convert(_to, bytes32),
+            convert(_value, bytes32),
+        ),
+        max_outsize=32,
+    )
+    if len(_response) > 0:
+        assert convert(_response, bool), "Transfer failed!"
+
+
+@internal
+def _safe_transfer_from(
+    _token: address, _from: address, _to: address, _value: uint256
+):
+    """
+    @notice
+        Used to solve Vyper SafeERC20 issue
+        https://github.com/vyperlang/vyper/issues/2202
+    """
+    _response: Bytes[32] = raw_call(
+        _token,
+        concat(
+            method_id("transferFrom(address,address,uint256)"),
+            convert(_from, bytes32),
+            convert(_to, bytes32),
+            convert(_value, bytes32),
+        ),
+        max_outsize=32,
+    )
+    if len(_response) > 0:
+        assert convert(_response, bool), "TransferFrom failed!"
+
+
+@internal
+def _safe_send_ether(_to: address, _value: uint256):
+    """
+    @notice Overcome 2300 gas limit on simple send
+    """
+    _response: Bytes[32] = raw_call(
+        _to, empty(bytes32), value=_value, max_outsize=32
+    )
+    if len(_response) > 0:
+        assert convert(_response, bool), "ETH transfer failed!"

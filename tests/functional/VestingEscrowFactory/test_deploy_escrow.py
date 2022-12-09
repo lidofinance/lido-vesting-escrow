@@ -1,6 +1,5 @@
 import brownie
 import pytest
-from brownie import ZERO_ADDRESS
 
 
 @pytest.fixture()
@@ -11,56 +10,25 @@ def initial_funding(token, balance, vesting_factory, owner):
 
 def test_params_are_set(
     vesting_factory,
-    vesting_target_simple,
-    vesting_target_fully_revokable,
+    vesting_target,
+    voting_adapter,
     token,
     owner,
     manager,
 ):
-    assert vesting_factory.target_simple() == vesting_target_simple
-    assert vesting_factory.target_fully_revokable() == vesting_target_fully_revokable
+    assert vesting_factory.target() == vesting_target
     assert vesting_factory.token() == token
     assert vesting_factory.owner() == owner
     assert vesting_factory.manager() == manager
+    assert vesting_factory.voting_adapter() == voting_adapter
 
 
 @pytest.mark.usefixtures("initial_funding")
-def test_deploy_simple(owner, recipient, vesting_factory, balance):
+def test_deploy(owner, recipient, vesting_factory, balance):
     tx = vesting_factory.deploy_vesting_contract(balance, recipient, 86400 * 365, {"from": owner})
 
     assert len(tx.new_contracts) == 1
     assert tx.return_value == tx.new_contracts[0]
-
-
-@pytest.mark.usefixtures("initial_funding")
-def test_deploy_fully_revokable(owner, recipient, balance, vesting_factory, start_time):
-    tx = vesting_factory.deploy_vesting_contract(
-        balance,
-        recipient,
-        86400 * 365,
-        start_time,
-        0,
-        1,
-        {"from": owner},
-    )
-
-    assert len(tx.new_contracts) == 1
-    assert tx.return_value == tx.new_contracts[0]
-
-
-@pytest.mark.usefixtures("initial_funding")
-@pytest.mark.parametrize("type", [2, 154])
-def test_deploy_invalid_type(owner, recipient, balance, vesting_factory, start_time, type):
-    with brownie.reverts("incorrect escrow type"):
-        vesting_factory.deploy_vesting_contract(
-            balance,
-            recipient,
-            86400 * 365,
-            start_time,
-            0,
-            type,
-            {"from": owner},
-        )
 
 
 @pytest.mark.usefixtures("initial_funding")
@@ -98,90 +66,58 @@ def test_invalid_cliff_duration(owner, recipient, balance, chain, vesting_factor
         )
 
 
-def test_init_vars(deployed_vesting, recipient, owner, manager, balance, token, start_time, end_time):
+def test_init_vars(deployed_vesting, recipient, balance, token, start_time, end_time):
     assert deployed_vesting.token() == token
     assert deployed_vesting.recipient() == recipient
     assert deployed_vesting.start_time() == start_time
     assert deployed_vesting.end_time() == end_time
-    assert deployed_vesting.owner() == owner
-    assert deployed_vesting.manager() == manager
     assert deployed_vesting.total_locked() == balance
     assert deployed_vesting.initialized() == True
 
 
 def test_cannot_call_init(
+    vesting_factory,
     deployed_vesting,
     owner,
     recipient,
-    manager,
     token,
     balance,
     start_time,
     end_time,
-    voting_adapter,
 ):
-    with brownie.reverts():
+    with brownie.reverts("can only initialize once"):
         deployed_vesting.initialize(
             token,
             balance,
             recipient,
-            owner,
-            manager,
             start_time,
             end_time,
             0,
-            voting_adapter,
+            0,
+            vesting_factory,
             {"from": owner},
         )
 
 
-def test_cannot_init_factory_target_simple(
-    vesting_target_simple,
+def test_cannot_init_factory_target(
+    vesting_factory,
+    vesting_target,
     owner,
     recipient,
     token,
     balance,
-    manager,
     start_time,
     end_time,
-    voting_adapter,
 ):
     with brownie.reverts("can only initialize once"):
-        vesting_target_simple.initialize(
+        vesting_target.initialize(
             token,
             balance,
             recipient,
-            owner,
-            manager,
             start_time,
             end_time,
             0,
-            voting_adapter,
-            {"from": owner},
-        )
-
-
-def test_cannot_init_factory_targe_fully_revokable(
-    vesting_target_fully_revokable,
-    owner,
-    recipient,
-    token,
-    balance,
-    manager,
-    start_time,
-    end_time,
-    voting_adapter,
-):
-    with brownie.reverts("can only initialize once"):
-        vesting_target_fully_revokable.initialize(
-            token,
-            balance,
-            recipient,
-            owner,
-            manager,
-            start_time,
-            end_time,
             0,
-            voting_adapter,
+            vesting_factory,
             {"from": owner},
         )

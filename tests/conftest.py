@@ -1,5 +1,5 @@
 import pytest
-from brownie import ZERO_ADDRESS, Contract
+from brownie import ZERO_ADDRESS
 
 WEEK = 7 * 24 * 60 * 60  # seconds
 YEAR = 365.25 * 24 * 60 * 60  # seconds
@@ -99,12 +99,12 @@ def snapshot_delegate(Delegate, owner):
 
 @pytest.fixture(scope="module")
 def voting_adapter(VotingAdapter, owner, voting, snapshot_delegate):
-    return VotingAdapter.deploy(voting, snapshot_delegate, ZERO_ADDRESS, {"from": owner})
+    return VotingAdapter.deploy(voting, snapshot_delegate, ZERO_ADDRESS, owner, {"from": owner})
 
 
 @pytest.fixture(scope="module")
 def voting_adapter_for_update(VotingAdapter, owner, voting, snapshot_delegate):
-    return VotingAdapter.deploy(voting, snapshot_delegate, ZERO_ADDRESS, {"from": owner})
+    return VotingAdapter.deploy(voting, snapshot_delegate, ZERO_ADDRESS, owner, {"from": owner})
 
 
 @pytest.fixture(scope="module")
@@ -123,28 +123,21 @@ def end_time(start_time, duration):
 
 
 @pytest.fixture(scope="module")
-def vesting_target_simple(VestingEscrow, owner):
+def vesting_target(VestingEscrow, owner):
     return VestingEscrow.deploy({"from": owner})
-
-
-@pytest.fixture(scope="module")
-def vesting_target_fully_revokable(VestingEscrowFullyRevokable, owner):
-    return VestingEscrowFullyRevokable.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
 def vesting_factory(
     VestingEscrowFactory,
     owner,
-    vesting_target_simple,
-    vesting_target_fully_revokable,
+    vesting_target,
     manager,
     token,
     voting_adapter,
 ):
     return VestingEscrowFactory.deploy(
-        vesting_target_simple,
-        vesting_target_fully_revokable,
+        vesting_target,
         token,
         owner,
         manager,
@@ -155,11 +148,10 @@ def vesting_factory(
 
 @pytest.fixture(
     scope="module",
-    params=[pytest.param(0, id="simple"), pytest.param(1, id="fully_revocable")],
+    params=[pytest.param(0, id="simple")],
 )
 def deployed_vesting(
     VestingEscrow,
-    VestingEscrowFullyRevokable,
     recipient,
     vesting_factory,
     token,
@@ -180,19 +172,15 @@ def deployed_vesting(
         request.param,
         {"from": owner},
     )
-    if request.param == 1:
-        return VestingEscrowFullyRevokable.at(tx.new_contracts[0])
-    else:
-        return VestingEscrow.at(tx.new_contracts[0])
+    return VestingEscrow.at(tx.new_contracts[0])
 
 
 @pytest.fixture(
     scope="module",
-    params=[pytest.param(0, id="simple"), pytest.param(1, id="fully_revocable")],
+    params=[pytest.param(0, id="simple")],
 )
 def deployed_vesting_with_cliff(
     VestingEscrow,
-    VestingEscrowFullyRevokable,
     recipient,
     vesting_factory,
     token,
@@ -214,7 +202,4 @@ def deployed_vesting_with_cliff(
         request.param,
         {"from": owner},
     )
-    if request.param == 1:
-        return VestingEscrowFullyRevokable.at(tx.new_contracts[0])
-    else:
-        return VestingEscrow.at(tx.new_contracts[0])
+    return VestingEscrow.at(tx.new_contracts[0])

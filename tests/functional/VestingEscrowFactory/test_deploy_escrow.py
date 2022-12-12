@@ -66,6 +66,17 @@ def test_invalid_cliff_duration(owner, recipient, balance, chain, vesting_factor
         )
 
 
+def test_invalid_duration(owner, recipient, balance, chain, vesting_factory, start_time):
+    with brownie.reverts("incorrect vesting duration"):
+        vesting_factory.deploy_vesting_contract(
+            balance,
+            recipient,
+            0,
+            start_time,
+            0,
+            {"from": owner},
+        )
+
 def test_init_vars(deployed_vesting, recipient, balance, token, start_time, end_time):
     assert deployed_vesting.token() == token
     assert deployed_vesting.recipient() == recipient

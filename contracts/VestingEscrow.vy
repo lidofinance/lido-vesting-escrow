@@ -135,7 +135,7 @@ def initialize(
 
 @internal
 @view
-def _total_vested_at(time: uint256 = block.timestamp) -> uint256:
+def _total_vested_at(time: uint256) -> uint256:
     start: uint256 = self.start_time
     end: uint256 = self.end_time
     locked: uint256 = self.total_locked

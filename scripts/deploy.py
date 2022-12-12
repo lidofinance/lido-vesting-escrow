@@ -1,10 +1,10 @@
-from brownie import VestingEscrow, VestingEscrowFactory, VestingEscrowFullyRevokable, VotingAdapter
+from brownie import VestingEscrow, VestingEscrowFactory, VotingAdapter
 
 import utils.log as log
 from utils.deployed_state import read_or_update_state
 
 
-def do_deploy_simple_escrow(tx_params):
+def do_deploy_escrow(tx_params):
     deployedState = read_or_update_state()
 
     if deployedState.vestingEscrowAddress:
@@ -35,37 +35,6 @@ def check_deployed_vesting_simple(escrow_simple):
     assert escrow_simple.initialized(), "VestingEscrow implementation state initialized is not True"
 
 
-def do_deploy_revokable_escrow(tx_params):
-    deployedState = read_or_update_state()
-
-    if deployedState.vestingEscrowFullyRevocableAddress:
-        escrow_revokable = VestingEscrowFullyRevokable.at(deployedState.vestingEscrowFullyRevocableAddress)
-        log.warn("VestingEscrowFullyRevocable already deployed at", deployedState.vestingEscrowFullyRevocableAddress)
-    else:
-        log.info("Deploying VestingEscrowFullyRevocable...")
-        escrow_revokable = VestingEscrowFullyRevokable.deploy(tx_params)
-        log.info("> txHash:", escrow_revokable.tx.txid)
-
-        deployedState = read_or_update_state(
-            {
-                "vestingEscrowFullyRevocableDeployer": tx_params["from"].address,
-                "vestingEscrowFullyRevocableDeployTx": escrow_revokable.tx.txid,
-                "vestingEscrowFullyRevocableAddress": escrow_revokable.address,
-            }
-        )
-        log.okay("VestingEscrowFullyRevocable deployed at", escrow_revokable.address)
-
-        log.info("Checking deployed VestingEscrowFullyRevocable...")
-        check_deployed_vesting_revokable(escrow_revokable)
-        log.okay("VestingEscrowFullyRevocable check pass")
-
-    return escrow_revokable
-
-
-def check_deployed_vesting_revokable(escrow_revokable):
-    assert escrow_revokable.initialized(), "VestingEscrowFullyRevocable implementation state initialized is not True"
-
-
 def do_deploy_voting_adapter(tx_params, deploy_args):
     deployedState = read_or_update_state()
 
@@ -75,7 +44,11 @@ def do_deploy_voting_adapter(tx_params, deploy_args):
     else:
         log.info("Deploying VotingAdapter...")
         voting_adapter = VotingAdapter.deploy(
-            deploy_args.voting_addr, deploy_args.snapshot_delegate_addr, deploy_args.delegation_addr, tx_params
+            deploy_args.voting_addr,
+            deploy_args.snapshot_delegate_addr,
+            deploy_args.delegation_addr,
+            deploy_args.owner,
+            tx_params,
         )
         log.info("> txHash:", voting_adapter.tx.txid)
 
@@ -113,8 +86,7 @@ def do_deploy_factory(tx_params, deploy_args):
     else:
         log.info("Deploying VestingEscrowFactory...")
         factory = VestingEscrowFactory.deploy(
-            deploy_args.target_simple,
-            deploy_args.target_fully_revokable,
+            deploy_args.target,
             deploy_args.token,
             deploy_args.owner,
             deploy_args.manager,
@@ -140,8 +112,7 @@ def do_deploy_factory(tx_params, deploy_args):
 
 
 def check_deployed_factory(factory, deploy_args):
-    assert factory.target_simple() == deploy_args.target_simple, "Invalid target_simple"
-    assert factory.target_fully_revokable() == deploy_args.target_fully_revokable, "Invalid target_fully_revokable"
+    assert factory.target() == deploy_args.target, "Invalid target"
     assert factory.token() == deploy_args.token, "Invalid vesting token"
     assert factory.voting_adapter() == deploy_args.voting_adapter, "Invalid voting_adapter"
     assert factory.owner() == deploy_args.owner, "Invalid owner"

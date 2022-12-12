@@ -1,11 +1,10 @@
-from brownie import network, VestingEscrow, VestingEscrowFactory, VestingEscrowFullyRevokable, VotingAdapter
+from brownie import network, VestingEscrow, VestingEscrowFactory, VotingAdapter
 
 import utils.log as log
 from scripts.deploy import (
     do_deploy_factory,
     do_deploy_voting_adapter,
-    do_deploy_revokable_escrow,
-    do_deploy_simple_escrow,
+    do_deploy_escrow,
 )
 from utils.config import get_common_deploy_args, prepare_voting_adapter_deploy_args, prepare_factory_deploy_args
 from utils.env import get_env
@@ -45,17 +44,15 @@ def deploy_factory():
 
     proceedPrompt()
 
-    log.note(f"VestingEscrowFactory deploy")
-    simple_escrow = do_deploy_simple_escrow({"from": deployer})
+    log.note(f"VestingEscrow deploy")
+    escrow = do_deploy_escrow({"from": deployer})
 
-    log.note(f"VestingEscrowFactory deploy")
-    revokable_escrow = do_deploy_revokable_escrow({"from": deployer})
-
-    log.note(f"VestingEscrowFactory deploy")
+    log.note(f"VotingAdapter deploy")
     voting_adapter_args = prepare_voting_adapter_deploy_args(
         voting_addr=deploy_args.aragon_voting,
         snapshot_delegate_addr=deploy_args.snapshot_delegation,
         delegation_addr=deploy_args.delegation,
+        owner=deploy_args.owner,
     )
 
     proceedPrompt()
@@ -66,8 +63,7 @@ def deploy_factory():
 
     log.note(f"VestingEscrowFactory deploy")
     factory_args = prepare_factory_deploy_args(
-        target_simple=simple_escrow.address,
-        target_fully_revokable=revokable_escrow.address,
+        target=escrow.address,
         token=deploy_args.token,
         owner=deploy_args.owner,
         manager=deploy_args.manager,

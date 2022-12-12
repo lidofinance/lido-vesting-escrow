@@ -19,19 +19,20 @@ def prepare_voting_adapter_deploy_args(
     voting_addr,
     snapshot_delegate_addr,
     delegation_addr,
+    owner,
 ):
     return DotMap(
         {
             "voting_addr": voting_addr,
             "snapshot_delegate_addr": snapshot_delegate_addr,
             "delegation_addr": delegation_addr,
+            "owner": owner,
         }
     )
 
 
 def prepare_factory_deploy_args(
-    target_simple,
-    target_fully_revokable,
+    target,
     token,
     owner,
     manager,
@@ -39,8 +40,7 @@ def prepare_factory_deploy_args(
 ):
     return DotMap(
         {
-            "target_simple": target_simple,
-            "target_fully_revokable": target_fully_revokable,
+            "target": target,
             "token": token,
             "owner": owner,
             "manager": manager,

@@ -142,8 +142,8 @@ trezor = "0.13.0"
 [package.source]
 type = "git"
 url = "https://github.com/madlabman/ape-safe"
-reference = "v0.6.1"
-resolved_reference = "efda67fc851192522981035cdecf50f7a04061f6"
+reference = "master"
+resolved_reference = "5204d5bb8de8c04ce91c5ad4044e44e058fa9e7f"
 
 [[package]]
 name = "asttokens"
@@ -2624,4 +2624,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "b74e6b228ce58caa19d281527226a9039c23fa2b59b074bcfdb64d106de1b715"
+content-hash = "6bd12e476603d560019e45ae86d43721aca60ca860d7d6c40a3369e3e568a3b8"

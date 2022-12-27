@@ -173,22 +173,6 @@ def check_deployed_vesting(contract: Contract, params: VestingParams) -> None:
     require("initialized", True)
 
 
-def sign_with_frame(safe_tx: SafeTx):
-    """Sign transaction propose via frame.io wallet interface (0.5.0-canary-9 only at the moment)"""
-    w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:1248", {"timeout": 300}))  # frame
-    if not w3.isConnected():
-        raise RuntimeError("Expected frame to be running")
-
-    # patching payload for eth_signTypedData
-    msg = safe_tx.eip712_structured_data
-    raw_data = msg["message"]["data"]
-    msg["message"]["data"] = to_hex(raw_data)
-
-    signer = input("Signer's address: ")
-    signature = w3.eth.sign_typed_data(signer, msg)
-    safe_tx.signatures = to_bytes(hexstr=to_hex(signature))
-
-
 def _test_factory_address(safe: Safe) -> str:
     from brownie import history
 

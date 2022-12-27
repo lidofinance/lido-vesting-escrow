@@ -11,7 +11,7 @@ packages = [{include = "lido_vesting_escrow"}]
 python = ">=3.8,<3.11"
 eth-brownie = "^1.19.2"
 dotmap = "^1.3.30"
-ape-safe = { git = "https://github.com/madlabman/ape-safe", tag = "v0.6.1" }
+ape-safe = { git = "https://github.com/madlabman/ape-safe", branch = "master" }
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"

@@ -1,6 +1,6 @@
 """
 Usage:
-    brownie run --network mainnet-fork build_multisig_tx main input.csv
+    brownie run --network mainnet-fork build_multisig_tx main input.csv [test]
 """
 import csv
 import os
@@ -16,20 +16,19 @@ from utils import log
 from web3 import Web3
 
 
-def main(csv_filename: str):
+def main(csv_filename: str, non_empty_for_testing=None):
     """Build vesting contracts deployment tx by parameters defined in CSV file"""
+    if non_empty_for_testing:
+        log.warn("Using fake factory")
+
     config = read_envs()
     safe = ApeSafe(config["SAFE_ADDRESS"])
+
+    factory_address = _test_factory_address(safe) if non_empty_for_testing else config["FACTORY_ADDRESS"]
     factory = VestingEscrowFactory.at(
-        address=config["FACTORY_ADDRESS"],
+        address=factory_address,
         owner=safe.address,
     )
-
-    # Uncomment for testing purpose
-    # factory = VestingEscrowFactory.at(
-    #     _test_factory_address(safe),
-    #     owner=safe.address,
-    # )
 
     log.info("Deploy vestings on forked network")
     deployments = []
@@ -51,7 +50,7 @@ def main(csv_filename: str):
     params: VestingParams
     tx: TransactionReceipt
     for params, tx in deployments:
-        log.info(f"Checking {params.recipient} vesting")
+        log.info(f"Checking {tx.return_value} vesting for recipient {params.recipient}")
         if not tx.return_value:
             raise ValueError(f"Unable to find created contract address in {tx=}")
         contract = VestingEscrow.at(tx.return_value)
@@ -60,6 +59,11 @@ def main(csv_filename: str):
     log.info("Constructing multisend transaction")
     safe_tx = safe.multisend_from_receipts()
     safe.preview(safe_tx)  # does not too much
+
+    if non_empty_for_testing:
+        log.warn("Testing mode is enabled, skip posting transaction")
+        return
+
     if log.prompt_yes_no("propose transaction?"):
         if log.prompt_yes_no("sign with frame?"):
             sign_with_frame(safe_tx)

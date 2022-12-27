@@ -104,3 +104,30 @@ Deploy of the `VestingEscrow` and VestingEscrowFullyRevokable is permissionless,
 After script finishes, all deployed metadata will be saved to file `./deployed-{NETWORK}.json`, i.e. `deployed-mainnet.json`.
 
 Deploy script is stateful, so it safe to start several times. To deploy from scratch, simply delete the `./deployed-{NETWORK}.json` before running it.
+
+To deploy end user vestings contracts via multisig wallet use `build_multisig_tx` scripts which
+effectively generates one-shot transaction to be executed by Gnosis Safe MultiSend contract.
+
+- Fill in vesting details into `input.csv` CSV file (use `input.csv.example`, as a reference).
+- Compute the file hash sum with the following command `sha256sum input.csv > input.csv.sum`. Notice
+  `.sum` suffix of the file containing checksum.
+- Run script `brownie run --network mainnet-fork build_multisig_tx main input.csv` and follow the
+  questions from the script. For testing purpose it's possible to use a VestingEscrowFactory
+  deployed in runtime and any existing Gnosis Safe by providing any string as additional argument to
+  the script's invocation command, e.g. `brownie run --network mainnet-fork build_multisig_tx main
+  input.csv test!`.
+
+
+## Utility scripts
+
+To work with delegates of a Gnosis Safe you can use `safe_delegates.py` script.
+
+Example usage:
+```bash
+# list delegates
+python -m scripts.safe_delegates list
+# add a delegate
+python -m scripts.safe_delegates add address label
+# remove a delegate
+python -m scripts.safe_delegates remove address
+```

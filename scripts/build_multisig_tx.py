@@ -60,14 +60,15 @@ def main(csv_filename: str, non_empty_for_testing=None):
     safe_tx = safe.multisend_from_receipts()
     safe.preview(safe_tx)  # does not too much
 
-    if non_empty_for_testing:
-        log.warn("Testing mode is enabled, skip posting transaction")
-        return
+    if log.prompt_yes_no("sign with frame?"):
+        safe.sign_with_frame(safe_tx)
+    else:  # sign with browine account
+        safe.sign_transaction(safe_tx)
 
     if log.prompt_yes_no("propose transaction?"):
-        if log.prompt_yes_no("sign with frame?"):
-            sign_with_frame(safe_tx)
-        # otherwise it will ask for account to sign by
+        if non_empty_for_testing:
+            if not log.prompt_yes_no("testing mode is enabled, are you sure to continue?"):
+                return
         safe.post_transaction(safe_tx)
 
 

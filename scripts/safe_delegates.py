@@ -135,7 +135,7 @@ if __name__ == "__main__":  # module-like invocation
 
     from inspect import signature
 
-    fun = vars()[cmd]
+    fun = locals()[cmd]
     sig = signature(fun)
     if len(args) != len(sig.parameters):
         log.error("cmd: unexpected sequence of arguments")

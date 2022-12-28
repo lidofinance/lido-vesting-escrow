@@ -1,6 +1,7 @@
 """
 Usage:
-    brownie run --network mainnet-fork build_multisig_tx main input.csv [test]
+    brownie run --network mainnet-fork multisig_tx build input.csv [test!]
+    brownie run --network mainnet-fork multisig_tx check 0xsafeTxHash input.csv
 """
 import csv
 import os
@@ -10,18 +11,16 @@ from typing import NamedTuple, TypedDict
 from ape_safe import ApeSafe, Safe
 from brownie import Contract, VestingEscrow, VestingEscrowFactory, VotingAdapter  # type: ignore
 from brownie.network.transaction import TransactionReceipt
-from eth_utils.conversions import to_bytes, to_hex
-from gnosis.safe import SafeTx
 from utils import log
-from web3 import Web3
 
 
-def main(csv_filename: str, non_empty_for_testing=None):
+def build(csv_filename: str, non_empty_for_testing=None):
     """Build vesting contracts deployment tx by parameters defined in CSV file"""
-    if non_empty_for_testing:
+    is_testing = bool(non_empty_for_testing)
+    if is_testing:
         log.warn("Using fake factory")
 
-    config = read_envs()
+    config = _read_envs()
     safe = ApeSafe(config["SAFE_ADDRESS"])
 
     factory_address = _test_factory_address(safe) if non_empty_for_testing else config["FACTORY_ADDRESS"]
@@ -30,11 +29,12 @@ def main(csv_filename: str, non_empty_for_testing=None):
         owner=safe.address,
     )
 
-    log.info("Deploy vestings on forked network")
-    deployments = []
-    raw_params_list = read_checksumed_csv(csv_filename)
+    log.info("Constructing multisend transaction")
+    raw_params_list = _read_checksumed_csv(csv_filename)
+    params_list = []
     for raw_params in raw_params_list:
         params = VestingParams.from_tuple(raw_params)
+        params_list.append(params)
         tx = factory.deploy_vesting_contract(
             params.amount,
             params.recipient,
@@ -44,32 +44,36 @@ def main(csv_filename: str, non_empty_for_testing=None):
             params.is_fully_revokable,
             {"from": safe.address},
         )
-        deployments.append((params, tx))
-
-    log.info("Validate deployed vestings")
-    params: VestingParams
-    tx: TransactionReceipt
-    for params, tx in deployments:
-        log.info(f"Checking {tx.return_value} vesting for recipient {params.recipient}")
-        if not tx.return_value:
-            raise ValueError(f"Unable to find created contract address in {tx=}")
-        contract = VestingEscrow.at(tx.return_value)
-        check_deployed_vesting(contract, params)
-
-    log.info("Constructing multisend transaction")
     safe_tx = safe.multisend_from_receipts()
-    safe.preview(safe_tx)  # does not too much
+    # do not reset chain in testing to keep the fake factory and other contracts intact
+    tx = safe.preview(safe_tx, reset=not is_testing)
+    _check_tx(tx, params_list)
 
     if log.prompt_yes_no("sign with frame?"):
         safe.sign_with_frame(safe_tx)
-    else:  # sign with browine account
-        safe.sign_transaction(safe_tx)
+    else:
+        log.error("transaction signature required!")
+        return
 
     if log.prompt_yes_no("propose transaction?"):
-        if non_empty_for_testing:
+        if is_testing:
             if not log.prompt_yes_no("testing mode is enabled, are you sure to continue?"):
                 return
         safe.post_transaction(safe_tx)
+
+
+def check(safe_tx_hash: str, csv_filename: str) -> None:
+    """Check the given safeTxHash against the given CSV"""
+    config = _read_envs()
+    safe = ApeSafe(config["SAFE_ADDRESS"])
+
+    params_list = [VestingParams.from_tuple(p) for p in _read_checksumed_csv(csv_filename)]
+    safe_tx = safe.get_safe_tx_by_safe_tx_hash(safe_tx_hash)
+    tx = safe.preview(safe_tx)
+    _check_tx(tx, params_list)
+
+    if log.prompt_yes_no("sign transaction?"):
+        safe.sign_with_frame(safe_tx)
 
 
 class Config(TypedDict):
@@ -79,7 +83,7 @@ class Config(TypedDict):
     SAFE_ADDRESS: str
 
 
-def read_envs() -> Config:
+def _read_envs() -> Config:
     """Read environment variables to Config object"""
     config = os.environ.copy()
 
@@ -94,17 +98,9 @@ def read_envs() -> Config:
     return Config(**config)
 
 
-# def read_factory_address() -> str:
-#     """Read address of VestingEscrowFactory from deployment json"""
-#     try:
-#         return read_or_update_state()["factoryAddress"]
-#     except KeyError as e:
-#         raise RuntimeError("Unable to found fatory address in json file") from e
-
-
-def read_checksumed_csv(filename: str) -> list[tuple]:
+def _read_checksumed_csv(filename: str) -> list[tuple]:
     """Read checksum-protected CSV file"""
-    validate_file_sha256(filename)
+    _validate_file_sha256(filename)
 
     with open(filename, encoding="utf-8") as f:
         reader = csv.reader(f, delimiter=",")
@@ -112,7 +108,7 @@ def read_checksumed_csv(filename: str) -> list[tuple]:
         return [tuple(row) for row in reader]
 
 
-def validate_file_sha256(filename: str) -> None:
+def _validate_file_sha256(filename: str) -> None:
     """Read filename checksum from filename.sum file and compare with the actual one"""
     if not os.path.exists(filename):
         raise AssertionError(f"{filename} does not exist")
@@ -156,7 +152,26 @@ class VestingParams(NamedTuple):
         )
 
 
-def check_deployed_vesting(contract: Contract, params: VestingParams) -> None:
+def _check_tx(tx: TransactionReceipt, params_list: list[VestingParams]) -> None:
+    """Check contracts created by the transaction against the parsed vesting parameters"""
+    log.info("Validate contracts from multisend transaction")
+
+    if not tx.new_contracts and len(params_list) or len(params_list) != len(tx.new_contracts):
+        raise RuntimeError("Deployed contracts count mismatch")
+
+    address: str
+    for address in tx.new_contracts:
+        contract = VestingEscrow.at(address)
+        recipient = contract.recipient()
+        try:
+            [params] = [p for p in params_list if p.recipient == recipient]
+        except ValueError as e:
+            raise ValueError(f"Recipient {recipient} not found in source") from e
+        _check_deployed_vesting(contract, params)
+        log.okay(f"{recipient=} vesting at {address=} checked")
+
+
+def _check_deployed_vesting(contract: Contract, params: VestingParams) -> None:
     """Compare the values returned by contract view functions with the values of VestingParams argument"""
 
     def require(field: str, expected):
@@ -188,7 +203,7 @@ def _test_factory_address(safe: Safe) -> str:
     )
     factory_address = VestingEscrowFactory.deploy(
         vesting,
-        "0xffffffffffffffffffffffffffffffffffffffff",
+        "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32",  # LDOs
         "0xffffffffffffffffffffffffffffffffffffffff",
         "0x0000000000000000000000000000000000000000",
         adapter,

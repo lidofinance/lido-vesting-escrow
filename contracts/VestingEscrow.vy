@@ -56,7 +56,7 @@ event ETHRecovered:
 
 
 recipient: public(address)
-token: public(address)
+token: public(ERC20)
 start_time: public(uint256)
 end_time: public(uint256)
 cliff_length: public(uint256)
@@ -107,13 +107,15 @@ def initialize(
     assert not self.initialized, "can only initialize once"
     self.initialized = True
 
-    self.token = token
+    self.token = ERC20(token)
     self.is_fully_revokable = is_fully_revokable
     self.start_time = start_time
     self.end_time = end_time
     self.cliff_length = cliff_length
 
-    self._safe_transfer_from(token, msg.sender, self, amount)
+    assert self.token.transferFrom(
+        msg.sender, self, amount, default_return_value=True
+    ), "funding failed"
 
     self.total_locked = amount
     self.recipient = recipient
@@ -146,7 +148,7 @@ def _total_vested_at(time: uint256) -> uint256:
 
 @internal
 @view
-def _unclaimed(time: uint256 = block.timestamp) -> uint256:
+def _unclaimed(time: uint256) -> uint256:
     if self.is_fully_revoked:
         return 0
     return self._total_vested_at(time) - self.total_claimed
@@ -194,7 +196,10 @@ def claim(
     claimable: uint256 = min(self._unclaimed(claim_period_end), amount)
     self.total_claimed += claimable
 
-    self._safe_transfer(self.token, beneficiary, claimable)
+    assert self.token.transfer(
+        beneficiary, claimable, default_return_value=True
+    ), "transfer failed"
+
     log Claim(self.recipient, beneficiary, claimable)
 
 
@@ -209,7 +214,10 @@ def revoke_unvested():
     revokable: uint256 = self._locked()
     self.disabled_at = block.timestamp
 
-    self._safe_transfer(self.token, self._owner(), revokable)
+    assert self.token.transfer(
+        self._owner(), revokable, default_return_value=True
+    ), "transfer failed"
+
     log UnvestedTokensRevoked(msg.sender, self.recipient, revokable)
 
 
@@ -228,7 +236,10 @@ def revoke_all():
     # NOTE: do not revoke extra tokens
     revokable: uint256 = self.total_locked - self.total_claimed
 
-    self._safe_transfer(self.token, self._owner(), revokable)
+    assert self.token.transfer(
+        self._owner(), revokable, default_return_value=True
+    ), "transfer failed"
+
     log VestingFullyRevoked(msg.sender, self.recipient, revokable)
 
 
@@ -239,13 +250,16 @@ def recover_erc20(token: address, amount: uint256):
     @param token Address of the ERC20 token to be recovered
     """
     recoverable: uint256 = amount
-    if token == self.token:
+    if token == self.token.address:
         available: uint256 = ERC20(token).balanceOf(self) - (
-            self._locked() + self._unclaimed()
+            self._locked()
+            + self._unclaimed(min(block.timestamp, self.disabled_at))
         )
         recoverable = min(recoverable, available)
     if recoverable > 0:
-        self._safe_transfer(token, self.recipient, recoverable)
+        assert ERC20(token).transfer(
+            self.recipient, recoverable, default_return_value=True
+        ), "transfer failed"
         log ERC20Recovered(token, recoverable)
 
 
@@ -266,6 +280,7 @@ def aragon_vote(abi_encoded_params: Bytes[1000]):
     @param abi_encoded_params Abi encoded data for call. Can be obtained from VotingAdapter.encode_aragon_vote_calldata
     """
     self._check_sender_is_recipient()
+    self._check_voting_adapter_is_set()
     raw_call(
         IVestingEscrowFactory(self.factory).voting_adapter(),
         _abi_encode(
@@ -283,6 +298,7 @@ def snapshot_set_delegate(abi_encoded_params: Bytes[1000]):
     @param abi_encoded_params Abi encoded data for call. Can be obtained from VotingAdapter.encode_snapshot_set_delegate_calldata
     """
     self._check_sender_is_recipient()
+    self._check_voting_adapter_is_set()
     raw_call(
         IVestingEscrowFactory(self.factory).voting_adapter(),
         _abi_encode(
@@ -300,6 +316,7 @@ def delegate(abi_encoded_params: Bytes[1000]):
     @param abi_encoded_params Abi encoded data for call. Can be obtained from VotingAdapter.encode_delegate_calldata
     """
     self._check_sender_is_recipient()
+    self._check_voting_adapter_is_set()
     raw_call(
         IVestingEscrowFactory(self.factory).voting_adapter(),
         _abi_encode(
@@ -338,46 +355,8 @@ def _check_sender_is_recipient():
 
 
 @internal
-def _safe_transfer(_token: address, _to: address, _value: uint256):
-    """
-    @notice
-        Used to solve Vyper SafeERC20 issue
-        https://github.com/vyperlang/vyper/issues/2202
-    """
-    _response: Bytes[32] = raw_call(
-        _token,
-        concat(
-            method_id("transfer(address,uint256)"),
-            convert(_to, bytes32),
-            convert(_value, bytes32),
-        ),
-        max_outsize=32,
-    )
-    if len(_response) > 0:
-        assert convert(_response, bool), "Transfer failed!"
-
-
-@internal
-def _safe_transfer_from(
-    _token: address, _from: address, _to: address, _value: uint256
-):
-    """
-    @notice
-        Used to solve Vyper SafeERC20 issue
-        https://github.com/vyperlang/vyper/issues/2202
-    """
-    _response: Bytes[32] = raw_call(
-        _token,
-        concat(
-            method_id("transferFrom(address,address,uint256)"),
-            convert(_from, bytes32),
-            convert(_to, bytes32),
-            convert(_value, bytes32),
-        ),
-        max_outsize=32,
-    )
-    if len(_response) > 0:
-        assert convert(_response, bool), "TransferFrom failed!"
+def _check_voting_adapter_is_set():
+    assert IVestingEscrowFactory(self.factory).voting_adapter() != empty(address), "voting adapter not set"
 
 
 @internal

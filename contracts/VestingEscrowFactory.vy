@@ -106,8 +106,12 @@ def deploy_vesting_contract(
     assert cliff_length <= vesting_duration, "incorrect vesting cliff"
     escrow: address = create_minimal_proxy_to(self.target)
 
-    self._safe_transfer_from(self.token, msg.sender, self, amount)
-    self._safe_approve(self.token, escrow, amount)
+    assert ERC20(self.token).transferFrom(
+        msg.sender, self, amount, default_return_value=True
+    ), "transferFrom deployer failed"
+    assert ERC20(self.token).approve(
+        escrow, amount, default_return_value=True
+    ), "approve to escrow failed"
 
     IVestingEscrow(escrow).initialize(
         self.token,
@@ -133,7 +137,9 @@ def recover_erc20(token: address, amount: uint256):
     @param token Address of the ERC20 token to be recovered
     """
     if amount != 0:
-        self._safe_transfer(token, self.owner, amount)
+        assert ERC20(token).transfer(
+            self.owner, amount, default_return_value=True
+        ), "transfer failed"
         log ERC20Recovered(token, amount)
 
 
@@ -189,69 +195,6 @@ def change_manager(manager: address):
 @internal
 def _check_sender_is_owner():
     assert msg.sender == self.owner, "msg.sender not owner"
-
-
-@internal
-def _safe_transfer(_token: address, _to: address, _value: uint256):
-    """
-    @notice
-        Used to solve Vyper SafeERC20 issue
-        https://github.com/vyperlang/vyper/issues/2202
-    """
-    _response: Bytes[32] = raw_call(
-        _token,
-        concat(
-            method_id("transfer(address,uint256)"),
-            convert(_to, bytes32),
-            convert(_value, bytes32),
-        ),
-        max_outsize=32,
-    )
-    if len(_response) > 0:
-        assert convert(_response, bool), "Transfer failed!"
-
-
-@internal
-def _safe_transfer_from(
-    _token: address, _from: address, _to: address, _value: uint256
-):
-    """
-    @notice
-        Used to solve Vyper SafeERC20 issue
-        https://github.com/vyperlang/vyper/issues/2202
-    """
-    _response: Bytes[32] = raw_call(
-        _token,
-        concat(
-            method_id("transferFrom(address,address,uint256)"),
-            convert(_from, bytes32),
-            convert(_to, bytes32),
-            convert(_value, bytes32),
-        ),
-        max_outsize=32,
-    )
-    if len(_response) > 0:
-        assert convert(_response, bool), "TransferFrom failed!"
-
-
-@internal
-def _safe_approve(_token: address, _to: address, _value: uint256):
-    """
-    @notice
-        Used to solve Vyper SafeERC20 issue
-        https://github.com/vyperlang/vyper/issues/2202
-    """
-    _response: Bytes[32] = raw_call(
-        _token,
-        concat(
-            method_id("approve(address,uint256)"),
-            convert(_to, bytes32),
-            convert(_value, bytes32),
-        ),
-        max_outsize=32,
-    )
-    if len(_response) > 0:
-        assert convert(_response, bool), "Approve failed!"
 
 
 @internal

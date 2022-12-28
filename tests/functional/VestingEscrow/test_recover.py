@@ -7,12 +7,25 @@ def token2(ERC20, owner):
     return ERC20.deploy("XYZ", "XYZ", 18, {"from": owner})
 
 
+@pytest.fixture
+def token_no_return(ERC20NoReturn, owner):
+    return ERC20NoReturn.deploy("XYZ", "XYZ", 18, {"from": owner})
+
+
 def test_recover_non_vested_token(deployed_vesting, token2, recipient, balance):
     token2._mint_for_testing(balance, {"from": recipient})
     token2.transfer(deployed_vesting, balance, {"from": recipient})
 
     deployed_vesting.recover_erc20(token2, balance, {"from": recipient})
     assert token2.balanceOf(recipient) == balance
+
+
+def test_recover_non_vested_token_with_bad_impl(deployed_vesting, token_no_return, recipient, balance):
+    token_no_return._mint_for_testing(balance, {"from": recipient})
+    token_no_return.transfer(deployed_vesting, balance, {"from": recipient})
+
+    deployed_vesting.recover_erc20(token_no_return, balance, {"from": recipient})
+    assert token_no_return.balanceOf(recipient) == balance
 
 
 def test_recover_locked_tokens(deployed_vesting, token, recipient, balance):

@@ -32,7 +32,7 @@ jobs:
           poetry install --no-root
 
       - name: Run Tests
-        run: poetry run brownie test tests/functional/ --gas --coverage --revert-tb
+        run: poetry run brownie test tests/functional/ --gas --coverage --revert-tb --disable-warnings
 
   integration:
     runs-on: ubuntu-latest
@@ -58,4 +58,4 @@ jobs:
           poetry install --no-root
 
       - name: Run Tests
-        run: poetry run brownie test tests/integration/ -s --revert-tb
+        run: poetry run brownie test tests/integration/ -s --revert-tb  --disable-warnings

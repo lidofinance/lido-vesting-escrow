@@ -105,17 +105,19 @@ After script finishes, all deployed metadata will be saved to file `./deployed-{
 
 Deploy script is stateful, so it safe to start several times. To deploy from scratch, simply delete the `./deployed-{NETWORK}.json` before running it.
 
-To deploy end user vestings contracts via multisig wallet use `build_multisig_tx` scripts which
+To deploy end user vestings contracts via multisig wallet use `multisig_tx build` script which
 effectively generates one-shot transaction to be executed by Gnosis Safe MultiSend contract.
 
 - Fill in vesting details into `input.csv` CSV file (use `input.csv.example`, as a reference).
 - Compute the file hash sum with the following command `sha256sum input.csv > input.csv.sum`. Notice
   `.sum` suffix of the file containing checksum.
-- Run script `brownie run --network mainnet-fork build_multisig_tx main input.csv` and follow the
+- Run script `brownie run --network mainnet-fork multisig_tx build input.csv` and follow the
   questions from the script. For testing purpose it's possible to use a VestingEscrowFactory
   deployed in runtime and any existing Gnosis Safe by providing any string as additional argument to
-  the script's invocation command, e.g. `brownie run --network mainnet-fork build_multisig_tx main
+  the script's invocation command, e.g. `brownie run --network mainnet-fork multisig_tx build
   input.csv test!`.
+- To test transaction as a signer use `brownie run --network mainnet-fork multisig_tx check 0xsafeTxHash input.csv`
+  command.
 
 
 ## Utility scripts

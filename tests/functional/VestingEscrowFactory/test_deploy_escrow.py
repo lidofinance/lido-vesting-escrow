@@ -31,6 +31,11 @@ def test_deploy(owner, recipient, vesting_factory, balance):
     assert tx.return_value == tx.new_contracts[0]
 
 
+def test_deploy_from_factory_with_invalid_token(owner, recipient, vesting_factory_with_invalid_token, balance):
+    with brownie.reverts(""):
+        vesting_factory_with_invalid_token.deploy_vesting_contract(balance, recipient, 86400 * 365, {"from": owner})
+
+
 @pytest.mark.usefixtures("initial_funding")
 def test_start_and_duration(VestingEscrow, owner, recipient, balance, chain, vesting_factory):
     start_time = chain.time() + 100

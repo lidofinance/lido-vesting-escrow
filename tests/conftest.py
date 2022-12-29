@@ -145,6 +145,23 @@ def vesting_factory(
         {"from": owner},
     )
 
+@pytest.fixture(scope="module")
+def vesting_factory_with_invalid_token(
+    VestingEscrowFactory,
+    owner,
+    vesting_target,
+    manager,
+    voting_adapter,
+    accounts,
+):
+    return VestingEscrowFactory.deploy(
+        vesting_target,
+        accounts[4],
+        owner,
+        manager,
+        voting_adapter,
+        {"from": owner},
+    )
 
 @pytest.fixture(
     scope="module",

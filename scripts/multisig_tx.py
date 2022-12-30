@@ -6,60 +6,81 @@ Usage:
 import csv
 import os
 from hashlib import sha256
-from typing import NamedTuple, TypedDict
+from typing import NamedTuple, Sequence, TypedDict
 
-from ape_safe import ApeSafe, Safe
-from brownie import Contract, VestingEscrow, VestingEscrowFactory, VotingAdapter  # type: ignore
+from ape_safe import ApeSafe, Safe, SafeTx
+from brownie import (
+    ERC20,  # type: ignore
+    Contract,
+    VestingEscrow,  # type: ignore
+    VestingEscrowFactory,  # type: ignore
+    VotingAdapter,  # type: ignore
+    chain,
+)
 from brownie.network.transaction import TransactionReceipt
+
 from utils import log
+from utils.helpers import chain_snapshot
+
+LDO_ADDRESS = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"
 
 
-def build(csv_filename: str, non_empty_for_testing=None):
+def build(csv_filename: str, non_empty_for_prod=None):
     """Build vesting contracts deployment tx by parameters defined in CSV file"""
-    is_testing = bool(non_empty_for_testing)
-    if is_testing:
-        log.warn("Using fake factory")
+    is_prod = bool(non_empty_for_prod)
+    if is_prod:
+        log.warn("SCRIPT RUNNED IN PRODUCTION ENV")
+        if not log.prompt_yes_no("ARE YOU SURE TO CONTINUE?"):
+            return log.warn("Script aborted")
 
     config = _read_envs()
     safe = ApeSafe(config["SAFE_ADDRESS"])
 
-    factory_address = _test_factory_address(safe) if non_empty_for_testing else config["FACTORY_ADDRESS"]
+    factory_address = config["FACTORY_ADDRESS"] if is_prod else _test_factory_address(safe)
     factory = VestingEscrowFactory.at(
         address=factory_address,
         owner=safe.address,
     )
 
-    log.info("Constructing multisend transaction")
-    raw_params_list = _read_checksumed_csv(csv_filename)
-    params_list = []
-    for raw_params in raw_params_list:
-        params = VestingParams.from_tuple(raw_params)
-        params_list.append(params)
-        tx = factory.deploy_vesting_contract(
-            params.amount,
-            params.recipient,
-            params.vesting_duration,
-            params.vesting_start,
-            params.cliff_length,
-            params.is_fully_revokable,
-            {"from": safe.address},
-        )
-    safe_tx = safe.multisend_from_receipts()
-    # do not reset chain in testing to keep the fake factory and other contracts intact
-    tx = safe.preview(safe_tx, reset=not is_testing)
-    _check_tx(tx, params_list)
+    log.info("Reading input file")
+    raw_params_list = _read_csv(csv_filename)
+    params_list = tuple(VestingParams.from_tuple(p) for p in raw_params_list)
 
-    if log.prompt_yes_no("sign with frame?"):
+    log.info("Checking multisig balance")
+    starting_balance = _ldo_balance(safe.address)
+    vestings_sum = sum(p.amount for p in params_list)
+    assert starting_balance >= vestings_sum, f"Not enough LDOs for vesting, need at least {vestings_sum / 10 ** 18}"
+
+    log.info("Constructing multisend transaction")
+    with chain_snapshot():
+        for params in params_list:
+            factory.deploy_vesting_contract(
+                params.amount,
+                params.recipient,
+                params.vesting_duration,
+                params.vesting_start,
+                params.cliff_length,
+                params.is_fully_revokable,
+                {"from": safe.address},
+            )
+        safe_tx = safe.multisend_from_receipts()
+
+    _preview_and_check_tx(safe, safe_tx, params_list, is_prod)
+
+    if log.prompt_yes_no("Sign with frame?"):
         safe.sign_with_frame(safe_tx)
+        log.info("Transaction signed")
     else:
-        log.error("transaction signature required!")
+        log.error("Signature required")
         return
 
-    if log.prompt_yes_no("propose transaction?"):
-        if is_testing:
-            if not log.prompt_yes_no("testing mode is enabled, are you sure to continue?"):
-                return
+    if not is_prod:
+        log.warn("Testing flow is finished")
+        return
+
+    if log.prompt_yes_no("Post transaction?"):
         safe.post_transaction(safe_tx)
+        log.okay("Done")
 
 
 def check(safe_tx_hash: str, csv_filename: str) -> None:
@@ -67,13 +88,36 @@ def check(safe_tx_hash: str, csv_filename: str) -> None:
     config = _read_envs()
     safe = ApeSafe(config["SAFE_ADDRESS"])
 
-    params_list = [VestingParams.from_tuple(p) for p in _read_checksumed_csv(csv_filename)]
-    safe_tx = safe.get_safe_tx_by_safe_tx_hash(safe_tx_hash)
-    tx = safe.preview(safe_tx)
-    _check_tx(tx, params_list)
+    log.info("Reading input file")
+    raw_params_list = _read_csv(csv_filename)
+    params_list = [VestingParams.from_tuple(p) for p in raw_params_list]
 
-    if log.prompt_yes_no("sign transaction?"):
+    log.info("Retrieving transaction from Gnosis Safe")
+    safe_tx = safe.get_safe_tx_by_safe_tx_hash(safe_tx_hash)
+    _preview_and_check_tx(safe, safe_tx, params_list)
+
+    if log.prompt_yes_no("Sign transaction?"):
         safe.sign_with_frame(safe_tx)
+
+
+def _preview_and_check_tx(safe: ApeSafe, safe_tx: SafeTx, params_list: Sequence["VestingParams"], is_prod=False):
+    vestings_sum = sum(p.amount for p in params_list)
+    starting_balance = _ldo_balance(safe.address)
+
+    log.info("Preview transaction")
+    # do not reset chain in testing to keep the fake factory and other contracts intact
+    tx = safe.preview(safe_tx, reset=is_prod)
+
+    log.info("Check LDO balance change")
+    ending_balance = _ldo_balance(safe.address)
+    assert starting_balance - ending_balance == vestings_sum, "LDOs difference after deploy mismatch"
+
+    # take some time to inspect the output before to continue
+    if not log.prompt_yes_no("Continue?"):
+        return log.warn("Script aborted")
+
+    log.info("Check individual vestings")
+    _check_tx(tx, params_list)
 
 
 class Config(TypedDict):
@@ -98,9 +142,12 @@ def _read_envs() -> Config:
     return Config(**config)
 
 
-def _read_checksumed_csv(filename: str) -> list[tuple]:
+def _read_csv(filename: str) -> list[tuple]:
     """Read checksum-protected CSV file"""
-    _validate_file_sha256(filename)
+    chksum = _get_file_sha256(filename)
+    if not log.prompt_yes_no(f"File's checksum: {chksum}, is it correct?"):
+        log.warn("Aborted!")
+        exit(1)
 
     with open(filename, encoding="utf-8") as f:
         reader = csv.reader(f, delimiter=",")
@@ -108,23 +155,13 @@ def _read_checksumed_csv(filename: str) -> list[tuple]:
         return [tuple(row) for row in reader]
 
 
-def _validate_file_sha256(filename: str) -> None:
+def _get_file_sha256(filename: str) -> str:
     """Read filename checksum from filename.sum file and compare with the actual one"""
     if not os.path.exists(filename):
         raise AssertionError(f"{filename} does not exist")
 
-    checksum_filename = filename + ".sum"
-    if not os.path.exists(checksum_filename):
-        raise AssertionError(f"{checksum_filename} does not exist")
-
-    with open(checksum_filename, encoding="utf-8") as f:
-        checksum = f.readline().split()[0].strip()
-
     with open(filename, mode="rb") as f:
-        calculated_checksum = sha256(f.read()).hexdigest()
-
-    if calculated_checksum != checksum:
-        raise AssertionError(f"Checksum mismatch, read: {checksum}, actual: {calculated_checksum}")
+        return sha256(f.read()).hexdigest()
 
 
 class VestingParams(NamedTuple):
@@ -152,7 +189,13 @@ class VestingParams(NamedTuple):
         )
 
 
-def _check_tx(tx: TransactionReceipt, params_list: list[VestingParams]) -> None:
+def _ldo_balance(account) -> int:
+    """Get balance of account in LDOs"""
+    ldo = ERC20.at(LDO_ADDRESS)
+    return ldo.balanceOf(account)
+
+
+def _check_tx(tx: TransactionReceipt, params_list: Sequence[VestingParams]) -> None:
     """Check contracts created by the transaction against the parsed vesting parameters"""
     log.info("Validate contracts from multisend transaction")
 
@@ -171,21 +214,55 @@ def _check_tx(tx: TransactionReceipt, params_list: list[VestingParams]) -> None:
         log.okay(f"{recipient=} vesting at {address=} checked")
 
 
-def _check_deployed_vesting(contract: Contract, params: VestingParams) -> None:
+def _check_deployed_vesting(contract: VestingEscrow, params: VestingParams) -> None:
     """Compare the values returned by contract view functions with the values of VestingParams argument"""
 
-    def require(field: str, expected):
-        result = getattr(contract, field)()
-        if result != expected:
-            raise AssertionError(f"{contract}.{field} = {result}, expected: {expected}")
+    def assert_field_value(field: str, expected):
+        actual = getattr(contract, field)()
+        assert actual == expected, f"{contract}.{field} = {actual}, expected: {expected}"
 
-    require("total_locked", params.amount)
-    require("recipient", params.recipient)
-    require("start_time", params.vesting_start)
-    require("end_time", params.vesting_start + params.vesting_duration)
-    require("is_fully_revokable", params.is_fully_revokable)
-    require("is_fully_revoked", False)
-    require("initialized", True)
+    assert_field_value("total_locked", params.amount)
+    assert_field_value("recipient", params.recipient)
+    assert_field_value("start_time", params.vesting_start)
+    assert_field_value("end_time", params.vesting_start + params.vesting_duration)
+    assert_field_value("is_fully_revokable", params.is_fully_revokable)
+    assert_field_value("is_fully_revoked", False)
+    assert_field_value("initialized", True)
+
+    assert _ldo_balance(contract) == params.amount, "Vesting's LDO balance mismatch"
+    _test_claim(contract, params)
+
+
+def _test_claim(vesting: VestingEscrow, params: VestingParams) -> None:
+    def assert_claimable():
+        # TODO: understand why it fails
+        # assert vesting.unclaimed() > 0, "Nothing to claim"
+        recipient = params.recipient
+        s = _ldo_balance(recipient)
+        assert vesting.claim({"from": recipient})
+        e = _ldo_balance(recipient)
+        assert e > s, "No balance change after claim()"
+
+    with chain_snapshot():
+        # 1. before start
+        if params.vesting_start > chain.time():
+            assert vesting.unclaimed() == 0
+
+    with chain_snapshot():
+        cliff_end = params.vesting_start + params.cliff_length
+        if cliff_end > chain.time():
+            # 2. before cliff
+            assert vesting.unclaimed() == 0
+            chain.sleep(cliff_end - chain.time() + 5)
+        # 3. after cliff
+        assert_claimable()
+
+    with chain_snapshot():
+        # 4. after end
+        vesting_end = params.vesting_start + params.vesting_duration
+        if vesting_end > chain.time():
+            chain.sleep(vesting_end - chain.time() + 5)
+        assert_claimable()
 
 
 def _test_factory_address(safe: Safe) -> str:
@@ -203,14 +280,14 @@ def _test_factory_address(safe: Safe) -> str:
     )
     factory_address = VestingEscrowFactory.deploy(
         vesting,
-        "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32",  # LDOs
+        LDO_ADDRESS,
         "0xffffffffffffffffffffffffffffffffffffffff",
         "0x0000000000000000000000000000000000000000",
         adapter,
         {"from": "0x1111111111111111111111111111111111111111"},
     )
-    ldo.transferFrom(lido_treasury, safe.address, 100_500, {"from": lido_treasury})
-    ldo.approve(factory_address, 100_500, {"from": safe.address})
+    ldo.transfer(safe.address, 100_000 * 10**18, {"from": lido_treasury})
+    ldo.approve(factory_address, 100_000 * 10**18, {"from": safe.address})
     history.clear()  # to avoid these transactions to occur in multisend
 
     return factory_address

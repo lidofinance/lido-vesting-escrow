@@ -1,6 +1,6 @@
 """
 Usage:
-    brownie run --network mainnet-fork multisig_tx build input.csv [test!]
+    brownie run --network mainnet-fork multisig_tx build input.csv [prod!]
     brownie run --network mainnet-fork multisig_tx check 0xsafeTxHash input.csv
 """
 import csv
@@ -36,7 +36,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
     config = _read_envs()
     safe = ApeSafe(config["SAFE_ADDRESS"])
 
-    factory_address = config["FACTORY_ADDRESS"] if is_prod else _test_factory_address(safe)
+    factory_address = config["FACTORY_ADDRESS"] if is_prod else _fake_factory_address(safe)
     factory = VestingEscrowFactory.at(
         address=factory_address,
         owner=safe.address,
@@ -112,7 +112,7 @@ def _preview_and_check_tx(safe: ApeSafe, safe_tx: SafeTx, params_list: Sequence[
     ending_balance = _ldo_balance(safe.address)
     assert starting_balance - ending_balance == vestings_sum, "LDOs difference after deploy mismatch"
 
-    # take some time to inspect the output before to continue
+    # give some time to inspect the output before to continue
     if not log.prompt_yes_no("Continue?"):
         return log.warn("Script aborted")
 
@@ -157,8 +157,7 @@ def _read_csv(filename: str) -> list[tuple]:
 
 def _get_file_sha256(filename: str) -> str:
     """Read filename checksum from filename.sum file and compare with the actual one"""
-    if not os.path.exists(filename):
-        raise AssertionError(f"{filename} does not exist")
+    assert os.path.exists(filename), f"{filename} does not exist"
 
     with open(filename, mode="rb") as f:
         return sha256(f.read()).hexdigest()
@@ -199,7 +198,8 @@ def _check_tx(tx: TransactionReceipt, params_list: Sequence[VestingParams]) -> N
     """Check contracts created by the transaction against the parsed vesting parameters"""
     log.info("Validate contracts from multisend transaction")
 
-    if not tx.new_contracts and len(params_list) or len(params_list) != len(tx.new_contracts):
+    new_contracts_count = len(tx.new_contracts) if tx.new_contracts else 0
+    if len(params_list) != new_contracts_count:
         raise RuntimeError("Deployed contracts count mismatch")
 
     address: str
@@ -234,38 +234,39 @@ def _check_deployed_vesting(contract: VestingEscrow, params: VestingParams) -> N
 
 
 def _test_claim(vesting: VestingEscrow, params: VestingParams) -> None:
-    def assert_claimable():
-        # TODO: understand why it fails
-        # assert vesting.unclaimed() > 0, "Nothing to claim"
+    def assert_claimable(step: str):
+        assert vesting.unclaimed() > 0, f"Nothing to claim after {step}"
         recipient = params.recipient
         s = _ldo_balance(recipient)
         assert vesting.claim({"from": recipient})
         e = _ldo_balance(recipient)
-        assert e > s, "No balance change after claim()"
+        assert e > s, f"No balance change on claim() after {step}"
 
     with chain_snapshot():
         # 1. before start
         if params.vesting_start > chain.time():
-            assert vesting.unclaimed() == 0
+            assert vesting.unclaimed() == 0, "Unexpected claimable before start"
 
     with chain_snapshot():
         cliff_end = params.vesting_start + params.cliff_length
-        if cliff_end > chain.time():
+        if cliff_end >= chain.time():
             # 2. before cliff
-            assert vesting.unclaimed() == 0
-            chain.sleep(cliff_end - chain.time() + 5)
+            assert vesting.unclaimed() == 0, "Unexpected claimable before cliff"
+            chain.sleep(cliff_end - chain.time() + 1)
+            chain.mine()
         # 3. after cliff
-        assert_claimable()
+        assert_claimable(step="cliff")
 
     with chain_snapshot():
         # 4. after end
         vesting_end = params.vesting_start + params.vesting_duration
-        if vesting_end > chain.time():
-            chain.sleep(vesting_end - chain.time() + 5)
-        assert_claimable()
+        if vesting_end >= chain.time():
+            chain.sleep(vesting_end - chain.time() + 1)
+            chain.mine()
+        assert_claimable(step="end")
 
 
-def _test_factory_address(safe: Safe) -> str:
+def _fake_factory_address(safe: Safe) -> str:
     from brownie import history
 
     lido_treasury = "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c"  # some address with LDOs

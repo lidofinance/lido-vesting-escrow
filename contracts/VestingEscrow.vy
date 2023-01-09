@@ -148,10 +148,11 @@ def _total_vested_at(time: uint256) -> uint256:
 
 @internal
 @view
-def _unclaimed(time: uint256) -> uint256:
+def _unclaimed(time: uint256 = block.timestamp) -> uint256:
     if self.is_fully_revoked:
         return 0
-    return self._total_vested_at(time) - self.total_claimed
+    claim_time: uint256 = min(time, self.disabled_at)
+    return self._total_vested_at(claim_time) - self.total_claimed
 
 
 @external
@@ -161,7 +162,7 @@ def unclaimed() -> uint256:
     @notice Get the number of unclaimed, vested tokens for recipient
     """
     # NOTE: if `revoke_unvested` is activated, limit by the activation timestamp
-    return self._unclaimed(min(block.timestamp, self.disabled_at))
+    return self._unclaimed()
 
 
 @internal
@@ -178,7 +179,7 @@ def locked() -> uint256:
     """
     @notice Get the number of locked tokens for recipient
     """
-    return self._locked(min(block.timestamp, self.disabled_at))
+    return self._locked()
 
 
 @external
@@ -192,8 +193,7 @@ def claim(
     """
     self._check_sender_is_recipient()
 
-    claim_period_end: uint256 = min(block.timestamp, self.disabled_at)
-    claimable: uint256 = min(self._unclaimed(claim_period_end), amount)
+    claimable: uint256 = min(self._unclaimed(), amount)
     self.total_claimed += claimable
 
     assert self.token.transfer(
@@ -252,8 +252,7 @@ def recover_erc20(token: address, amount: uint256):
     recoverable: uint256 = amount
     if token == self.token.address:
         available: uint256 = ERC20(token).balanceOf(self) - (
-            self._locked()
-            + self._unclaimed(min(block.timestamp, self.disabled_at))
+            self._locked() + self._unclaimed()
         )
         recoverable = min(recoverable, available)
     if recoverable > 0:
@@ -356,7 +355,9 @@ def _check_sender_is_recipient():
 
 @internal
 def _check_voting_adapter_is_set():
-    assert IVestingEscrowFactory(self.factory).voting_adapter() != empty(address), "voting adapter not set"
+    assert IVestingEscrowFactory(self.factory).voting_adapter() != empty(
+        address
+    ), "voting adapter not set"
 
 
 @internal

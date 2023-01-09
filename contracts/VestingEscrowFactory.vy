@@ -66,7 +66,7 @@ def __init__(
 ):
     """
     @notice Contract constructor
-    @dev Prior to deployment you must deploy one copy of `VestingEscrowSimple` and `VestingEscrowFullyRevokable` which
+    @dev Prior to deployment you must deploy one copy of `VestingEscrow` and `VestingEscrowFullyRevokable` which
          are used as a library for vesting contracts deployed by this factory
     @param target `VestingEscrow` contract address
     @param token Address of the ERC20 token being distributed using escrows

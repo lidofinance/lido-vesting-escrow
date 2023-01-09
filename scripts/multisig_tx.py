@@ -31,10 +31,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
             log.warn("Script aborted")
             return
 
-    if network.show_active() != "mainnet-fork":
-        log.error("Script requires mainnet-fork network")
-        return
-
+    _assert_mainnet_fork()
     config = _read_envs()
 
     log.info("Reading input file")
@@ -88,10 +85,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
 
 def check(safe_tx_hash: str, csv_filename: str) -> None:
     """Check the given safeTxHash against the given CSV"""
-    if network.show_active() != "mainnet-fork":
-        log.error("Script requires mainnet-fork network")
-        return
-
+    _assert_mainnet_fork()
     config = _read_envs()
 
     log.info("Reading input file")
@@ -239,6 +233,11 @@ class VestingParams(NamedTuple):
             tupl[5] == "1",
         )
 
+def _assert_mainnet_fork():
+    """Check that scripts is running on mainnet-fork network"""
+    if network.show_active() != "mainnet-fork":
+        log.error("Script requires mainnet-fork network")
+        exit(1)
 
 def _ldo_balance(account) -> int:
     """Get balance of account in LDOs"""

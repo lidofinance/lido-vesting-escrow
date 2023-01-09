@@ -104,6 +104,15 @@ def check(safe_tx_hash: str, csv_filename: str) -> None:
     safe_tx = safe.get_safe_tx_by_safe_tx_hash(safe_tx_hash)
     _preview_and_check_tx(safe, safe_tx, params_list, is_prod=True)
 
+
+def sign(safe_tx_hash: str) -> None:
+    """Sign the given transaction"""
+    config = _read_envs()
+    safe = ApeSafe(config["SAFE_ADDRESS"])
+
+    log.info("Retrieving transaction from Gnosis Safe")
+    safe_tx = safe.get_safe_tx_by_safe_tx_hash(safe_tx_hash)
+
     if log.prompt_yes_no("Sign transaction?"):
         signature = safe.sign_with_frame(safe_tx)
         if log.prompt_yes_no("Post signature?"):

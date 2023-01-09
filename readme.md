@@ -117,5 +117,6 @@ effectively generates one-shot transaction to be executed by Gnosis Safe MultiSe
   Check the output of the scripts and run the same command but with an additional arg as follows to
   be able to propose the transaction to Gnosis backend: `brownie run multisig_tx build input.csv
   prod!`.
-- To test transaction as a signer and send to Gnosis backend use the following command `brownie run
-  multisig_tx check 0xsafeTxHash input.csv`.
+- To test transaction as a signer use the following command `brownie run multisig_tx check
+  0xsafeTxHash input.csv`.
+- To sign the transaction use `brownie run multisig_tx sign 0xsafeTxHash`

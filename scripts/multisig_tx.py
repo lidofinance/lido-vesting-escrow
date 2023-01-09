@@ -97,7 +97,9 @@ def check(safe_tx_hash: str, csv_filename: str) -> None:
     _preview_and_check_tx(safe, safe_tx, params_list, is_prod=True)
 
     if log.prompt_yes_no("Sign transaction?"):
-        safe.sign_with_frame(safe_tx)
+        signature = safe.sign_with_frame(safe_tx)
+        if log.prompt_yes_no("Post signature?"):
+            safe.post_signature(safe_tx, signature)
 
 
 def _preview_and_check_tx(safe: ApeSafe, safe_tx: SafeTx, params_list: Sequence["VestingParams"], is_prod=False):

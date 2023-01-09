@@ -94,7 +94,7 @@ def check(safe_tx_hash: str, csv_filename: str) -> None:
 
     log.info("Retrieving transaction from Gnosis Safe")
     safe_tx = safe.get_safe_tx_by_safe_tx_hash(safe_tx_hash)
-    _preview_and_check_tx(safe, safe_tx, params_list)
+    _preview_and_check_tx(safe, safe_tx, params_list, is_prod=True)
 
     if log.prompt_yes_no("Sign transaction?"):
         safe.sign_with_frame(safe_tx)

@@ -1,7 +1,7 @@
 """
 Usage:
-    brownie run --network mainnet-fork multisig_tx build input.csv [prod!]
-    brownie run --network mainnet-fork multisig_tx check 0xsafeTxHash input.csv
+    brownie run multisig_tx build input.csv [prod!]
+    brownie run multisig_tx check 0xsafeTxHash input.csv
 """
 import csv
 import os
@@ -9,14 +9,11 @@ from hashlib import sha256
 from typing import NamedTuple, Sequence, TypedDict
 
 from ape_safe import ApeSafe, Safe, SafeTx
-from brownie import (
-    ERC20,  # type: ignore
-    Contract,
-    VestingEscrow,  # type: ignore
-    VestingEscrowFactory,  # type: ignore
-    VotingAdapter,  # type: ignore
-    chain,
-)
+from brownie import ERC20  # type: ignore
+from brownie import VestingEscrow  # type: ignore
+from brownie import VestingEscrowFactory  # type: ignore
+from brownie import VotingAdapter  # type: ignore
+from brownie import Contract, chain, network
 from brownie.network.transaction import TransactionReceipt
 
 from utils import log
@@ -31,9 +28,19 @@ def build(csv_filename: str, non_empty_for_prod=None):
     if is_prod:
         log.warn("SCRIPT RUNNED IN PRODUCTION ENV")
         if not log.prompt_yes_no("ARE YOU SURE TO CONTINUE?"):
-            return log.warn("Script aborted")
+            log.warn("Script aborted")
+            return
+
+    if network.show_active() != "mainnet-fork":
+        log.error("Script requires mainnet-fork network")
+        return
 
     config = _read_envs()
+
+    log.info("Reading input file")
+    raw_params_list = _read_csv(csv_filename)
+    params_list = tuple(VestingParams.from_tuple(p) for p in raw_params_list)
+
     safe = ApeSafe(config["SAFE_ADDRESS"])
 
     factory_address = config["FACTORY_ADDRESS"] if is_prod else _fake_factory_address(safe)
@@ -41,10 +48,6 @@ def build(csv_filename: str, non_empty_for_prod=None):
         address=factory_address,
         owner=safe.address,
     )
-
-    log.info("Reading input file")
-    raw_params_list = _read_csv(csv_filename)
-    params_list = tuple(VestingParams.from_tuple(p) for p in raw_params_list)
 
     log.info("Checking multisig balance")
     starting_balance = _ldo_balance(safe.address)
@@ -85,12 +88,17 @@ def build(csv_filename: str, non_empty_for_prod=None):
 
 def check(safe_tx_hash: str, csv_filename: str) -> None:
     """Check the given safeTxHash against the given CSV"""
+    if network.show_active() != "mainnet-fork":
+        log.error("Script requires mainnet-fork network")
+        return
+
     config = _read_envs()
-    safe = ApeSafe(config["SAFE_ADDRESS"])
 
     log.info("Reading input file")
     raw_params_list = _read_csv(csv_filename)
     params_list = [VestingParams.from_tuple(p) for p in raw_params_list]
+
+    safe = ApeSafe(config["SAFE_ADDRESS"])
 
     log.info("Retrieving transaction from Gnosis Safe")
     safe_tx = safe.get_safe_tx_by_safe_tx_hash(safe_tx_hash)

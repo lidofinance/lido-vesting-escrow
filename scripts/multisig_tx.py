@@ -8,7 +8,7 @@ import os
 from hashlib import sha256
 from typing import NamedTuple, Sequence, TypedDict
 
-from ape_safe import ApeSafe, Safe, SafeTx
+from ape_safe import ApeSafe, SafeTx
 from brownie import ERC20  # type: ignore
 from brownie import VestingEscrow  # type: ignore
 from brownie import VestingEscrowFactory  # type: ignore
@@ -73,7 +73,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
     if log.prompt_yes_no("Sign with frame?"):
         safe.sign_with_frame(safe_tx)
         log.info("Transaction signed")
-    else:
+    elif is_prod:
         log.error("Signature required")
         return
 

@@ -43,7 +43,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
 
     safe = ApeSafe(config["SAFE_ADDRESS"])
 
-    factory_address = config["FACTORY_ADDRESS"] if is_prod else _fake_factory_address(safe)
+    factory_address = config["FACTORY_ADDRESS"]
     factory = VestingEscrowFactory.at(
         address=factory_address,
         owner=safe.address,
@@ -108,6 +108,39 @@ def check(safe_tx_hash: str, csv_filename: str) -> None:
         signature = safe.sign_with_frame(safe_tx)
         if log.prompt_yes_no("Post signature?"):
             safe.post_signature(safe_tx, signature)
+
+
+def fake_factory() -> None:
+    """Use to deploy factory for testing purpose"""
+    from brownie import history
+
+    config = _read_envs()
+    safe = ApeSafe(config["SAFE_ADDRESS"])
+
+    lido_treasury = "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c"  # some address with LDOs
+    ldo = Contract.from_explorer("0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32")
+    vesting = VestingEscrow.deploy({"from": safe.address})
+    adapter = VotingAdapter.deploy(
+        "0xffffffffffffffffffffffffffffffffffffffff",
+        "0xffffffffffffffffffffffffffffffffffffffff",
+        "0xffffffffffffffffffffffffffffffffffffffff",
+        "0xffffffffffffffffffffffffffffffffffffffff",
+        {"from": "0x1111111111111111111111111111111111111111"},
+    )
+    factory = VestingEscrowFactory.deploy(
+        vesting,
+        LDO_ADDRESS,
+        "0xffffffffffffffffffffffffffffffffffffffff",
+        "0x0000000000000000000000000000000000000000",
+        adapter,
+        {"from": "0x1111111111111111111111111111111111111111"},
+    )
+    ldo.transfer(safe.address, 100_000 * 10**18, {"from": lido_treasury})
+    ldo.approve(factory, 100_000 * 10**18, {"from": safe.address})
+    history.clear()  # to avoid these transactions to occur in multisend
+
+    log.info(f"{factory.address=}")
+    input("Press ENTER to exit...")
 
 
 def _preview_and_check_tx(safe: ApeSafe, safe_tx: SafeTx, params_list: Sequence["VestingParams"], is_prod=False):
@@ -274,31 +307,3 @@ def _test_claim(vesting: VestingEscrow, params: VestingParams) -> None:
             chain.sleep(vesting_end - chain.time() + 1)
             chain.mine()
         assert_claimable(step="end")
-
-
-def _fake_factory_address(safe: Safe) -> str:
-    from brownie import history
-
-    lido_treasury = "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c"  # some address with LDOs
-    ldo = Contract.from_explorer("0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32")
-    vesting = VestingEscrow.deploy({"from": safe.address})
-    adapter = VotingAdapter.deploy(
-        "0xffffffffffffffffffffffffffffffffffffffff",
-        "0xffffffffffffffffffffffffffffffffffffffff",
-        "0xffffffffffffffffffffffffffffffffffffffff",
-        "0xffffffffffffffffffffffffffffffffffffffff",
-        {"from": "0x1111111111111111111111111111111111111111"},
-    )
-    factory_address = VestingEscrowFactory.deploy(
-        vesting,
-        LDO_ADDRESS,
-        "0xffffffffffffffffffffffffffffffffffffffff",
-        "0x0000000000000000000000000000000000000000",
-        adapter,
-        {"from": "0x1111111111111111111111111111111111111111"},
-    )
-    ldo.transfer(safe.address, 100_000 * 10**18, {"from": lido_treasury})
-    ldo.approve(factory_address, 100_000 * 10**18, {"from": safe.address})
-    history.clear()  # to avoid these transactions to occur in multisend
-
-    return factory_address

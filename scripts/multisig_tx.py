@@ -27,7 +27,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
     is_prod = bool(non_empty_for_prod)
     if is_prod:
         log.warn("SCRIPT RUNNED IN PRODUCTION ENV")
-        if not log.prompt_yes_no("ARE YOU SURE TO CONTINUE?"):
+        if not log.prompt_yes_no("ARE YOU SURE YOU WANT TO CONTINUE?"):
             log.warn("Script aborted")
             return
 
@@ -233,11 +233,13 @@ class VestingParams(NamedTuple):
             tupl[5] == "1",
         )
 
+
 def _assert_mainnet_fork():
     """Check that scripts is running on mainnet-fork network"""
     if network.show_active() != "mainnet-fork":
         log.error("Script requires mainnet-fork network")
         exit(1)
+
 
 def _ldo_balance(account) -> int:
     """Get balance of account in LDOs"""
@@ -251,7 +253,9 @@ def _check_tx(tx: TransactionReceipt, params_list: Sequence[VestingParams]) -> N
 
     new_contracts_count = len(tx.new_contracts) if tx.new_contracts else 0
     if len(params_list) != new_contracts_count:
-        raise RuntimeError("Deployed contracts count mismatch")
+        raise RuntimeError(
+            f"Deployed contracts count mismatch. Expected: {len(params_list)}, actual: {new_contracts_count}"
+        )
 
     address: str
     for address in tx.new_contracts:
@@ -260,7 +264,7 @@ def _check_tx(tx: TransactionReceipt, params_list: Sequence[VestingParams]) -> N
         try:
             [params] = [p for p in params_list if p.recipient == recipient]
         except ValueError as e:
-            raise ValueError(f"Recipient {recipient} not found in source") from e
+            raise ValueError(f"Recipient {recipient} for {address=} was not found in source") from e
         _check_deployed_vesting(contract, params)
         log.okay(f"{recipient=} vesting at {address=} checked")
 

@@ -109,27 +109,13 @@ To deploy end user vestings contracts via multisig wallet use `multisig_tx build
 effectively generates one-shot transaction to be executed by Gnosis Safe MultiSend contract.
 
 - Fill in vesting details into `input.csv` CSV file (use `input.csv.example`, as a reference).
-- Compute the file hash sum with the following command `sha256sum input.csv > input.csv.sum`. Notice
-  `.sum` suffix of the file containing checksum.
-- Run script `brownie run --network mainnet-fork multisig_tx build input.csv` and follow the
-  questions from the script. For testing purpose it's possible to use a VestingEscrowFactory
-  deployed in runtime and any existing Gnosis Safe by providing any string as additional argument to
-  the script's invocation command, e.g. `brownie run --network mainnet-fork multisig_tx build
-  input.csv test!`.
-- To test transaction as a signer use `brownie run --network mainnet-fork multisig_tx check 0xsafeTxHash input.csv`
-  command.
-
-
-## Utility scripts
-
-To work with delegates of a Gnosis Safe you can use `safe_delegates.py` script.
-
-Example usage:
-```bash
-# list delegates
-python -m scripts.safe_delegates list
-# add a delegate
-python -m scripts.safe_delegates add address label
-# remove a delegate
-python -m scripts.safe_delegates remove address
-```
+- Compute the file hash sum with the following command `sha256sum input.csv` to share with the other
+  signers later.
+- For testing purpose it's possible to use a `VestingEscrowFactory` deployed in runtime and any
+  existing Gnosis Safe by using the following command: `brownie run multisig_tx fake_factory`.
+- Run script `brownie run multisig_tx build input.csv` and follow the questions from the script.
+  Check the output of the scripts and run the same command but with an additional arg as follows to
+  be able to propose the transaction to Gnosis backend: `brownie run multisig_tx build input.csv
+  prod!`.
+- To test transaction as a signer and send to Gnosis backend use the following command `brownie run
+  multisig_tx check 0xsafeTxHash input.csv`.

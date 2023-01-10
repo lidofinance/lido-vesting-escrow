@@ -15,6 +15,8 @@ from brownie import VestingEscrowFactory  # type: ignore
 from brownie import VotingAdapter  # type: ignore
 from brownie import Contract, chain, network
 from brownie.network.transaction import TransactionReceipt
+from gnosis.safe.signatures import signature_split, signature_to_bytes
+from web3._utils.encoding import to_json
 
 from utils import log
 from utils.helpers import chain_snapshot
@@ -69,11 +71,13 @@ def build(csv_filename: str, non_empty_for_prod=None):
 
     if log.prompt_yes_no("Sign with frame?"):
         safe.sign_with_frame(safe_tx)
-        log.info("Transaction signed")
+    elif log.prompt_yes_no("Sign manually?"):
+        _sign_safe_tx_manually(safe_tx)
     elif is_prod:
         log.error("Signature required")
         return
 
+    log.info("Transaction signed")
     if not is_prod:
         log.warn("Testing flow is finished")
         return
@@ -239,6 +243,19 @@ def _assert_mainnet_fork():
     if network.show_active() != "mainnet-fork":
         log.error("Script requires mainnet-fork network")
         exit(1)
+
+
+def _sign_safe_tx_manually(safe_tx: SafeTx) -> None:
+    """Draft of manual signing"""
+    log.warn("Manual signing! Use on your own risk!")
+    log.info("Sign the following EIP-712 message")
+    msg = to_json(safe_tx.eip712_structured_data)
+    log.info(msg)
+    signature = input("Signature > ")
+    v, r, s = signature_split(signature)
+    if v in {0, 1}:
+        v += 27
+    safe_tx.signatures = signature_to_bytes(v, r, s)
 
 
 def _ldo_balance(account) -> int:

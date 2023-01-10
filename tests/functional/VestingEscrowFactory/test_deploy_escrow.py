@@ -94,7 +94,7 @@ def test_init_vars(deployed_vesting, recipient, balance, token, start_time, end_
     assert deployed_vesting.start_time() == start_time
     assert deployed_vesting.end_time() == end_time
     assert deployed_vesting.total_locked() == balance
-    assert deployed_vesting.initialized() == True
+    assert deployed_vesting.initialized() is True
 
 
 def test_cannot_call_init(

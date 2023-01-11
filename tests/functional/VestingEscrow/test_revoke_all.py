@@ -37,7 +37,7 @@ def test_revoke_all_before_start_time(deployed_vesting, token, owner, recipient,
     assert token.balanceOf(owner) == balance
 
 
-def test_claim_revoked(
+def test_claim_after_revoke_all(
     deployed_vesting, token, owner, recipient, chain, start_time, end_time, sleep_time, balance
 ):
     chain.sleep(start_time - chain.time() + sleep_time)
@@ -50,7 +50,7 @@ def test_claim_revoked(
     assert token.balanceOf(owner) == balance
 
 
-def test_revoke_all_partially_claimed(
+def test_revoke_all_after_partial_claim(
     deployed_vesting, token, owner, recipient, chain, start_time, end_time, sleep_time, balance
 ):
     chain.sleep(start_time - chain.time() + sleep_time)

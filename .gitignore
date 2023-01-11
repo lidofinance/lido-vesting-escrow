@@ -5,3 +5,6 @@ __pycache__
 build/
 reports/
 deployed-development.json
+.direnv
+venv
+node_modules/

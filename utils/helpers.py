@@ -1,6 +1,7 @@
 import os
+from contextlib import contextmanager
 
-from brownie import accounts, network
+from brownie import accounts, chain, network
 
 import utils.log as log
 from utils.env import get_env
@@ -44,3 +45,12 @@ def proceedPrompt():
 def pprint_map(data):
     for k, v in data.items():
         log.note(k, v)
+
+
+@contextmanager
+def chain_snapshot():
+    try:
+        chain.snapshot()
+        yield
+    finally:
+        chain.revert()

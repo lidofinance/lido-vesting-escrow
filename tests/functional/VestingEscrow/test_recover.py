@@ -1,5 +1,6 @@
-import brownie
 import pytest
+
+from tests.conftest import fully_revocable
 
 
 @pytest.fixture
@@ -83,3 +84,46 @@ def test_recover_ether(deployed_vesting, anyone, recipient, random_guy, one_eth,
     deployed_vesting.recover_ether({"from": anyone})
     assert recipient.balance() == balance_before + one_eth
     assert deployed_vesting.balance() == 0
+
+
+def test_recover_extra_after_revoke_unvested(deployed_vesting, token, balance, recipient, owner, start_time, end_time):
+    extra = 10**17
+    token._mint_for_testing(extra, {"from": owner})
+    token.transfer(deployed_vesting, extra, {"from": owner})
+
+    deployed_vesting.revoke_unvested({"from": owner})
+    assert token.balanceOf(owner) == balance
+
+    deployed_vesting.recover_erc20(token, extra + 1, {"from": recipient})
+    assert token.balanceOf(recipient) == extra
+
+
+def test_recover_extra_after_revoke_unvested_partially(deployed_vesting, token, balance, recipient, owner, chain, start_time, end_time, sleep_time):
+    extra = 10**17
+    token._mint_for_testing(extra, {"from": owner})
+    token.transfer(deployed_vesting, extra, {"from": owner})
+
+    chain.sleep(start_time - chain.time() + sleep_time)
+    tx = deployed_vesting.revoke_unvested({"from": owner})
+    expected_amount = 10 ** 20 * (tx.timestamp - start_time) // (end_time - start_time)
+    assert token.balanceOf(owner) == expected_amount
+
+    deployed_vesting.recover_erc20(token, extra + 1, {"from": recipient})
+    assert token.balanceOf(recipient) == extra
+
+    deployed_vesting.claim({"from": recipient})
+    assert token.balanceOf(recipient) == extra + balance - expected_amount
+
+
+@fully_revocable
+def test_recover_extra_after_revoke_all(deployed_vesting, token, balance, recipient, owner, chain, start_time, end_time, sleep_time):
+    extra = 10**17
+    token._mint_for_testing(extra, {"from": owner})
+    token.transfer(deployed_vesting, extra, {"from": owner})
+
+    chain.sleep(start_time - chain.time() + sleep_time)
+    deployed_vesting.revoke_all({"from": owner})
+    assert token.balanceOf(owner) == balance
+
+    deployed_vesting.recover_erc20(token, balance, {"from": recipient})
+    assert token.balanceOf(recipient) == extra

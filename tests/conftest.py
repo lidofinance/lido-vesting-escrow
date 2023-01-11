@@ -5,6 +5,9 @@ WEEK = 7 * 24 * 60 * 60  # seconds
 YEAR = 365.25 * 24 * 60 * 60  # seconds
 
 
+fully_revocable = pytest.mark.parametrize("deployed_vesting", [pytest.param(1, id="fully_revocable")], indirect=True)
+
+
 @pytest.fixture(autouse=True)
 def isolation_setup(fn_isolation):
     pass
@@ -120,6 +123,11 @@ def start_time(chain):
 @pytest.fixture(scope="module")
 def end_time(start_time, duration):
     return int(start_time + duration)
+
+
+@pytest.fixture(scope="module")
+def sleep_time(start_time, end_time):
+    return (end_time - start_time) // 2
 
 
 @pytest.fixture(scope="module")

@@ -45,8 +45,8 @@ def test_revoke_unvested_before_start_time(deployed_vesting, token, owner, recip
     assert token.balanceOf(owner) == deployed_vesting.total_locked()
 
 
-def test_revoke_unvested_partially_ununclaimed(deployed_vesting, token, owner, recipient, chain, start_time, end_time):
-    chain.sleep(start_time - chain.time() + 31337)
+def test_revoke_unvested_partially_unclaimed(deployed_vesting, token, owner, recipient, chain, start_time, end_time, sleep_time):
+    chain.sleep(start_time - chain.time() + sleep_time)
     tx = deployed_vesting.revoke_unvested({"from": owner})
     chain.sleep(end_time - chain.time())
     deployed_vesting.claim({"from": recipient})
@@ -57,9 +57,8 @@ def test_revoke_unvested_partially_ununclaimed(deployed_vesting, token, owner, r
 
 
 def test_revoke_unvested_partially_claimed(
-    deployed_vesting, token, owner, recipient, chain, start_time, end_time, balance
+    deployed_vesting, token, owner, recipient, chain, start_time, end_time, sleep_time, balance
 ):
-    sleep_time = (end_time - start_time) // 2
     chain.sleep(start_time - chain.time() + sleep_time)
     chain.mine()
     claim_amount = 10**18

@@ -2,7 +2,7 @@
 
 """
 @title Voting Adapter
-@author Curve Finance, Yearn Finance, Lido Finance
+@author Lido Finance
 @license MIT
 @notice Used to allow voting with tokens under vesting
 """

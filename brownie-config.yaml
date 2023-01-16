@@ -1,0 +1,4 @@
+compiler:
+    evm_version: paris
+    vyper:
+        version: 0.3.7

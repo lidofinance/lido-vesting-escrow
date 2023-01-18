@@ -36,13 +36,11 @@ event Claim:
 
 event UnvestedTokensRevoked:
     recoverer: indexed(address)
-    recipient: indexed(address)
     revoked: uint256
 
 
 event VestingFullyRevoked:
     recoverer: indexed(address)
-    recipient: indexed(address)
     revoked: uint256
 
 
@@ -218,7 +216,7 @@ def revoke_unvested():
         self._owner(), revokable, default_return_value=True
     ), "transfer failed"
 
-    log UnvestedTokensRevoked(msg.sender, self.recipient, revokable)
+    log UnvestedTokensRevoked(msg.sender, revokable)
 
 
 @external
@@ -240,7 +238,7 @@ def revoke_all():
         self._owner(), revokable, default_return_value=True
     ), "transfer failed"
 
-    log VestingFullyRevoked(msg.sender, self.recipient, revokable)
+    log VestingFullyRevoked(msg.sender, revokable)
 
 
 @external

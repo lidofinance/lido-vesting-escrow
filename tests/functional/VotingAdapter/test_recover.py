@@ -1,9 +1,13 @@
-def test_recover_erc20(voting_adapter, token, anyone, balance, owner, random_guy):
-    token._mint_for_testing(balance, {"from": random_guy})
-    token.transfer(voting_adapter, balance, {"from": random_guy})
+from tests.utils import mint_or_transfer_for_testing
 
+
+def test_recover_erc20(voting_adapter, token, anyone, balance, owner, random_guy, deployed):
+    mint_or_transfer_for_testing(owner, random_guy, token, balance, deployed)
+    token.transfer(voting_adapter, balance, {"from": random_guy})
+    
+    owner_balance = token.balanceOf(owner)
     voting_adapter.recover_erc20(token, balance, {"from": anyone})
-    assert token.balanceOf(owner) == balance
+    assert token.balanceOf(owner) == balance + owner_balance
     assert token.balanceOf(voting_adapter) == 0
 
 

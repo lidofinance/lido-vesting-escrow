@@ -1,3 +1,4 @@
+from tests.utils import mint_or_transfer_for_testing
 import pytest
 
 
@@ -15,12 +16,13 @@ def test_recover_non_vested_token(vesting_factory, token2, anyone, owner, balanc
     assert token2.balanceOf(vesting_factory) == 0
 
 
-def test_recover_vested_token(vesting_factory, token, anyone, balance, owner, random_guy):
-    token._mint_for_testing(balance, {"from": random_guy})
+def test_recover_vested_token(vesting_factory, token, anyone, balance, owner, random_guy, deployed):
+    mint_or_transfer_for_testing(owner, random_guy, token, balance, deployed)
     token.transfer(vesting_factory, balance, {"from": random_guy})
 
+    owner_balance = token.balanceOf(owner)
     vesting_factory.recover_erc20(token, balance, {"from": anyone})
-    assert token.balanceOf(owner) == balance
+    assert token.balanceOf(owner) == balance + owner_balance
     assert token.balanceOf(vesting_factory) == 0
 
 

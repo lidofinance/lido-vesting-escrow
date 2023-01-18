@@ -1,4 +1,7 @@
 import brownie
+import pytest
+
+pytestmark = pytest.mark.no_deploy
 
 
 def test_vote(deployed_vesting, recipient, voting_adapter):

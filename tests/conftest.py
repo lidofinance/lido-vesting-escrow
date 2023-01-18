@@ -1,4 +1,6 @@
+import json
 import pytest
+from tests.utils import mint_or_transfer_for_testing
 from brownie import ZERO_ADDRESS
 
 WEEK = 7 * 24 * 60 * 60  # seconds
@@ -25,22 +27,23 @@ def one_eth():
 
 @pytest.fixture(scope="session")
 def owner(accounts):
-    return accounts[0]
+    print("Owner address: ", accounts[-1])
+    return accounts[-1]
 
 
 @pytest.fixture(scope="session")
 def manager(accounts):
-    return accounts[1]
+    return accounts[-2]
 
 
 @pytest.fixture(scope="session")
 def recipient(accounts):
-    return accounts[2]
+    return accounts[-3]
 
 
 @pytest.fixture(scope="session")
 def random_guy(accounts):
-    return accounts[3]
+    return accounts[-4]
 
 
 @pytest.fixture(scope="session", params=["manager", "recipient", "random_guy"])
@@ -86,12 +89,16 @@ def cliff():
 
 
 @pytest.fixture(scope="module")
-def token(ERC20, accounts):
+def token(ERC20, accounts, deployed):
+    if deployed:
+        return ERC20.at(deployed["factoryDeployConstructorArgs"]["token"])
     return ERC20.deploy("Lido Token", "LFI", 18, {"from": accounts[0]})
 
 
 @pytest.fixture(scope="module")
-def voting(Voting, token, owner):
+def voting(Voting, token, owner, deployed):
+    if deployed:
+        return Voting.at(deployed["votingAdapterDeployConstructorArgs"]["voting_addr"])
     return Voting.deploy(token, {"from": owner})
 
 
@@ -101,7 +108,10 @@ def snapshot_delegate(Delegate, owner):
 
 
 @pytest.fixture(scope="module")
-def voting_adapter(VotingAdapter, owner, voting, snapshot_delegate):
+def voting_adapter(VotingAdapter, owner, voting, snapshot_delegate, deployed,
+):
+    if deployed:
+        return VotingAdapter.at(deployed["votingAdapterAddress"])
     return VotingAdapter.deploy(voting, snapshot_delegate, ZERO_ADDRESS, owner, {"from": owner})
 
 
@@ -131,7 +141,9 @@ def sleep_time(start_time, end_time):
 
 
 @pytest.fixture(scope="module")
-def vesting_target(VestingEscrow, owner):
+def vesting_target(VestingEscrow, owner, deployed):
+    if deployed:
+        return VestingEscrow.at(deployed["vestingEscrowAddress"])
     return VestingEscrow.deploy({"from": owner})
 
 
@@ -143,7 +155,10 @@ def vesting_factory(
     manager,
     token,
     voting_adapter,
+    deployed,
 ):
+    if deployed:
+        return VestingEscrowFactory.at(deployed["factoryAddress"])
     return VestingEscrowFactory.deploy(
         vesting_target,
         token,
@@ -185,8 +200,9 @@ def deployed_vesting(
     owner,
     request,
     balance,
+    deployed,
 ):
-    token._mint_for_testing(balance, {"from": owner})
+    mint_or_transfer_for_testing(owner, owner, token, balance, deployed)
     token.approve(vesting_factory, balance, {"from": owner})
     tx = vesting_factory.deploy_vesting_contract(
         balance,
@@ -215,8 +231,9 @@ def deployed_vesting_with_cliff(
     owner,
     request,
     balance,
+    deployed,
 ):
-    token._mint_for_testing(balance, {"from": owner})
+    mint_or_transfer_for_testing(owner, owner, token, balance, deployed)
     token.approve(vesting_factory, balance, {"from": owner})
     tx = vesting_factory.deploy_vesting_contract(
         balance,
@@ -228,3 +245,29 @@ def deployed_vesting_with_cliff(
         {"from": owner},
     )
     return VestingEscrow.at(tx.new_contracts[0])
+
+
+@pytest.fixture(scope="session")
+def cmd_opts(request):
+    return request.config.option
+
+
+@pytest.fixture(scope="session")
+def deployed(cmd_opts):
+    if cmd_opts.deploy_json:
+        with open(cmd_opts.deploy_json) as f:
+            yield json.load(f)
+    else:
+        yield {}
+
+
+def pytest_addoption(parser):
+    """Add plugin CLI options"""
+
+    parser.addoption(
+        "--deploy-json",
+        action="store",
+        default=None,
+        help="Path to the deployment JSON file with addresses of deployed contracts."
+        "Should be used only with --network=mainnet-fork",
+    )

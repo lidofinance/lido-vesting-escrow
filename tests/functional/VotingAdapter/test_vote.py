@@ -1,5 +1,11 @@
-def test_aragon_vote(voting_adapter, recipient, balance, token):
-    token._mint_for_testing(balance, {"from": recipient})
+from tests.utils import mint_or_transfer_for_testing
+import pytest
+
+pytestmark = pytest.mark.no_deploy
+
+
+def test_aragon_vote(voting_adapter, recipient, balance, token, owner, deployed):
+    mint_or_transfer_for_testing(owner, recipient, token, balance, deployed)
     token.transfer(voting_adapter.address, balance, {"from": recipient})
     vote_id = 154
     supports = True

@@ -1,10 +1,11 @@
+from tests.utils import mint_or_transfer_for_testing
 import brownie
 import pytest
 
 
 @pytest.fixture()
-def initial_funding(token, balance, vesting_factory, owner):
-    token._mint_for_testing(balance, {"from": owner})
+def initial_funding(token, balance, vesting_factory, owner, deployed):
+    mint_or_transfer_for_testing(owner, owner, token, balance, deployed)
     token.approve(vesting_factory, balance, {"from": owner})
 
 
@@ -76,7 +77,7 @@ def test_invalid_cliff_duration(owner, recipient, balance, chain, vesting_factor
         )
 
 
-def test_invalid_duration(owner, recipient, balance, chain, vesting_factory, start_time):
+def test_invalid_duration(owner, recipient, balance, vesting_factory, start_time):
     with brownie.reverts("incorrect vesting duration"):
         vesting_factory.deploy_vesting_contract(
             balance,

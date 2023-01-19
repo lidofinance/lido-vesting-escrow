@@ -58,7 +58,7 @@ token: public(ERC20)
 start_time: public(uint256)
 end_time: public(uint256)
 cliff_length: public(uint256)
-factory: public(address)
+factory: public(IVestingEscrowFactory)
 total_locked: public(uint256)
 is_fully_revokable: public(bool)
 
@@ -118,7 +118,7 @@ def initialize(
     self.total_locked = amount
     self.recipient = recipient
     self.disabled_at = end_time  # Set to maximum time
-    self.factory = factory
+    self.factory = IVestingEscrowFactory(factory)
     log VestingEscrowInitialized(
         factory,
         recipient,
@@ -159,7 +159,6 @@ def unclaimed() -> uint256:
     """
     @notice Get the number of unclaimed, vested tokens for recipient
     """
-    # NOTE: if `revoke_unvested` is activated, limit by the activation timestamp
     return self._unclaimed()
 
 
@@ -207,8 +206,8 @@ def revoke_unvested():
     @notice Disable further flow of tokens and revoke the unvested part to owner
     """
     self._check_sender_is_owner_or_manager()
-    # NOTE: Revoking more than once is futile
 
+    # NOTE: Revoking more than once is futile
     revokable: uint256 = self._locked()
     self.disabled_at = block.timestamp
 
@@ -228,7 +227,6 @@ def revoke_all():
     assert self.is_fully_revokable, "not allowed for ordinary vesting"
 
     # NOTE: Revoking more than once is futile
-
     self.is_fully_revoked = True
     self.disabled_at = block.timestamp
     # NOTE: do not revoke extra tokens
@@ -246,6 +244,7 @@ def recover_erc20(token: address, amount: uint256):
     """
     @notice Recover ERC20 tokens to recipient
     @param token Address of the ERC20 token to be recovered
+    @param amount Amount of the ERC20 token to be recovered
     """
     recoverable: uint256 = amount
     if token == self.token.address:
@@ -279,7 +278,7 @@ def aragon_vote(abi_encoded_params: Bytes[1000]):
     self._check_sender_is_recipient()
     self._check_voting_adapter_is_set()
     raw_call(
-        IVestingEscrowFactory(self.factory).voting_adapter(),
+        self.factory.voting_adapter(),
         _abi_encode(
             abi_encoded_params,
             method_id=method_id("aragon_vote(bytes)"),
@@ -297,7 +296,7 @@ def snapshot_set_delegate(abi_encoded_params: Bytes[1000]):
     self._check_sender_is_recipient()
     self._check_voting_adapter_is_set()
     raw_call(
-        IVestingEscrowFactory(self.factory).voting_adapter(),
+        self.factory.voting_adapter(),
         _abi_encode(
             abi_encoded_params,
             method_id=method_id("snapshot_set_delegate(bytes)"),
@@ -315,7 +314,7 @@ def delegate(abi_encoded_params: Bytes[1000]):
     self._check_sender_is_recipient()
     self._check_voting_adapter_is_set()
     raw_call(
-        IVestingEscrowFactory(self.factory).voting_adapter(),
+        self.factory.voting_adapter(),
         _abi_encode(
             abi_encoded_params,
             method_id=method_id("delegate(bytes)"),
@@ -326,12 +325,12 @@ def delegate(abi_encoded_params: Bytes[1000]):
 
 @internal
 def _owner() -> address:
-    return IVestingEscrowFactory(self.factory).owner()
+    return self.factory.owner()
 
 
 @internal
 def _manager() -> address:
-    return IVestingEscrowFactory(self.factory).manager()
+    return self.factory.manager()
 
 
 @internal
@@ -353,7 +352,7 @@ def _check_sender_is_recipient():
 
 @internal
 def _check_voting_adapter_is_set():
-    assert IVestingEscrowFactory(self.factory).voting_adapter() != empty(
+    assert self.factory.voting_adapter() != empty(
         address
     ), "voting adapter not set"
 

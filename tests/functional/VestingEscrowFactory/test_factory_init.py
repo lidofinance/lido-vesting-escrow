@@ -32,7 +32,7 @@ def test_init_fail_on_zero_target(
     token,
     manager,
 ):
-    with brownie.reverts("zero target_simple"):
+    with brownie.reverts("zero target"):
         VestingEscrowFactory.deploy(
             ZERO_ADDRESS,
             token,

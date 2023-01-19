@@ -74,7 +74,7 @@ def __init__(
     @param manager Address of the manager of the deployed escrows
     @param voting_adapter Address of the Lido Voting Adapter
     """
-    assert target != empty(address), "zero target_simple"
+    assert target != empty(address), "zero target"
     assert owner != empty(address), "zero owner"
     assert token != empty(address), "zero token"
     self.target = target

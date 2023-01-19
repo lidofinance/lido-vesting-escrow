@@ -41,6 +41,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
     params_list = tuple(VestingParams.from_tuple(p) for p in raw_params_list)
 
     safe = ApeSafe(config["SAFE_ADDRESS"])
+    ldo = ERC20.at(LDO_ADDRESS)
 
     factory_address = config["FACTORY_ADDRESS"]
     factory = VestingEscrowFactory.at(
@@ -55,6 +56,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
 
     log.info("Constructing multisend transaction")
     with chain_snapshot():
+        ldo.approve(factory, vestings_sum, {"from": safe.address})
         for params in params_list:
             factory.deploy_vesting_contract(
                 params.amount,
@@ -123,9 +125,9 @@ def fake_factory() -> None:
 
     config = _read_envs()
     safe = ApeSafe(config["SAFE_ADDRESS"])
+    ldo = ERC20.at(LDO_ADDRESS)
 
     lido_treasury = "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c"  # some address with LDOs
-    ldo = Contract.from_explorer("0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32")
     vesting = VestingEscrow.deploy({"from": safe.address})
     adapter = VotingAdapter.deploy(
         "0xffffffffffffffffffffffffffffffffffffffff",
@@ -143,7 +145,6 @@ def fake_factory() -> None:
         {"from": "0x1111111111111111111111111111111111111111"},
     )
     ldo.transfer(safe.address, 100_000 * 10**18, {"from": lido_treasury})
-    ldo.approve(factory, 100_000 * 10**18, {"from": safe.address})
     history.clear()  # to avoid these transactions to occur in multisend
 
     log.info(f"{factory.address=}")

@@ -82,6 +82,27 @@ Then run all tests
 brownie test -s --disable-warnings
 ```
 
+### Run tests against mainnet deployed setup
+
+Add `owner` and `manager` accounts to the `brownie-config.yaml`
+
+```yaml
+networks:
+    mainnet-fork:
+        cmd_settings:
+            unlock: # accounts order is crucial!
+                - 0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX # manager
+                - 0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX # owner
+```
+ 
+Run tests on the `mainnet-fork` forked after deploy
+
+```shell
+brownie test --network mainnet-fork --deploy-json deployed-mainnet.json -m "not no_deploy"
+```
+
+> Note: Not all tests will be executed (ex. Vote tests will be excluded)
+
 ## Deployment
 
 Make sure your account is imported to Brownie: `brownie accounts list`.

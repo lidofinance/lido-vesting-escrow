@@ -2,6 +2,9 @@ import brownie
 from brownie import ZERO_ADDRESS
 
 
+pytestmark = pytest.mark.no_deploy
+
+
 def test_init_args(
     owner,
     VestingEscrowFactory,

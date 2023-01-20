@@ -36,7 +36,7 @@ def test_deploy_no_approve(owner, recipient, vesting_factory, balance):
     with brownie.reverts(""):
         vesting_factory.deploy_vesting_contract(balance, recipient, 86400 * 365, {"from": owner})
 
-
+@pytest.mark.no_deploy
 def test_deploy_from_factory_with_invalid_token(owner, recipient, vesting_factory_with_invalid_token, balance):
     with brownie.reverts(""):
         vesting_factory_with_invalid_token.deploy_vesting_contract(balance, recipient, 86400 * 365, {"from": owner})

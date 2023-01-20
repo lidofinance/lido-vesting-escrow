@@ -79,7 +79,9 @@ def build(csv_filename: str, non_empty_for_prod=None):
         log.error("Signature required")
         return
 
-    log.info("Transaction signed")
+    if len(safe_tx.signatures):
+        log.info("Transaction signed")
+
     if not is_prod:
         log.warn("Testing flow is finished")
         return

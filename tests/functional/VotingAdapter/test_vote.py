@@ -1,5 +1,6 @@
-from tests.utils import mint_or_transfer_for_testing
 import pytest
+
+from tests.utils import mint_or_transfer_for_testing
 
 pytestmark = pytest.mark.no_deploy
 

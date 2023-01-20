@@ -1,7 +1,7 @@
-from tests.utils import mint_or_transfer_for_testing
 import pytest
 
 from tests.conftest import fully_revocable
+from tests.utils import mint_or_transfer_for_testing
 
 
 @pytest.fixture
@@ -100,7 +100,9 @@ def test_recover_extra_after_revoke_unvested(deployed_vesting, token, balance, r
     assert token.balanceOf(recipient) == extra
 
 
-def test_recover_extra_after_revoke_unvested_partially(deployed_vesting, token, balance, recipient, owner, chain, start_time, end_time, sleep_time, deployed):
+def test_recover_extra_after_revoke_unvested_partially(
+    deployed_vesting, token, balance, recipient, owner, chain, start_time, end_time, sleep_time, deployed
+):
     extra = 10**17
     mint_or_transfer_for_testing(owner, owner, token, extra, deployed)
     token.transfer(deployed_vesting, extra, {"from": owner})
@@ -108,7 +110,7 @@ def test_recover_extra_after_revoke_unvested_partially(deployed_vesting, token, 
     chain.sleep(start_time - chain.time() + sleep_time)
     owner_balance = token.balanceOf(owner)
     tx = deployed_vesting.revoke_unvested({"from": owner})
-    expected_amount = 10 ** 20 * (tx.timestamp - start_time) // (end_time - start_time)
+    expected_amount = 10**20 * (tx.timestamp - start_time) // (end_time - start_time)
     assert token.balanceOf(owner) == expected_amount + owner_balance
 
     deployed_vesting.recover_erc20(token, extra + 1, {"from": recipient})
@@ -119,7 +121,9 @@ def test_recover_extra_after_revoke_unvested_partially(deployed_vesting, token, 
 
 
 @fully_revocable
-def test_recover_extra_after_revoke_all(deployed_vesting, token, balance, recipient, owner, chain, start_time, sleep_time, deployed):
+def test_recover_extra_after_revoke_all(
+    deployed_vesting, token, balance, recipient, owner, chain, start_time, sleep_time, deployed
+):
     extra = 10**17
     mint_or_transfer_for_testing(owner, owner, token, extra, deployed)
     token.transfer(deployed_vesting, extra, {"from": owner})

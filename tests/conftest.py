@@ -1,7 +1,9 @@
 import json
+
 import pytest
-from tests.utils import mint_or_transfer_for_testing
 from brownie import ZERO_ADDRESS
+
+from tests.utils import mint_or_transfer_for_testing
 
 WEEK = 7 * 24 * 60 * 60  # seconds
 YEAR = 365.25 * 24 * 60 * 60  # seconds
@@ -108,7 +110,12 @@ def snapshot_delegate(Delegate, owner):
 
 
 @pytest.fixture(scope="module")
-def voting_adapter(VotingAdapter, owner, voting, snapshot_delegate, deployed,
+def voting_adapter(
+    VotingAdapter,
+    owner,
+    voting,
+    snapshot_delegate,
+    deployed,
 ):
     if deployed:
         return VotingAdapter.at(deployed["votingAdapterAddress"])
@@ -168,6 +175,7 @@ def vesting_factory(
         {"from": owner},
     )
 
+
 @pytest.fixture(scope="module")
 def vesting_factory_with_invalid_token(
     VestingEscrowFactory,
@@ -185,6 +193,7 @@ def vesting_factory_with_invalid_token(
         voting_adapter,
         {"from": owner},
     )
+
 
 @pytest.fixture(
     scope="module",

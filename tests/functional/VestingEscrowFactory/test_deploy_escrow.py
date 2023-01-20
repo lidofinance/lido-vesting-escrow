@@ -1,6 +1,7 @@
-from tests.utils import mint_or_transfer_for_testing
 import brownie
 import pytest
+
+from tests.utils import mint_or_transfer_for_testing
 
 
 @pytest.fixture()
@@ -35,6 +36,7 @@ def test_deploy(owner, recipient, vesting_factory, balance):
 def test_deploy_no_approve(owner, recipient, vesting_factory, balance):
     with brownie.reverts(""):
         vesting_factory.deploy_vesting_contract(balance, recipient, 86400 * 365, {"from": owner})
+
 
 @pytest.mark.no_deploy
 def test_deploy_from_factory_with_invalid_token(owner, recipient, vesting_factory_with_invalid_token, balance):

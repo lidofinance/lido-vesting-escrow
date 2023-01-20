@@ -58,7 +58,7 @@ def test_revoke_all_after_partial_claim(
     deployed_vesting, token, owner, recipient, chain, start_time, end_time, sleep_time, balance
 ):
     chain.sleep(start_time - chain.time() + sleep_time)
-    claim_amount = 10 ** 18
+    claim_amount = 10**18
     deployed_vesting.claim(recipient, claim_amount, {"from": recipient})
     chain.sleep(end_time - chain.time())
     owner_balance = token.balanceOf(owner)

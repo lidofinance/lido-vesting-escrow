@@ -1,4 +1,5 @@
 from dotmap import DotMap
+
 from vesting_initial_params import ARAGON_VOTING, DELEGATION, MANAGER, OWNER, SNAPSHOT_DELEGATION, TOKEN
 
 

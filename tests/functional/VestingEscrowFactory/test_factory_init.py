@@ -1,6 +1,6 @@
 import brownie
+import pytest
 from brownie import ZERO_ADDRESS
-
 
 pytestmark = pytest.mark.no_deploy
 

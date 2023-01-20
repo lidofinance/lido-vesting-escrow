@@ -1,14 +1,10 @@
-from brownie import network, VestingEscrow, VestingEscrowFactory, VotingAdapter
+from brownie import VestingEscrow, VestingEscrowFactory, VotingAdapter, network
 
 import utils.log as log
-from scripts.deploy import (
-    do_deploy_factory,
-    do_deploy_voting_adapter,
-    do_deploy_escrow,
-)
-from utils.config import get_common_deploy_args, prepare_voting_adapter_deploy_args, prepare_factory_deploy_args
+from scripts.deploy import do_deploy_escrow, do_deploy_factory, do_deploy_voting_adapter
+from utils.config import get_common_deploy_args, prepare_factory_deploy_args, prepare_voting_adapter_deploy_args
 from utils.env import get_env
-from utils.helpers import get_deployer_account, proceedPrompt, pprint_map
+from utils.helpers import get_deployer_account, pprint_map, proceedPrompt
 
 # environment
 WEB3_INFURA_PROJECT_ID = get_env("WEB3_INFURA_PROJECT_ID")
@@ -47,7 +43,6 @@ def deploy_factory():
     log.note(f"VestingEscrow deploy")
     escrow = do_deploy_escrow({"from": deployer})
 
-    log.note(f"VotingAdapter deploy")
     voting_adapter_args = prepare_voting_adapter_deploy_args(
         voting_addr=deploy_args.aragon_voting,
         snapshot_delegate_addr=deploy_args.snapshot_delegation,
@@ -55,13 +50,14 @@ def deploy_factory():
         owner=deploy_args.owner,
     )
 
-    proceedPrompt()
-
     log.info("> VotingAdapterDeployArgs:")
     pprint_map(voting_adapter_args)
+
+    proceedPrompt()
+
+    log.note(f"VotingAdapter deploy")
     voting_adapter = do_deploy_voting_adapter({"from": deployer}, voting_adapter_args)
 
-    log.note(f"VestingEscrowFactory deploy")
     factory_args = prepare_factory_deploy_args(
         target=escrow.address,
         token=deploy_args.token,
@@ -74,6 +70,7 @@ def deploy_factory():
 
     proceedPrompt()
 
+    log.note(f"VestingEscrowFactory deploy")
     factory = do_deploy_factory({"from": deployer}, factory_args)
 
     if network.show_active() == "mainnet":

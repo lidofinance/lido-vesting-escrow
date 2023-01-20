@@ -1,5 +1,6 @@
 def test_claim_full(deployed_vesting, token, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
+    assert token.balanceOf(recipient) == 0
     deployed_vesting.claim({"from": recipient})
 
     assert token.balanceOf(recipient) == balance
@@ -7,6 +8,7 @@ def test_claim_full(deployed_vesting, token, recipient, chain, end_time, balance
 
 def test_claim_less(deployed_vesting, token, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
+    assert token.balanceOf(recipient) == 0
     deployed_vesting.claim(recipient, balance / 10, {"from": recipient})
 
     assert token.balanceOf(recipient) == balance / 10
@@ -14,6 +16,7 @@ def test_claim_less(deployed_vesting, token, recipient, chain, end_time, balance
 
 def test_claim_beneficiary(deployed_vesting, token, random_guy, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
+    assert token.balanceOf(random_guy) == 0
     deployed_vesting.claim(random_guy, {"from": recipient})
 
     assert token.balanceOf(random_guy) == balance

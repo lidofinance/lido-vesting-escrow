@@ -3,7 +3,7 @@
 """
 @title Vesting Escrow Factory
 @author Curve Finance, Yearn Finance, Lido Finance
-@license MIT
+@license GPL-3.0
 @notice Stores and distributes ERC20 tokens by deploying `VestingEscrow` contracts
 """
 
@@ -66,15 +66,15 @@ def __init__(
 ):
     """
     @notice Contract constructor
-    @dev Prior to deployment you must deploy one copy of `VestingEscrowSimple` and `VestingEscrowFullyRevokable` which
-         are used as a library for vesting contracts deployed by this factory
+    @dev Prior to deployment you must deploy one copy of `VestingEscrow` which
+         is used as a library for vesting contracts deployed by this factory
     @param target `VestingEscrow` contract address
     @param token Address of the ERC20 token being distributed using escrows
     @param owner Address of the owner of the deployed escrows
     @param manager Address of the manager of the deployed escrows
     @param voting_adapter Address of the Lido Voting Adapter
     """
-    assert target != empty(address), "zero target_simple"
+    assert target != empty(address), "zero target"
     assert owner != empty(address), "zero owner"
     assert token != empty(address), "zero token"
     self.target = target
@@ -109,9 +109,9 @@ def deploy_vesting_contract(
     assert ERC20(self.token).transferFrom(
         msg.sender, self, amount, default_return_value=True
     ), "transferFrom deployer failed"
-    assert ERC20(self.token).approve(
+    assert ERC20(self.token).transfer(
         escrow, amount, default_return_value=True
-    ), "approve to escrow failed"
+    ), "transfer to escrow failed"
 
     IVestingEscrow(escrow).initialize(
         self.token,

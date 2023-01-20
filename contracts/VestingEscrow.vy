@@ -3,7 +3,7 @@
 """
 @title Vesting Escrow
 @author Curve Finance, Yearn Finance, Lido Finance
-@license MIT
+@license GPL-3.0
 @notice Vests ERC20 tokens for a single address
 @dev Intended to be deployed many times via `VotingEscrowFactory`
 """
@@ -36,13 +36,11 @@ event Claim:
 
 event UnvestedTokensRevoked:
     recoverer: indexed(address)
-    recipient: indexed(address)
     revoked: uint256
 
 
 event VestingFullyRevoked:
     recoverer: indexed(address)
-    recipient: indexed(address)
     revoked: uint256
 
 
@@ -60,7 +58,7 @@ token: public(ERC20)
 start_time: public(uint256)
 end_time: public(uint256)
 cliff_length: public(uint256)
-factory: public(address)
+factory: public(IVestingEscrowFactory)
 total_locked: public(uint256)
 is_fully_revokable: public(bool)
 
@@ -80,7 +78,6 @@ def __init__():
 
 
 @external
-@nonreentrant("lock")
 def initialize(
     token: address,
     amount: uint256,
@@ -113,14 +110,12 @@ def initialize(
     self.end_time = end_time
     self.cliff_length = cliff_length
 
-    assert self.token.transferFrom(
-        msg.sender, self, amount, default_return_value=True
-    ), "funding failed"
+    assert self.token.balanceOf(self) >= amount, "insufficient balance"
 
     self.total_locked = amount
     self.recipient = recipient
     self.disabled_at = end_time  # Set to maximum time
-    self.factory = factory
+    self.factory = IVestingEscrowFactory(factory)
     log VestingEscrowInitialized(
         factory,
         recipient,
@@ -148,10 +143,11 @@ def _total_vested_at(time: uint256) -> uint256:
 
 @internal
 @view
-def _unclaimed(time: uint256) -> uint256:
+def _unclaimed(time: uint256 = block.timestamp) -> uint256:
     if self.is_fully_revoked:
         return 0
-    return self._total_vested_at(time) - self.total_claimed
+    claim_time: uint256 = min(time, self.disabled_at)
+    return self._total_vested_at(claim_time) - self.total_claimed
 
 
 @external
@@ -160,8 +156,7 @@ def unclaimed() -> uint256:
     """
     @notice Get the number of unclaimed, vested tokens for recipient
     """
-    # NOTE: if `revoke_unvested` is activated, limit by the activation timestamp
-    return self._unclaimed(min(block.timestamp, self.disabled_at))
+    return self._unclaimed()
 
 
 @internal
@@ -178,7 +173,7 @@ def locked() -> uint256:
     """
     @notice Get the number of locked tokens for recipient
     """
-    return self._locked(min(block.timestamp, self.disabled_at))
+    return self._locked()
 
 
 @external
@@ -192,8 +187,7 @@ def claim(
     """
     self._check_sender_is_recipient()
 
-    claim_period_end: uint256 = min(block.timestamp, self.disabled_at)
-    claimable: uint256 = min(self._unclaimed(claim_period_end), amount)
+    claimable: uint256 = min(self._unclaimed(), amount)
     self.total_claimed += claimable
 
     assert self.token.transfer(
@@ -209,7 +203,7 @@ def revoke_unvested():
     @notice Disable further flow of tokens and revoke the unvested part to owner
     """
     self._check_sender_is_owner_or_manager()
-    # NOTE: Revoking more than once is futile
+    assert block.timestamp < self.disabled_at, "noting to revoke"
 
     revokable: uint256 = self._locked()
     self.disabled_at = block.timestamp
@@ -218,7 +212,7 @@ def revoke_unvested():
         self._owner(), revokable, default_return_value=True
     ), "transfer failed"
 
-    log UnvestedTokensRevoked(msg.sender, self.recipient, revokable)
+    log UnvestedTokensRevoked(msg.sender, revokable)
 
 
 @external
@@ -228,8 +222,7 @@ def revoke_all():
     """
     self._check_sender_is_owner()
     assert self.is_fully_revokable, "not allowed for ordinary vesting"
-
-    # NOTE: Revoking more than once is futile
+    assert not self.is_fully_revoked, "already fully revoked"
 
     self.is_fully_revoked = True
     self.disabled_at = block.timestamp
@@ -240,7 +233,7 @@ def revoke_all():
         self._owner(), revokable, default_return_value=True
     ), "transfer failed"
 
-    log VestingFullyRevoked(msg.sender, self.recipient, revokable)
+    log VestingFullyRevoked(msg.sender, revokable)
 
 
 @external
@@ -248,12 +241,12 @@ def recover_erc20(token: address, amount: uint256):
     """
     @notice Recover ERC20 tokens to recipient
     @param token Address of the ERC20 token to be recovered
+    @param amount Amount of the ERC20 token to be recovered
     """
     recoverable: uint256 = amount
     if token == self.token.address:
         available: uint256 = ERC20(token).balanceOf(self) - (
-            self._locked()
-            + self._unclaimed(min(block.timestamp, self.disabled_at))
+            self._locked() + self._unclaimed()
         )
         recoverable = min(recoverable, available)
     if recoverable > 0:
@@ -282,7 +275,7 @@ def aragon_vote(abi_encoded_params: Bytes[1000]):
     self._check_sender_is_recipient()
     self._check_voting_adapter_is_set()
     raw_call(
-        IVestingEscrowFactory(self.factory).voting_adapter(),
+        self.factory.voting_adapter(),
         _abi_encode(
             abi_encoded_params,
             method_id=method_id("aragon_vote(bytes)"),
@@ -300,7 +293,7 @@ def snapshot_set_delegate(abi_encoded_params: Bytes[1000]):
     self._check_sender_is_recipient()
     self._check_voting_adapter_is_set()
     raw_call(
-        IVestingEscrowFactory(self.factory).voting_adapter(),
+        self.factory.voting_adapter(),
         _abi_encode(
             abi_encoded_params,
             method_id=method_id("snapshot_set_delegate(bytes)"),
@@ -318,7 +311,7 @@ def delegate(abi_encoded_params: Bytes[1000]):
     self._check_sender_is_recipient()
     self._check_voting_adapter_is_set()
     raw_call(
-        IVestingEscrowFactory(self.factory).voting_adapter(),
+        self.factory.voting_adapter(),
         _abi_encode(
             abi_encoded_params,
             method_id=method_id("delegate(bytes)"),
@@ -329,12 +322,12 @@ def delegate(abi_encoded_params: Bytes[1000]):
 
 @internal
 def _owner() -> address:
-    return IVestingEscrowFactory(self.factory).owner()
+    return self.factory.owner()
 
 
 @internal
 def _manager() -> address:
-    return IVestingEscrowFactory(self.factory).manager()
+    return self.factory.manager()
 
 
 @internal
@@ -356,7 +349,9 @@ def _check_sender_is_recipient():
 
 @internal
 def _check_voting_adapter_is_set():
-    assert IVestingEscrowFactory(self.factory).voting_adapter() != empty(address), "voting adapter not set"
+    assert self.factory.voting_adapter() != empty(
+        address
+    ), "voting adapter not set"
 
 
 @internal

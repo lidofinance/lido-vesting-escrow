@@ -1,5 +1,8 @@
 import brownie
+import pytest
 from brownie import ZERO_ADDRESS
+
+pytestmark = pytest.mark.no_deploy
 
 
 def test_init_args(
@@ -32,7 +35,7 @@ def test_init_fail_on_zero_target(
     token,
     manager,
 ):
-    with brownie.reverts("zero target_simple"):
+    with brownie.reverts("zero target"):
         VestingEscrowFactory.deploy(
             ZERO_ADDRESS,
             token,

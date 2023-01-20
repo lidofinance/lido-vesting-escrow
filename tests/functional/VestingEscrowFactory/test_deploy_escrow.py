@@ -1,10 +1,12 @@
 import brownie
 import pytest
 
+from tests.utils import mint_or_transfer_for_testing
+
 
 @pytest.fixture()
-def initial_funding(token, balance, vesting_factory, owner):
-    token._mint_for_testing(balance, {"from": owner})
+def initial_funding(token, balance, vesting_factory, owner, deployed):
+    mint_or_transfer_for_testing(owner, owner, token, balance, deployed)
     token.approve(vesting_factory, balance, {"from": owner})
 
 
@@ -36,6 +38,7 @@ def test_deploy_no_approve(owner, recipient, vesting_factory, balance):
         vesting_factory.deploy_vesting_contract(balance, recipient, 86400 * 365, {"from": owner})
 
 
+@pytest.mark.no_deploy
 def test_deploy_from_factory_with_invalid_token(owner, recipient, vesting_factory_with_invalid_token, balance):
     with brownie.reverts(""):
         vesting_factory_with_invalid_token.deploy_vesting_contract(balance, recipient, 86400 * 365, {"from": owner})
@@ -76,7 +79,7 @@ def test_invalid_cliff_duration(owner, recipient, balance, chain, vesting_factor
         )
 
 
-def test_invalid_duration(owner, recipient, balance, chain, vesting_factory, start_time):
+def test_invalid_duration(owner, recipient, balance, vesting_factory, start_time):
     with brownie.reverts("incorrect vesting duration"):
         vesting_factory.deploy_vesting_contract(
             balance,
@@ -94,7 +97,7 @@ def test_init_vars(deployed_vesting, recipient, balance, token, start_time, end_
     assert deployed_vesting.start_time() == start_time
     assert deployed_vesting.end_time() == end_time
     assert deployed_vesting.total_locked() == balance
-    assert deployed_vesting.initialized() == True
+    assert deployed_vesting.initialized() is True
 
 
 def test_cannot_call_init(

@@ -1,5 +1,7 @@
-import brownie
 import pytest
+
+from tests.conftest import fully_revocable
+from tests.utils import mint_or_transfer_for_testing
 
 
 @pytest.fixture
@@ -33,20 +35,20 @@ def test_recover_locked_tokens(deployed_vesting, token, recipient, balance):
     assert token.balanceOf(recipient) == 0
 
 
-def test_recover_extra_locked_tokens(deployed_vesting, token, recipient, owner, balance):
+def test_recover_extra_locked_tokens(deployed_vesting, token, recipient, owner, balance, deployed):
     extra = 10**17
-    token._mint_for_testing(extra, {"from": owner})
+    mint_or_transfer_for_testing(owner, owner, token, extra, deployed)
     token.transfer(deployed_vesting, extra, {"from": owner})
     deployed_vesting.recover_erc20(token, balance, {"from": recipient})
     assert token.balanceOf(recipient) == extra
 
 
 def test_recover_extra_locked_tokens_partially_claimed(
-    deployed_vesting, token, recipient, owner, random_guy, chain, end_time, balance
+    deployed_vesting, token, recipient, owner, random_guy, chain, end_time, balance, deployed
 ):
     extra = 10**17
     claim_amount = 3 * extra
-    token._mint_for_testing(extra, {"from": owner})
+    mint_or_transfer_for_testing(owner, owner, token, extra, deployed)
     token.transfer(deployed_vesting, extra, {"from": owner})
     chain.sleep(end_time - chain.time() + 1)
     deployed_vesting.claim(random_guy, claim_amount, {"from": recipient})
@@ -83,3 +85,53 @@ def test_recover_ether(deployed_vesting, anyone, recipient, random_guy, one_eth,
     deployed_vesting.recover_ether({"from": anyone})
     assert recipient.balance() == balance_before + one_eth
     assert deployed_vesting.balance() == 0
+
+
+def test_recover_extra_after_revoke_unvested(deployed_vesting, token, balance, recipient, owner, deployed):
+    extra = 10**17
+    mint_or_transfer_for_testing(owner, owner, token, extra, deployed)
+    token.transfer(deployed_vesting, extra, {"from": owner})
+
+    owner_balance = token.balanceOf(owner)
+    deployed_vesting.revoke_unvested({"from": owner})
+    assert token.balanceOf(owner) == balance + owner_balance
+
+    deployed_vesting.recover_erc20(token, extra + 1, {"from": recipient})
+    assert token.balanceOf(recipient) == extra
+
+
+def test_recover_extra_after_revoke_unvested_partially(
+    deployed_vesting, token, balance, recipient, owner, chain, start_time, end_time, sleep_time, deployed
+):
+    extra = 10**17
+    mint_or_transfer_for_testing(owner, owner, token, extra, deployed)
+    token.transfer(deployed_vesting, extra, {"from": owner})
+
+    chain.sleep(start_time - chain.time() + sleep_time)
+    owner_balance = token.balanceOf(owner)
+    tx = deployed_vesting.revoke_unvested({"from": owner})
+    expected_amount = 10**20 * (tx.timestamp - start_time) // (end_time - start_time)
+    assert token.balanceOf(owner) == expected_amount + owner_balance
+
+    deployed_vesting.recover_erc20(token, extra + 1, {"from": recipient})
+    assert token.balanceOf(recipient) == extra
+
+    deployed_vesting.claim({"from": recipient})
+    assert token.balanceOf(recipient) == extra + balance - expected_amount
+
+
+@fully_revocable
+def test_recover_extra_after_revoke_all(
+    deployed_vesting, token, balance, recipient, owner, chain, start_time, sleep_time, deployed
+):
+    extra = 10**17
+    mint_or_transfer_for_testing(owner, owner, token, extra, deployed)
+    token.transfer(deployed_vesting, extra, {"from": owner})
+
+    chain.sleep(start_time - chain.time() + sleep_time)
+    owner_balance = token.balanceOf(owner)
+    deployed_vesting.revoke_all({"from": owner})
+    assert token.balanceOf(owner) == balance + owner_balance
+
+    deployed_vesting.recover_erc20(token, balance, {"from": recipient})
+    assert token.balanceOf(recipient) == extra

@@ -3,7 +3,7 @@
 """
 @title Vesting Escrow
 @author Curve Finance, Yearn Finance, Lido Finance
-@license MIT
+@license GPL-3.0
 @notice Vests ERC20 tokens for a single address
 @dev Intended to be deployed many times via `VotingEscrowFactory`
 """
@@ -78,7 +78,6 @@ def __init__():
 
 
 @external
-@nonreentrant("lock")
 def initialize(
     token: address,
     amount: uint256,
@@ -111,9 +110,7 @@ def initialize(
     self.end_time = end_time
     self.cliff_length = cliff_length
 
-    assert self.token.transferFrom(
-        msg.sender, self, amount, default_return_value=True
-    ), "funding failed"
+    assert self.token.balanceOf(self) >= amount, "insufficient balance"
 
     self.total_locked = amount
     self.recipient = recipient
@@ -206,8 +203,8 @@ def revoke_unvested():
     @notice Disable further flow of tokens and revoke the unvested part to owner
     """
     self._check_sender_is_owner_or_manager()
+    assert block.timestamp < self.disabled_at, "noting to revoke"
 
-    # NOTE: Revoking more than once is futile
     revokable: uint256 = self._locked()
     self.disabled_at = block.timestamp
 
@@ -225,8 +222,8 @@ def revoke_all():
     """
     self._check_sender_is_owner()
     assert self.is_fully_revokable, "not allowed for ordinary vesting"
+    assert not self.is_fully_revoked, "already fully revoked"
 
-    # NOTE: Revoking more than once is futile
     self.is_fully_revoked = True
     self.disabled_at = block.timestamp
     # NOTE: do not revoke extra tokens

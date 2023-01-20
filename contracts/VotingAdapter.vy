@@ -3,7 +3,7 @@
 """
 @title Voting Adapter
 @author Lido Finance
-@license MIT
+@license GPL-3.0
 @notice Used to allow voting with tokens under vesting
 """
 
@@ -74,7 +74,7 @@ def __init__(
 @view
 def encode_aragon_vote_calldata(voteId: uint256, supports: bool) -> Bytes[1000]:
     """
-    @notice Encode calldata for use in VestingEscrow
+    @notice Encode calldata for use in VestingEscrow. Returns type is Bytes[1000] to be compatible with up to 30 agrs
     @param voteId Id of the vote
     @param supports Support flag true - yea, false - nay
     """
@@ -99,7 +99,7 @@ def aragon_vote(abi_encoded_params: Bytes[1000]):
 @view
 def encode_snapshot_set_delegate_calldata(delegate: address) -> Bytes[1000]:
     """
-    @notice Encode calldata for use in VestingEscrow
+    @notice Encode calldata for use in VestingEscrow. Returns type is Bytes[1000] to be compatible with up to 30 agrs
     @param delegate Address of the delegate
     """
     return _abi_encode(delegate)
@@ -122,7 +122,7 @@ def snapshot_set_delegate(abi_encoded_params: Bytes[1000]):
 @view
 def encode_delegate_calldata(delegate: address) -> Bytes[1000]:
     """
-    @notice Encode calldata for use in VestingEscrow
+    @notice Encode calldata for use in VestingEscrow. Returns type is Bytes[1000] to be compatible with up to 30 agrs
     @param delegate Address of the delegate
     """
     return _abi_encode(delegate)

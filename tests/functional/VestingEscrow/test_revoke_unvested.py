@@ -31,7 +31,8 @@ def test_revoke_unvested_from_manager(deployed_vesting, manager):
 def test_revoke_unvested_after_end_time(deployed_vesting, token, owner, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
     owner_balance = token.balanceOf(owner)
-    deployed_vesting.revoke_unvested({"from": owner})
+    with brownie.reverts("noting to revoke"):
+        deployed_vesting.revoke_unvested({"from": owner})
     deployed_vesting.claim({"from": recipient})
 
     assert token.balanceOf(recipient) == balance

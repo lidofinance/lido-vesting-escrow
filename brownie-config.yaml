@@ -2,9 +2,3 @@ compiler:
     evm_version: paris
     vyper:
         version: 0.3.7
-networks:
-    mainnet-fork:
-        cmd_settings:
-            unlock: # accounts order is crucial!
-                - 0xE80efD4bA1E683DcB681715EEfDFA741B99828e8 # manager
-                - 0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c # owner

@@ -110,7 +110,8 @@ def test_recover_extra_after_revoke_unvested_partially(
     chain.sleep(start_time - chain.time() + sleep_time)
     owner_balance = token.balanceOf(owner)
     tx = deployed_vesting.revoke_unvested({"from": owner})
-    expected_amount = 10**20 * (tx.timestamp - start_time) // (end_time - start_time)
+    vested = balance * (tx.timestamp - start_time) // (end_time - start_time)
+    expected_amount = balance - vested  # unvested
     assert token.balanceOf(owner) == expected_amount + owner_balance
 
     deployed_vesting.recover_erc20(token, extra + 1, {"from": recipient})

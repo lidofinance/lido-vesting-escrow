@@ -20,6 +20,12 @@ def test_revoke_all(deployed_vesting, owner, token, balance):
     assert token.balanceOf(owner) == balance + owner_balance
 
 
+def test_revoke_all_twice(deployed_vesting, owner):
+    deployed_vesting.revoke_all({"from": owner})
+    with brownie.reverts("already fully revoked"):
+        deployed_vesting.revoke_all({"from": owner})
+
+
 def test_revoke_all_after_end_time(deployed_vesting, token, owner, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
     owner_balance = token.balanceOf(owner)

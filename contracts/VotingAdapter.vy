@@ -173,7 +173,7 @@ def recover_erc20(token: address, amount: uint256):
     if amount != 0:
         assert ERC20(token).transfer(
             self.owner, amount, default_return_value=True
-        ), "transfer failed!"
+        ), "transfer failed"
         log ERC20Recovered(token, amount)
 
 
@@ -202,4 +202,4 @@ def _safe_send_ether(_to: address, _value: uint256):
         _to, empty(bytes32), value=_value, max_outsize=32
     )
     if len(_response) > 0:
-        assert convert(_response, bool), "ETH transfer failed!"
+        assert convert(_response, bool), "ETH transfer failed"

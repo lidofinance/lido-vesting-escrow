@@ -1,4 +1,5 @@
 import pytest
+import brownie
 
 from tests.conftest import fully_revocable
 from tests.utils import mint_or_transfer_for_testing
@@ -136,3 +137,8 @@ def test_recover_extra_after_revoke_all(
 
     deployed_vesting.recover_erc20(token, balance, {"from": recipient})
     assert token.balanceOf(recipient) == extra
+
+
+def test_cant_send_ether(deployed_vesting, random_guy, one_eth):
+    with brownie.reverts(""):
+        random_guy.transfer(deployed_vesting, one_eth)

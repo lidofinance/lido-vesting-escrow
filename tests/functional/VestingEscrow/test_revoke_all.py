@@ -73,3 +73,15 @@ def test_revoke_all_after_partial_claim(
 
     assert token.balanceOf(recipient) == claim_amount
     assert token.balanceOf(owner) == balance - claim_amount + owner_balance
+
+
+def test_revoke_all_after_revoke_unvested(
+    deployed_vesting, token, owner, chain, start_time, end_time, sleep_time, balance
+):
+    chain.sleep(start_time - chain.time() + sleep_time)
+    owner_balance = token.balanceOf(owner)
+    tx = deployed_vesting.revoke_unvested({"from": owner})
+    expected_amount = balance * (tx.timestamp - start_time) // (end_time - start_time)
+    assert token.balanceOf(owner) == balance - expected_amount + owner_balance
+    deployed_vesting.revoke_all({"from": owner})
+    assert token.balanceOf(owner) == balance + owner_balance

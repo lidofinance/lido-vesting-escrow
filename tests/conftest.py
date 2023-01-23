@@ -264,8 +264,11 @@ def cmd_opts(request):
 @pytest.fixture(scope="session")
 def deployed(cmd_opts):
     if cmd_opts.deploy_json:
-        with open(cmd_opts.deploy_json) as f:
-            yield json.load(f)
+        try:
+            with open(cmd_opts.deploy_json) as f:
+                yield json.load(f)
+        except FileNotFoundError:
+            pytest.exit("Deployment JSON file not found", -1)
     else:
         yield {}
 

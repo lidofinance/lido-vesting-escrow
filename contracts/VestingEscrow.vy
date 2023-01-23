@@ -245,7 +245,7 @@ def recover_erc20(token: address, amount: uint256):
     """
     recoverable: uint256 = amount
     if token == self.token.address:
-        available: uint256 = ERC20(token).balanceOf(self) - (
+        available: uint256 = self.token.balanceOf(self) - (
             self._locked() + self._unclaimed()
         )
         recoverable = min(recoverable, available)
@@ -262,8 +262,9 @@ def recover_ether():
     @notice Recover Ether to recipient
     """
     amount: uint256 = self.balance
-    self._safe_send_ether(self.recipient, amount)
-    log ETHRecovered(amount)
+    if amount != 0:
+        self._safe_send_ether(self.recipient, amount)
+        log ETHRecovered(amount)
 
 
 @external
@@ -363,4 +364,4 @@ def _safe_send_ether(_to: address, _value: uint256):
         _to, empty(bytes32), value=_value, max_outsize=32
     )
     if len(_response) > 0:
-        assert convert(_response, bool), "ETH transfer failed!"
+        assert convert(_response, bool), "ETH transfer failed"

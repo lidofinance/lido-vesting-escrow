@@ -38,10 +38,6 @@ event OwnerChanged:
     owner: address
 
 
-ZERO_BYTES32: constant(
-    bytes32
-) = 0x0000000000000000000000000000000000000000000000000000000000000000
-
 VOTING_CONTRACT_ADDR: immutable(address)
 SNAPSHOT_DELEGATE_CONTRACT_ADDR: immutable(address)
 DELEGATION_CONTRACT_ADDR: immutable(address)
@@ -114,7 +110,7 @@ def snapshot_set_delegate(abi_encoded_params: Bytes[1000]):
     delegate: address = empty(address)
     delegate = _abi_decode (abi_encoded_params, (address))
     IDelegation(SNAPSHOT_DELEGATE_CONTRACT_ADDR).setDelegate(
-        ZERO_BYTES32, delegate
+        empty(bytes32), delegate
     )  # dev: null id allows voting at any snapshot space
 
 
@@ -187,8 +183,9 @@ def recover_ether():
     @notice Recover Ether to owner
     """
     amount: uint256 = self.balance
-    self._safe_send_ether(self.owner, amount)
-    log ETHRecovered(amount)
+    if amount != 0:
+        self._safe_send_ether(self.owner, amount)
+        log ETHRecovered(amount)
 
 
 @internal

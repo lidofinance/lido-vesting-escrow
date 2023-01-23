@@ -86,6 +86,7 @@ def test_revoke_all_after_revoke_unvested(
     deployed_vesting.revoke_all({"from": owner})
     assert token.balanceOf(owner) == balance + owner_balance
 
+
 def test_revoke_all_after_end_time_and_claim(deployed_vesting, owner, recipient, chain, end_time):
     chain.sleep(end_time - chain.time())
     deployed_vesting.claim({"from": recipient})

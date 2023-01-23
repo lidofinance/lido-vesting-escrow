@@ -60,6 +60,8 @@ def __init__(
     @param owner Address to recover tokens and ether to
     """
     assert owner != empty(address), "zero owner"
+    assert voting_addr != empty(address), "zero voting_addr"
+    assert snapshot_delegate_addr != empty(address), "zero snapshot_delegate_addr"
     self.owner = owner
     VOTING_CONTRACT_ADDR = voting_addr
     SNAPSHOT_DELEGATE_CONTRACT_ADDR = snapshot_delegate_addr

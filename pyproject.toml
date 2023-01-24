@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "lido-vesting-escrow"
+version = "0.1.0"
+description = "Vesting escrow contracts"
+authors = ["Lido dev team"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "lido_vesting_escrow"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10.9,<3.11"
+eth-brownie = "^1.19.2"
+dotmap = "^1.3.30"
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.10.0"
+isort = "^5.10.1"
+mamushi = "^0.0.1a8"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+target-version = ['py310']

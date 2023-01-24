@@ -1,9 +1,17 @@
 import brownie
+from brownie import ZERO_ADDRESS
 
 
-def test_reinit_impossible(vesting, accounts, token):
-    vesting.renounce_ownership({"from": accounts[0]})
-    with brownie.reverts("dev: can only initialize once"):
-        vesting.initialize(
-            accounts[1], token, accounts[1], 0, 0, 0, 0, {"from": accounts[1]}
+def test_reinit_impossible_from_owner(deployed_vesting, owner, token, recipient, balance):
+    with brownie.reverts("can only initialize once"):
+        deployed_vesting.initialize(
+            token,
+            balance,
+            recipient,
+            0,
+            0,
+            0,
+            0,
+            ZERO_ADDRESS,
+            {"from": owner},
         )

@@ -2,103 +2,154 @@ import brownie
 import pytest
 from brownie import ZERO_ADDRESS
 
-
-@pytest.fixture(scope="module", autouse=True)
-def initial_funding(token, vesting_factory, accounts):
-    token._mint_for_testing(10 ** 21, {"from": accounts[0]})
-    token.approve(vesting_factory, 10 ** 21, {"from": accounts[0]})
+from tests.utils import mint_or_transfer_for_testing
 
 
-def test_approve_fail(accounts, vesting_factory, token):
-    with brownie.reverts("dev: funding failed"):
-        vesting_factory.deploy_vesting_contract(
-            token,
-            accounts[2],
-            10 ** 22,
-            86400 * 365,
-            {"from": accounts[0]},
-        )
+@pytest.fixture()
+def initial_funding(token, balance, vesting_factory, owner, deployed):
+    mint_or_transfer_for_testing(owner, owner, token, balance, deployed)
+    token.approve(vesting_factory, balance, {"from": owner})
 
 
-def test_target_is_set(vesting_factory, vesting_target):
+def test_params_are_set(
+    vesting_factory,
+    vesting_target,
+    voting_adapter,
+    token,
+    owner,
+    manager,
+):
     assert vesting_factory.target() == vesting_target
+    assert vesting_factory.token() == token
+    assert vesting_factory.owner() == owner
+    assert vesting_factory.manager() == manager
+    assert vesting_factory.voting_adapter() == voting_adapter
 
 
-def test_deploys(accounts, vesting_factory, token):
-    tx = vesting_factory.deploy_vesting_contract(
-        token, accounts[1], 10 ** 18, 86400 * 365, {"from": accounts[0]}
-    )
+@pytest.mark.usefixtures("initial_funding")
+def test_deploy(owner, recipient, vesting_factory, balance):
+    tx = vesting_factory.deploy_vesting_contract(balance, recipient, 86400 * 365, {"from": owner})
 
     assert len(tx.new_contracts) == 1
     assert tx.return_value == tx.new_contracts[0]
 
 
-def test_start_and_duration(
-    VestingEscrowSimple, accounts, chain, vesting_factory, token
-):
+def test_deploy_no_approve(owner, recipient, vesting_factory, balance):
+    with brownie.reverts(""):
+        vesting_factory.deploy_vesting_contract(balance, recipient, 86400 * 365, {"from": owner})
+
+
+@pytest.mark.no_deploy
+def test_deploy_from_factory_with_invalid_token(owner, recipient, vesting_factory_with_invalid_token, balance):
+    with brownie.reverts(""):
+        vesting_factory_with_invalid_token.deploy_vesting_contract(balance, recipient, 86400 * 365, {"from": owner})
+
+
+@pytest.mark.usefixtures("initial_funding")
+def test_start_and_duration(VestingEscrow, owner, recipient, balance, chain, vesting_factory):
     start_time = chain.time() + 100
 
     tx = vesting_factory.deploy_vesting_contract(
-        token,
-        accounts[1],
-        10 ** 18,
+        balance,
+        recipient,
         86400 * 700,
         start_time,
-        {"from": accounts[0]},
+        {"from": owner},
     )
 
     assert len(tx.new_contracts) == 1
     assert tx.return_value == tx.new_contracts[0]
 
-    escrow = VestingEscrowSimple.at(tx.return_value)
+    escrow = VestingEscrow.at(tx.return_value)
     assert escrow.start_time() == start_time
     assert escrow.end_time() == start_time + 86400 * 700
 
 
-def test_token_xfer(vesting, token):
-    # exactly 10**18 tokens should be transferred
-    assert token.balanceOf(vesting) == 10 ** 20
+@pytest.mark.usefixtures("initial_funding")
+def test_zero_recipient(owner, balance, vesting_factory):
+    with brownie.reverts("zero recipient"):
+        vesting_factory.deploy_vesting_contract(balance, ZERO_ADDRESS, 86400 * 365, {"from": owner})
 
 
-def test_token_approval(vesting, vesting_factory, token):
-    # remaining approval should be zero
-    assert token.allowance(vesting, vesting_factory) == 0
+def test_invalid_cliff_duration(owner, recipient, balance, chain, vesting_factory):
+    start_time = chain.time() + 100
+    duration = 86400 * 700
+    cliff_time = start_time + duration
+    with brownie.reverts("incorrect vesting cliff"):
+        vesting_factory.deploy_vesting_contract(
+            balance,
+            recipient,
+            duration,
+            start_time,
+            cliff_time,
+            {"from": owner},
+        )
 
 
-def test_init_vars(vesting, accounts, token, start_time, end_time):
-    assert vesting.token() == token
-    assert vesting.admin() == accounts[0]
-    assert vesting.recipient() == accounts[1]
-    assert vesting.start_time() == start_time
-    assert vesting.end_time() == end_time
-    assert vesting.total_locked() == 10 ** 20
+def test_invalid_duration(owner, recipient, balance, vesting_factory, start_time):
+    with brownie.reverts("incorrect vesting duration"):
+        vesting_factory.deploy_vesting_contract(
+            balance,
+            recipient,
+            0,
+            start_time,
+            0,
+            {"from": owner},
+        )
 
 
-def test_cannot_call_init(vesting, accounts, token, start_time, end_time):
-    with brownie.reverts():
-        vesting.initialize(
-            accounts[0],
+def test_init_vars(deployed_vesting, recipient, balance, token, start_time, end_time):
+    assert deployed_vesting.token() == token
+    assert deployed_vesting.recipient() == recipient
+    assert deployed_vesting.start_time() == start_time
+    assert deployed_vesting.end_time() == end_time
+    assert deployed_vesting.total_locked() == balance
+    assert deployed_vesting.initialized() is True
+
+
+def test_cannot_call_init(
+    vesting_factory,
+    deployed_vesting,
+    owner,
+    recipient,
+    token,
+    balance,
+    start_time,
+    end_time,
+):
+    with brownie.reverts("can only initialize once"):
+        deployed_vesting.initialize(
             token,
-            accounts[1],
-            10 ** 20,
+            balance,
+            recipient,
             start_time,
             end_time,
             0,
-            {"from": accounts[0]},
+            0,
+            vesting_factory,
+            {"from": owner},
         )
 
 
 def test_cannot_init_factory_target(
-    vesting_target, accounts, token, start_time, end_time
+    vesting_factory,
+    vesting_target,
+    owner,
+    recipient,
+    token,
+    balance,
+    start_time,
+    end_time,
 ):
-    with brownie.reverts("dev: can only initialize once"):
+    with brownie.reverts("can only initialize once"):
         vesting_target.initialize(
-            accounts[0],
             token,
-            accounts[1],
-            10 ** 20,
+            balance,
+            recipient,
             start_time,
             end_time,
             0,
-            {"from": accounts[0]},
+            0,
+            vesting_factory,
+            {"from": owner},
         )

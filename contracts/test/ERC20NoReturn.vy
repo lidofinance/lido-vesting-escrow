@@ -45,27 +45,24 @@ def allowance(_owner: address, _spender: address) -> uint256:
 
 
 @external
-def transfer(_to: address, _value: uint256) -> bool:
+def transfer(_to: address, _value: uint256):
     self.balanceOf[msg.sender] -= _value
     self.balanceOf[_to] += _value
     log Transfer(msg.sender, _to, _value)
-    return True
 
 
 @external
-def transferFrom(_from: address, _to: address, _value: uint256) -> bool:
+def transferFrom(_from: address, _to: address, _value: uint256):
     self.balanceOf[_from] -= _value
     self.balanceOf[_to] += _value
     self.allowances[_from][msg.sender] -= _value
     log Transfer(_from, _to, _value)
-    return True
 
 
 @external
-def approve(_spender: address, _value: uint256) -> bool:
+def approve(_spender: address, _value: uint256):
     self.allowances[msg.sender][_spender] = _value
     log Approval(msg.sender, _spender, _value)
-    return True
 
 
 @external

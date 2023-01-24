@@ -1,4 +1,4 @@
-# Lido Vesting Escrow (WIP)
+# Lido Vesting Escrow
 
 A deeply modified version of [Yearn Vesting Escrow](https://github.com/banteg/yearn-vesting-escrow) contracts with added functionality:
 - `rug_pull` method is renamed to `revoke_unvested`

@@ -1,10 +1,10 @@
 {
     "vestingEscrowDeployer": "0xE80efD4bA1E683DcB681715EEfDFA741B99828e8",
-    "vestingEscrowDeployTx": "0x2e711afc016522824760d61dedf5a764e104146934e61787700f24b3b151bffa",
-    "vestingEscrowAddress": "0x9111973d6399d8287d9f00b09b5dC63371c0a7ce",
+    "vestingEscrowDeployTx": "0x3914e35bcb06438e6c389b3b67a2b4bee19f321de546d7aaeb3e8a3497639fa9",
+    "vestingEscrowAddress": "0x7915be0b4BF48b46E594988AcE5553bc0eF7F2E3",
     "votingAdapterDeployer": "0xE80efD4bA1E683DcB681715EEfDFA741B99828e8",
-    "votingAdapterDeployTx": "0xf1cca20842647b6951fb68a57830fe73414028a678b6b0242b825e65d0391815",
-    "votingAdapterAddress": "0x1598744CceAe470039b7488ad07e08a0046E7594",
+    "votingAdapterDeployTx": "0x69328367561d69b7b392dfed98014653d94ebd779ba7821b4a55f3c0c509e9cd",
+    "votingAdapterAddress": "0x4d5C16778B7632e7B0C24fF102072247b9cf34c2",
     "votingAdapterDeployConstructorArgs": {
         "voting_addr": "0xbc0B67b4553f4CF52a913DE9A6eD0057E2E758Db",
         "snapshot_delegate_addr": "0x469788fE6E9E9681C6ebF3bF78e7Fd26Fc015446",
@@ -12,13 +12,13 @@
         "owner": "0x4333218072D5d7008546737786663c38B4D561A4"
     },
     "factoryDeployer": "0xE80efD4bA1E683DcB681715EEfDFA741B99828e8",
-    "factoryDeployTx": "0x525ccb21c4a66e65a65fac82698d23912c4e1458383aeeb1ed1b59afb0f60bab",
-    "factoryAddress": "0xeA79BB777C8D64cCE30E04e00656c0212B787555",
+    "factoryDeployTx": "0x2258620c16409aec947a5aa61470bd5bbdc58864e991cf008922b680cb8f630d",
+    "factoryAddress": "0x8D20FD1Ac547e035BF01089cFb92459054F82Ff7",
     "factoryDeployConstructorArgs": {
-        "target": "0x9111973d6399d8287d9f00b09b5dC63371c0a7ce",
+        "target": "0x7915be0b4BF48b46E594988AcE5553bc0eF7F2E3",
         "token": "0x56340274fB5a72af1A3C6609061c451De7961Bd4",
         "owner": "0x4333218072D5d7008546737786663c38B4D561A4",
         "manager": "0xE80efD4bA1E683DcB681715EEfDFA741B99828e8",
-        "voting_adapter": "0x1598744CceAe470039b7488ad07e08a0046E7594"
+        "voting_adapter": "0x4d5C16778B7632e7B0C24fF102072247b9cf34c2"
     }
 }

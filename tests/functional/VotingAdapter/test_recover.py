@@ -1,3 +1,4 @@
+import brownie
 from tests.utils import mint_or_transfer_for_testing
 
 
@@ -19,3 +20,8 @@ def test_recover_ether(voting_adapter, anyone, owner, random_guy, one_eth, destr
     voting_adapter.recover_ether({"from": anyone})
     assert owner.balance() == balance_before + one_eth
     assert voting_adapter.balance() == 0
+
+
+def test_cant_send_ether(voting_adapter, random_guy, one_eth):
+    with brownie.reverts(""):
+        random_guy.transfer(voting_adapter, one_eth)

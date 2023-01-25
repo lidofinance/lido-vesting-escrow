@@ -1,5 +1,6 @@
 import brownie
 import pytest
+from brownie import ZERO_ADDRESS
 
 from tests.utils import mint_or_transfer_for_testing
 
@@ -62,6 +63,12 @@ def test_start_and_duration(VestingEscrow, owner, recipient, balance, chain, ves
     escrow = VestingEscrow.at(tx.return_value)
     assert escrow.start_time() == start_time
     assert escrow.end_time() == start_time + 86400 * 700
+
+
+@pytest.mark.usefixtures("initial_funding")
+def test_zero_recipient(owner, balance, vesting_factory):
+    with brownie.reverts("zero recipient"):
+        vesting_factory.deploy_vesting_contract(balance, ZERO_ADDRESS, 86400 * 365, {"from": owner})
 
 
 def test_invalid_cliff_duration(owner, recipient, balance, chain, vesting_factory):

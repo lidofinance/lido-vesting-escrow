@@ -38,10 +38,6 @@ event OwnerChanged:
     owner: address
 
 
-ZERO_BYTES32: constant(
-    bytes32
-) = 0x0000000000000000000000000000000000000000000000000000000000000000
-
 VOTING_CONTRACT_ADDR: immutable(address)
 SNAPSHOT_DELEGATE_CONTRACT_ADDR: immutable(address)
 DELEGATION_CONTRACT_ADDR: immutable(address)
@@ -64,6 +60,8 @@ def __init__(
     @param owner Address to recover tokens and ether to
     """
     assert owner != empty(address), "zero owner"
+    assert voting_addr != empty(address), "zero voting_addr"
+    assert snapshot_delegate_addr != empty(address), "zero snapshot_delegate_addr"
     self.owner = owner
     VOTING_CONTRACT_ADDR = voting_addr
     SNAPSHOT_DELEGATE_CONTRACT_ADDR = snapshot_delegate_addr
@@ -114,7 +112,7 @@ def snapshot_set_delegate(abi_encoded_params: Bytes[1000]):
     delegate: address = empty(address)
     delegate = _abi_decode (abi_encoded_params, (address))
     IDelegation(SNAPSHOT_DELEGATE_CONTRACT_ADDR).setDelegate(
-        ZERO_BYTES32, delegate
+        empty(bytes32), delegate
     )  # dev: null id allows voting at any snapshot space
 
 
@@ -177,7 +175,7 @@ def recover_erc20(token: address, amount: uint256):
     if amount != 0:
         assert ERC20(token).transfer(
             self.owner, amount, default_return_value=True
-        ), "transfer failed!"
+        ), "transfer failed"
         log ERC20Recovered(token, amount)
 
 
@@ -187,8 +185,9 @@ def recover_ether():
     @notice Recover Ether to owner
     """
     amount: uint256 = self.balance
-    self._safe_send_ether(self.owner, amount)
-    log ETHRecovered(amount)
+    if amount != 0:
+        self._safe_send_ether(self.owner, amount)
+        log ETHRecovered(amount)
 
 
 @internal
@@ -205,4 +204,4 @@ def _safe_send_ether(_to: address, _value: uint256):
         _to, empty(bytes32), value=_value, max_outsize=32
     )
     if len(_response) > 0:
-        assert convert(_response, bool), "ETH transfer failed!"
+        assert convert(_response, bool), "ETH transfer failed"

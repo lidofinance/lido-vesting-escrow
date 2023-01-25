@@ -134,7 +134,7 @@ def destructible(SelfDestructible, owner):
 
 @pytest.fixture(scope="module")
 def start_time(chain):
-    return chain.time() + 1000 + 86400 * 365
+    return chain.time() + int(YEAR) + 1000
 
 
 @pytest.fixture(scope="module")
@@ -144,7 +144,7 @@ def end_time(start_time, duration):
 
 @pytest.fixture(scope="module")
 def sleep_time(start_time, end_time):
-    return (end_time - start_time) // 2
+    return (end_time - start_time) // 3
 
 
 @pytest.fixture(scope="module")
@@ -264,8 +264,11 @@ def cmd_opts(request):
 @pytest.fixture(scope="session")
 def deployed(cmd_opts):
     if cmd_opts.deploy_json:
-        with open(cmd_opts.deploy_json) as f:
-            yield json.load(f)
+        try:
+            with open(cmd_opts.deploy_json) as f:
+                yield json.load(f)
+        except FileNotFoundError:
+            pytest.exit("Deployment JSON file not found", -1)
     else:
         yield {}
 

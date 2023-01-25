@@ -29,7 +29,6 @@ event VestingEscrowInitialized:
 
 
 event Claim:
-    recipient: indexed(address)
     beneficiary: indexed(address)
     claimed: uint256
 
@@ -194,7 +193,7 @@ def claim(
         beneficiary, claimable, default_return_value=True
     ), "transfer failed"
 
-    log Claim(self.recipient, beneficiary, claimable)
+    log Claim(beneficiary, claimable)
 
 
 @external
@@ -203,9 +202,9 @@ def revoke_unvested():
     @notice Disable further flow of tokens and revoke the unvested part to owner
     """
     self._check_sender_is_owner_or_manager()
-    assert block.timestamp < self.disabled_at, "noting to revoke"
 
     revokable: uint256 = self._locked()
+    assert revokable > 0, "nothing to revoke"
     self.disabled_at = block.timestamp
 
     assert self.token.transfer(
@@ -224,10 +223,12 @@ def revoke_all():
     assert self.is_fully_revokable, "not allowed for ordinary vesting"
     assert not self.is_fully_revoked, "already fully revoked"
 
+    # NOTE: do not revoke extra tokens
+    revokable: uint256 = self._locked() + self._unclaimed()
+    assert revokable > 0, "nothing to revoke"
+
     self.is_fully_revoked = True
     self.disabled_at = block.timestamp
-    # NOTE: do not revoke extra tokens
-    revokable: uint256 = self.total_locked - self.total_claimed
 
     assert self.token.transfer(
         self._owner(), revokable, default_return_value=True
@@ -245,7 +246,7 @@ def recover_erc20(token: address, amount: uint256):
     """
     recoverable: uint256 = amount
     if token == self.token.address:
-        available: uint256 = ERC20(token).balanceOf(self) - (
+        available: uint256 = self.token.balanceOf(self) - (
             self._locked() + self._unclaimed()
         )
         recoverable = min(recoverable, available)
@@ -262,8 +263,9 @@ def recover_ether():
     @notice Recover Ether to recipient
     """
     amount: uint256 = self.balance
-    self._safe_send_ether(self.recipient, amount)
-    log ETHRecovered(amount)
+    if amount != 0:
+        self._safe_send_ether(self.recipient, amount)
+        log ETHRecovered(amount)
 
 
 @external
@@ -363,4 +365,4 @@ def _safe_send_ether(_to: address, _value: uint256):
         _to, empty(bytes32), value=_value, max_outsize=32
     )
     if len(_response) > 0:
-        assert convert(_response, bool), "ETH transfer failed!"
+        assert convert(_response, bool), "ETH transfer failed"

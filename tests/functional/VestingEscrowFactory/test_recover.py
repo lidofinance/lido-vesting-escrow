@@ -1,4 +1,5 @@
 import pytest
+import brownie
 
 from tests.utils import mint_or_transfer_for_testing
 
@@ -35,3 +36,8 @@ def test_recover_ether(vesting_factory, anyone, owner, random_guy, one_eth, dest
     vesting_factory.recover_ether({"from": anyone})
     assert owner.balance() == balance_before + one_eth
     assert vesting_factory.balance() == 0
+
+
+def test_cant_send_ether(vesting_factory, random_guy, one_eth):
+    with brownie.reverts(""):
+        random_guy.transfer(vesting_factory, one_eth)

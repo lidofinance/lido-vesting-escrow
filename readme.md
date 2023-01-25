@@ -1,15 +1,15 @@
-# Lido Vesting Escrow (WIP)
+# Lido Vesting Escrow
 
 A deeply modified version of [Yearn Vesting Escrow](https://github.com/banteg/yearn-vesting-escrow) contracts with added functionality:
 - `rug_pull` method is renamed to `revoke_unvested`
 - `admin` role is renamed to `manager`
 - Added new role `owner`
-- Added new escrow method `revoke_all` method that allows `owner` to revoke ALL tokens form escrow. This is required for legal optimization (in terms of legal token ownership)
+- Added new escrow method `revoke_all` method that allows `owner` to revoke ALL tokens form escrow. This is required for legal optimization (in terms of legal token ownership) 
 - Added methods:
     - `aragon_vote` method for Aragon voting participation
     - `snapshot_set_delegate` method for Snapshot voting delegation,
-    - `delegate` method for further voting power delegation
-
+    - `delegate` method for further voting power delegation 
+    
 - Voting methods operate over upgradable middleware to encounter possible changes in voting interfaces
 - Added `recover_erc20` and `recover_ether` methods
 - Existing methods and events refined
@@ -126,18 +126,3 @@ After script finishes, all deployed metadata will be saved to file `./deployed-{
 
 Deploy script is stateful, so it safe to start several times. To deploy from scratch, simply delete the `./deployed-{NETWORK}.json` before running it.
 
-To deploy end user vestings contracts via multisig wallet use `multisig_tx build` script which
-effectively generates one-shot transaction to be executed by Gnosis Safe MultiSend contract.
-
-- Fill in vesting details into `input.csv` CSV file (use `input.csv.example`, as a reference).
-- Compute the file hash sum with the following command `sha256sum input.csv` to share with the other
-  signers later.
-- For testing purpose it's possible to use a `VestingEscrowFactory` deployed in runtime and any
-  existing Gnosis Safe by using the following command: `brownie run multisig_tx fake_factory`.
-- Run script `brownie run multisig_tx build input.csv` and follow the questions from the script.
-  Check the output of the scripts and run the same command but with an additional arg as follows to
-  be able to propose the transaction to Gnosis backend: `brownie run multisig_tx build input.csv
-  prod!`.
-- To test transaction as a signer use the following command `brownie run multisig_tx check
-  0xsafeTxHash input.csv`.
-- To sign the transaction use `brownie run multisig_tx sign 0xsafeTxHash`

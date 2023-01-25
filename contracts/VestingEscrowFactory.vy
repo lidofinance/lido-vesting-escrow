@@ -25,6 +25,7 @@ interface IVestingEscrow:
 
 event VestingEscrowCreated:
     creator: indexed(address)
+    recipient: indexed(address)
     escrow: address
 
 
@@ -49,8 +50,8 @@ event ManagerChanged:
     manager: address
 
 
-target: public(address)
-token: public(address)
+TARGET: immutable(address)
+TOKEN: immutable(address)
 voting_adapter: public(address)
 owner: public(address)
 manager: public(address)
@@ -77,8 +78,8 @@ def __init__(
     assert target != empty(address), "zero target"
     assert owner != empty(address), "zero owner"
     assert token != empty(address), "zero token"
-    self.target = target
-    self.token = token
+    TARGET = target
+    TOKEN = token
     self.owner = owner
     self.manager = manager
     self.voting_adapter = voting_adapter
@@ -104,17 +105,16 @@ def deploy_vesting_contract(
     """
     assert vesting_duration > 0, "incorrect vesting duration"
     assert cliff_length <= vesting_duration, "incorrect vesting cliff"
-    escrow: address = create_minimal_proxy_to(self.target)
+    assert recipient != empty(address), "zero recipient"
 
-    assert ERC20(self.token).transferFrom(
-        msg.sender, self, amount, default_return_value=True
-    ), "transferFrom deployer failed"
-    assert ERC20(self.token).transfer(
-        escrow, amount, default_return_value=True
-    ), "transfer to escrow failed"
+    escrow: address = create_minimal_proxy_to(TARGET)
+
+    assert ERC20(TOKEN).transferFrom(
+        msg.sender, escrow, amount, default_return_value=True
+    ), "transferFrom deployer to escrow failed"
 
     IVestingEscrow(escrow).initialize(
-        self.token,
+        TOKEN,
         amount,
         recipient,
         vesting_start,
@@ -125,6 +125,7 @@ def deploy_vesting_contract(
     )
     log VestingEscrowCreated(
         msg.sender,
+        recipient,
         escrow,
     )
     return escrow
@@ -192,6 +193,18 @@ def change_manager(manager: address):
     log ManagerChanged(manager)
 
 
+@external
+@view
+def token() -> address:
+    return TOKEN
+
+
+@external
+@view
+def target() -> address:
+    return TARGET
+
+
 @internal
 def _check_sender_is_owner():
     assert msg.sender == self.owner, "msg.sender not owner"
@@ -206,4 +219,4 @@ def _safe_send_ether(_to: address, _value: uint256):
         _to, empty(bytes32), value=_value, max_outsize=32
     )
     if len(_response) > 0:
-        assert convert(_response, bool), "ETH transfer failed!"
+        assert convert(_response, bool), "ETH transfer failed"

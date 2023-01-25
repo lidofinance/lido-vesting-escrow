@@ -20,6 +20,12 @@ def test_revoke_all(deployed_vesting, owner, token, balance):
     assert token.balanceOf(owner) == balance + owner_balance
 
 
+def test_revoke_all_twice(deployed_vesting, owner):
+    deployed_vesting.revoke_all({"from": owner})
+    with brownie.reverts("already fully revoked"):
+        deployed_vesting.revoke_all({"from": owner})
+
+
 def test_revoke_all_after_end_time(deployed_vesting, token, owner, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
     owner_balance = token.balanceOf(owner)
@@ -67,3 +73,22 @@ def test_revoke_all_after_partial_claim(
 
     assert token.balanceOf(recipient) == claim_amount
     assert token.balanceOf(owner) == balance - claim_amount + owner_balance
+
+
+def test_revoke_all_after_revoke_unvested(
+    deployed_vesting, token, owner, chain, start_time, end_time, sleep_time, balance
+):
+    chain.sleep(start_time - chain.time() + sleep_time)
+    owner_balance = token.balanceOf(owner)
+    tx = deployed_vesting.revoke_unvested({"from": owner})
+    expected_amount = balance * (tx.timestamp - start_time) // (end_time - start_time)
+    assert token.balanceOf(owner) == balance - expected_amount + owner_balance
+    deployed_vesting.revoke_all({"from": owner})
+    assert token.balanceOf(owner) == balance + owner_balance
+
+
+def test_revoke_all_after_end_time_and_claim(deployed_vesting, owner, recipient, chain, end_time):
+    chain.sleep(end_time - chain.time())
+    deployed_vesting.claim({"from": recipient})
+    with brownie.reverts("nothing to revoke"):
+        deployed_vesting.revoke_all({"from": owner})

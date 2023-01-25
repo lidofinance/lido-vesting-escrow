@@ -2,6 +2,7 @@
 Usage:
     brownie run multisig_tx build input.csv [prod!]
     brownie run multisig_tx check 0xsafeTxHash input.csv
+    brownie run multisig_tx sign 0xsafeTxHash
 """
 import csv
 import os
@@ -13,7 +14,7 @@ from brownie import ERC20  # type: ignore
 from brownie import VestingEscrow  # type: ignore
 from brownie import VestingEscrowFactory  # type: ignore
 from brownie import VotingAdapter  # type: ignore
-from brownie import Contract, chain, network
+from brownie import chain, network
 from brownie.network.transaction import TransactionReceipt
 from gnosis.safe.signatures import signature_split, signature_to_bytes
 from web3._utils.encoding import to_json
@@ -70,6 +71,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
         safe_tx = safe.multisend_from_receipts()
 
     _preview_and_check_tx(safe, safe_tx, params_list, is_prod)
+    log.info(f"SafeTX hash: {safe_tx.safe_tx_hash.hex()}")
 
     if log.prompt_yes_no("Sign with frame?"):
         safe.sign_with_frame(safe_tx)
@@ -115,10 +117,19 @@ def sign(safe_tx_hash: str) -> None:
     log.info("Retrieving transaction from Gnosis Safe")
     safe_tx = safe.get_safe_tx_by_safe_tx_hash(safe_tx_hash)
 
+    log.info(f"SafeTX hash: {safe_tx.safe_tx_hash}")
+
     if log.prompt_yes_no("Sign transaction?"):
-        signature = safe.sign_with_frame(safe_tx)
-        if log.prompt_yes_no("Post signature?"):
-            safe.post_signature(safe_tx, signature)
+        if log.prompt_yes_no("Sign with frame?"):
+            safe.sign_with_frame(safe_tx)
+        elif log.prompt_yes_no("Sign manually?"):
+            _sign_safe_tx_manually(safe_tx)
+        else:
+            log.error("Signature required")
+            return
+
+    if log.prompt_yes_no("Post signature?"):
+        safe.post_signature(safe_tx, safe_tx.signatures)
 
 
 def fake_factory() -> None:
@@ -164,6 +175,7 @@ def _preview_and_check_tx(safe: ApeSafe, safe_tx: SafeTx, params_list: Sequence[
     log.info("Check LDO balance change")
     ending_balance = _ldo_balance(safe.address)
     assert starting_balance - ending_balance == vestings_sum, "LDOs difference after deploy mismatch"
+    log.okay("LDOs difference after deploy is correct")
 
     # give some time to inspect the output before to continue
     if not log.prompt_yes_no("Continue?"):
@@ -171,6 +183,7 @@ def _preview_and_check_tx(safe: ApeSafe, safe_tx: SafeTx, params_list: Sequence[
 
     log.info("Check individual vestings")
     _check_tx(tx, params_list)
+    log.okay("All checks have passed")
 
 
 class Config(TypedDict):

@@ -25,6 +25,7 @@ interface IVestingEscrow:
 
 event VestingEscrowCreated:
     creator: indexed(address)
+    recipient: indexed(address)
     escrow: address
 
 
@@ -124,6 +125,7 @@ def deploy_vesting_contract(
     )
     log VestingEscrowCreated(
         msg.sender,
+        recipient,
         escrow,
     )
     return escrow

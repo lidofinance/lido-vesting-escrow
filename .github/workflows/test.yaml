@@ -1,3 +1,4 @@
+---
 name: Test
 
 on:
@@ -19,8 +20,8 @@ jobs:
         with:
           node-version: "16"
 
-      - name: Install ganache
-        run: npm install -g ganache-cli
+      - name: Install NodeJS dependencies
+        run: npm ci && echo $GITHUB_WORKSPACE/node_modules/.bin >> $GITHUB_PATH
 
       - uses: actions/setup-python@v4
         with:
@@ -32,7 +33,9 @@ jobs:
           poetry install --no-root
 
       - name: Run Tests
-        run: poetry run brownie test tests/functional/ --gas --coverage --revert-tb --disable-warnings
+        run: >
+          poetry run brownie test tests/functional/
+          --network development --gas --coverage --revert-tb --disable-warnings
 
   integration:
     runs-on: ubuntu-latest
@@ -45,8 +48,8 @@ jobs:
         with:
           node-version: "16"
 
-      - name: Install ganache
-        run: npm install -g ganache-cli
+      - name: Install NodeJS dependencies
+        run: npm ci && echo $GITHUB_WORKSPACE/node_modules/.bin >> $GITHUB_PATH
 
       - uses: actions/setup-python@v4
         with:
@@ -58,4 +61,6 @@ jobs:
           poetry install --no-root
 
       - name: Run Tests
-        run: poetry run brownie test tests/integration/ -s --revert-tb  --disable-warnings
+        run: >
+          poetry run brownie test tests/integration/
+          --network development -s --revert-tb  --disable-warnings

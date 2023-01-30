@@ -23,6 +23,7 @@ A deeply modified version of [Yearn Vesting Escrow](https://github.com/banteg/ye
 ## Setup
 
 ```shell
+pip install poetry==1.3.1
 poetry shell
 poetry install
 

@@ -88,4 +88,4 @@ def deploy_factory():
 
 
 def deploy_vestings():
-    pass
+    log.error("use brownie run multisig_tx build instead")

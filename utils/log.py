@@ -1,3 +1,7 @@
+from contextlib import contextmanager 
+import curses
+
+
 color_hl = "\x1b[38;5;141m"
 color_green = "\033[92m"
 color_yellow = "\033[93m"
@@ -63,3 +67,22 @@ def note(text, value=None):
 def assert_equals(desc, actual, expected):
     assert actual == expected, f"{desc}: expected {expected} bot got {actual}"
     okay(desc, actual)
+
+
+@contextmanager
+def block(msg: str):
+    header = f"{highlight('[info]', color_blue)} {msg} ..."
+    failed = False
+    try:
+        print(header, end=" ")
+        print(highlight("IN PROGRESS", color_yellow))
+        yield
+    except Exception as e:
+        failed = True
+        raise e
+    finally:
+        print(header, end=" ")
+        if failed:
+            print(highlight("FAIL", color_red))
+        else:
+            print(highlight("OK", color_green))

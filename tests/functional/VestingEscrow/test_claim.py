@@ -1,16 +1,18 @@
 def test_claim_full(deployed_vesting, token, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
     assert token.balanceOf(recipient) == 0
-    deployed_vesting.claim({"from": recipient})
+    claimed = deployed_vesting.claim({"from": recipient})
 
+    assert claimed.return_value == balance
     assert token.balanceOf(recipient) == balance
 
 
 def test_claim_less(deployed_vesting, token, recipient, chain, end_time, balance):
     chain.sleep(end_time - chain.time())
     assert token.balanceOf(recipient) == 0
-    deployed_vesting.claim(recipient, balance / 10, {"from": recipient})
+    claimed = deployed_vesting.claim(recipient, balance / 10, {"from": recipient})
 
+    assert claimed.return_value == balance / 10
     assert token.balanceOf(recipient) == balance / 10
 
 
@@ -24,8 +26,9 @@ def test_claim_beneficiary(deployed_vesting, token, random_guy, recipient, chain
 
 def test_claim_before_start(deployed_vesting, token, recipient, chain, start_time):
     chain.sleep(start_time - chain.time() - 5)
-    deployed_vesting.claim({"from": recipient})
+    claimed = deployed_vesting.claim({"from": recipient})
 
+    assert claimed.return_value == 0
     assert token.balanceOf(recipient) == 0
 
 
@@ -50,6 +53,7 @@ def test_claim_after_cliff(
     tx = deployed_vesting_with_cliff.claim({"from": recipient})
     expected_amount = balance * (tx.timestamp - start_time) // (end_time - start_time)
 
+    assert tx.return_value == expected_amount
     assert token.balanceOf(recipient) == expected_amount
     assert deployed_vesting_with_cliff.total_claimed() == expected_amount
 

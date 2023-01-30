@@ -178,7 +178,7 @@ def locked() -> uint256:
 @external
 def claim(
     beneficiary: address = msg.sender, amount: uint256 = max_value(uint256)
-):
+) -> uint256:
     """
     @notice Claim tokens which have vested
     @param beneficiary Address to transfer claimed tokens to
@@ -194,6 +194,8 @@ def claim(
     ), "transfer failed"
 
     log Claim(beneficiary, claimable)
+
+    return claimable
 
 
 @external

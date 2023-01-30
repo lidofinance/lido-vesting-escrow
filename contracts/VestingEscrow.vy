@@ -142,10 +142,10 @@ def _total_vested_at(time: uint256) -> uint256:
 
 @internal
 @view
-def _unclaimed(time: uint256 = block.timestamp) -> uint256:
+def _unclaimed() -> uint256:
     if self.is_fully_revoked:
         return 0
-    claim_time: uint256 = min(time, self.disabled_at)
+    claim_time: uint256 = min(block.timestamp, self.disabled_at)
     return self._total_vested_at(claim_time) - self.total_claimed
 
 
@@ -160,10 +160,10 @@ def unclaimed() -> uint256:
 
 @internal
 @view
-def _locked(time: uint256 = block.timestamp) -> uint256:
-    if time >= self.disabled_at:
+def _locked() -> uint256:
+    if block.timestamp >= self.disabled_at:
         return 0
-    return self.total_locked - self._total_vested_at(time)
+    return self.total_locked - self._total_vested_at(block.timestamp)
 
 
 @external

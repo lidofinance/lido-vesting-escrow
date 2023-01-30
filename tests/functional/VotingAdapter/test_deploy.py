@@ -4,6 +4,7 @@ from brownie import ZERO_ADDRESS
 
 pytestmark = pytest.mark.no_deploy
 
+
 def test_deploy_voting_adapter(VotingAdapter, owner, voting, snapshot_delegate):
     voting_adapter = VotingAdapter.deploy(voting, snapshot_delegate, ZERO_ADDRESS, owner, {"from": owner})
     assert voting_adapter.voting_contract_addr() == voting

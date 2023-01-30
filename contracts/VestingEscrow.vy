@@ -109,7 +109,7 @@ def initialize(
     self.end_time = end_time
     self.cliff_length = cliff_length
 
-    assert self.token.balanceOf(self) >= amount, "insufficient balance"
+    assert ERC20(token).balanceOf(self) >= amount, "insufficient balance"
 
     self.total_locked = amount
     self.recipient = recipient
@@ -246,7 +246,7 @@ def recover_erc20(token: address, amount: uint256):
     """
     recoverable: uint256 = amount
     if token == self.token.address:
-        available: uint256 = self.token.balanceOf(self) - (
+        available: uint256 = ERC20(token).balanceOf(self) - (
             self._locked() + self._unclaimed()
         )
         recoverable = min(recoverable, available)

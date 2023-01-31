@@ -106,6 +106,7 @@ def deploy_vesting_contract(
     assert vesting_duration > 0, "incorrect vesting duration"
     assert cliff_length <= vesting_duration, "incorrect vesting cliff"
     assert recipient != empty(address), "zero recipient"
+    assert amount > 0, "incorrect amount"
 
     escrow: address = create_minimal_proxy_to(TARGET)
 

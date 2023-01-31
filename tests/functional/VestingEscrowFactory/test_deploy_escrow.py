@@ -98,6 +98,19 @@ def test_invalid_duration(owner, recipient, balance, vesting_factory, start_time
         )
 
 
+def test_invalid_amount(owner, recipient, vesting_factory, start_time):
+    duration = 86400 * 700
+    with brownie.reverts("incorrect amount"):
+        vesting_factory.deploy_vesting_contract(
+            0,
+            recipient,
+            duration,
+            start_time,
+            0,
+            {"from": owner},
+        )
+
+
 def test_init_vars(deployed_vesting, recipient, balance, token, start_time, end_time):
     assert deployed_vesting.token() == token
     assert deployed_vesting.recipient() == recipient

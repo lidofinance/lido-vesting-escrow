@@ -13,6 +13,7 @@ from brownie import ERC20  # type: ignore
 from brownie import VestingEscrow  # type: ignore
 from brownie import VestingEscrowFactory  # type: ignore
 from brownie import VotingAdapter  # type: ignore
+from datetime import datetime
 from brownie import chain, network
 from brownie.network.transaction import TransactionReceipt
 from gnosis.safe.signatures import signature_split, signature_to_bytes
@@ -45,6 +46,10 @@ def build(csv_filename: str, non_empty_for_prod=None):
     with log.block("Reading input file"):
         raw_params_list = _read_csv(csv_filename)
         params_list = tuple(VestingParams.from_tuple(p) for p in raw_params_list)
+        i = 1
+        for params in params_list:
+            _preview_vesting_params(i, params)
+            i += 1
 
     safe = ApeSafe(config["SAFE_ADDRESS"])
     ldo = ERC20.at(LDO_ADDRESS)
@@ -211,6 +216,24 @@ def _get_file_sha256(filename: str) -> str:
 
     with open(filename, mode="rb") as f:
         return sha256(f.read()).hexdigest()
+
+
+def _preview_vesting_params(number: int, params: "VestingParams") -> None:
+    log.info(f"Vesting {number} params:")
+    log.info(f"  recipient: {params.recipient}")
+    log.info(f"  total amount: {params.amount // 10 ** 18} LDO")
+    log.info(f"  cliff date: {_unix_time_to_date(params.vesting_start + params.cliff_length)}")
+    log.info(f"  amount at cliff date: {params.amount / params.vesting_duration * params.cliff_length // 10 ** 18} LDO")
+    log.info(f"  vesting end: {_unix_time_to_date(params.vesting_start + params.vesting_duration)}")
+    log.info(f"  is fully revokable: {params.is_fully_revokable}")
+    if not log.prompt_yes_no(f"Are the vesting {number} params valid?"):
+        log.warn("Script aborted")
+        exit(1)
+
+
+def _unix_time_to_date(unix_time: int) -> str:
+    """Convert unix time to date in format YYYY-MM-DD"""
+    return datetime.utcfromtimestamp(unix_time).strftime("%Y-%m-%d")
 
 
 class VestingParams(NamedTuple):

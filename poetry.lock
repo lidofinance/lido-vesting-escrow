@@ -125,6 +125,27 @@ files = [
 frozenlist = ">=1.1.0"
 
 [[package]]
+name = "ape-safe"
+version = "0.7.0"
+description = "Build complex Gnosis Safe transactions and safely preview them in a forked environment."
+category = "main"
+optional = false
+python-versions = ">=3.8,<3.11"
+files = []
+develop = false
+
+[package.dependencies]
+eth-brownie = "^1.19.1"
+safe-eth-py = "~4.8.2"
+trezor = "0.13.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/madlabman/ape-safe"
+reference = "master"
+resolved_reference = "baaf63790fdb509bfb970aa2f25f0d0d0bdcf800"
+
+[[package]]
 name = "asttokens"
 version = "2.0.5"
 description = "Annotate AST trees with source code positions"
@@ -325,6 +346,18 @@ jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
 uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
+name = "cached-property"
+version = "1.5.2"
+description = "A decorator for caching properties in classes."
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
+    {file = "cached_property-1.5.2-py2.py3-none-any.whl", hash = "sha256:df4f613cf7ad9a588cc381aaf4a512d26265ecebd5eb9e1ba12f1319eb85a6a0"},
+]
+
+[[package]]
 name = "certifi"
 version = "2022.9.24"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -377,6 +410,20 @@ files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
+
+[[package]]
+name = "construct"
+version = "2.10.68"
+description = "A powerful declarative symmetric parser/builder for binary data"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "construct-2.10.68.tar.gz", hash = "sha256:7b2a3fd8e5f597a5aa1d614c3bd516fa065db01704c72a1efaaeec6ef23d8b45"},
+]
+
+[package.extras]
+extras = ["arrow", "cloudpickle", "enum34", "lz4", "numpy", "ruamel.yaml"]
 
 [[package]]
 name = "cytoolz"
@@ -503,6 +550,25 @@ files = [
 ]
 
 [[package]]
+name = "ecdsa"
+version = "0.18.0"
+description = "ECDSA cryptographic signature library (pure python)"
+category = "main"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+files = [
+    {file = "ecdsa-0.18.0-py2.py3-none-any.whl", hash = "sha256:80600258e7ed2f16b9aa1d7c295bd70194109ad5a30fdee0eaeefef1d4c559dd"},
+    {file = "ecdsa-0.18.0.tar.gz", hash = "sha256:190348041559e21b22a1d65cee485282ca11a6f81d503fddb84d5017e9ed1e49"},
+]
+
+[package.dependencies]
+six = ">=1.9.0"
+
+[package.extras]
+gmpy = ["gmpy"]
+gmpy2 = ["gmpy2"]
+
+[[package]]
 name = "eip712"
 version = "0.1.0"
 description = "eip712: Message classes for typed structured data hashing and signing in Ethereum"
@@ -580,6 +646,27 @@ dev = ["Sphinx (>=1.6.5,<2)", "bumpversion (>=0.5.3,<1)", "flake8 (==3.7.9)", "h
 doc = ["Sphinx (>=1.6.5,<2)", "sphinx-rtd-theme (>=0.1.9,<1)", "towncrier (>=21.9.0)"]
 lint = ["flake8 (==3.7.9)", "isort (>=4.2.15,<5)", "mypy (==0.910)", "pydocstyle (>=5.0.0,<6)"]
 test = ["hypothesis (>=4.18.0,<5)", "pytest (>=6.2.5,<7)", "pytest-xdist", "tox (==3.14.6)"]
+
+[[package]]
+name = "eth-bloom"
+version = "1.0.4"
+description = "Python implementation of the Ethereum Trie structure"
+category = "main"
+optional = false
+python-versions = ">=3.6, <4"
+files = [
+    {file = "eth-bloom-1.0.4.tar.gz", hash = "sha256:688317306d87b823da63d24e1ad706defadbd865887ed4bddf7fbd0410b2093c"},
+    {file = "eth_bloom-1.0.4-py3-none-any.whl", hash = "sha256:5d6d28fa60ee1e25436c45b9593798d7e193224b364ea1a212050055dfa1942c"},
+]
+
+[package.dependencies]
+eth-hash = {version = ">=0.3.1,<0.4.0", extras = ["pycryptodome"]}
+
+[package.extras]
+deploy = ["bumpversion (>=0.5.3,<1.0.0)", "wheel (>=0.30.0,<1.0.0)"]
+dev = ["bumpversion (>=0.5.3,<1.0.0)", "flake8 (>=3.5.0,<4.0.0)", "hypothesis (==3.7.0)", "mypy (<0.600)", "pytest (==3.0.7)", "tox (==2.6.0)", "twine", "wheel (>=0.30.0,<1.0.0)"]
+lint = ["flake8 (>=3.5.0,<4.0.0)", "mypy (<0.600)"]
+test = ["hypothesis (==3.7.0)", "pytest (==3.0.7)", "tox (==2.6.0)"]
 
 [[package]]
 name = "eth-brownie"
@@ -1115,6 +1202,20 @@ files = [
 ]
 
 [[package]]
+name = "libusb1"
+version = "3.0.0"
+description = "Pure-python wrapper for libusb-1.0"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "libusb1-3.0.0-py3-none-any.whl", hash = "sha256:0e652b04cbe85ec8e74f9ee82b49f861fb14b5320ae51399387ad2601ccc0500"},
+    {file = "libusb1-3.0.0-py3-none-win32.whl", hash = "sha256:083f75e5d15cb5e2159e64c308c5317284eae926a820d6dce53a9505d18be3b2"},
+    {file = "libusb1-3.0.0-py3-none-win_amd64.whl", hash = "sha256:6f6bb010632ada35c661d17a65e135077beef0fbb2434d5ffdb3a4a911fd9490"},
+    {file = "libusb1-3.0.0.tar.gz", hash = "sha256:5792a9defee40f15d330a40d9b1800545c32e47ba7fc66b6f28f133c9fcc8538"},
+]
+
+[[package]]
 name = "lru-dict"
 version = "1.1.8"
 description = "An Dict like LRU container."
@@ -1194,6 +1295,18 @@ pathspec = ">=0.9.0"
 
 [package.extras]
 dev = ["black (>=22.6.0)", "bump2version (>=1.0.0)", "coverage (>=6.0.0)", "flake8 (==5.0.4)", "mypy (>=0.900)", "mypy-extensions (==0.4.3)", "pylint (==2.14.5)", "pytest (>=6.0.0)", "pytest-cov (>=3.0.0)"]
+
+[[package]]
+name = "mnemonic"
+version = "0.20"
+description = "Implementation of Bitcoin BIP-0039"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "mnemonic-0.20-py3-none-any.whl", hash = "sha256:acd2168872d0379e7a10873bb3e12bf6c91b35de758135c4fbd1015ef18fafc5"},
+    {file = "mnemonic-0.20.tar.gz", hash = "sha256:7c6fb5639d779388027a77944680aee4870f0fcd09b1e42a5525ee2ce4c625f6"},
+]
 
 [[package]]
 name = "multiaddr"
@@ -1504,6 +1617,63 @@ files = [
 ]
 
 [[package]]
+name = "py-ecc"
+version = "5.2.0"
+description = "Elliptic curve crypto in python including secp256k1 and alt_bn128"
+category = "main"
+optional = false
+python-versions = ">=3.5, <4"
+files = [
+    {file = "py_ecc-5.2.0-py3-none-any.whl", hash = "sha256:525b95aae5bbc185baff7dbfdb9bbd14d2c9454a797457f3edc85fd14c2ad7a6"},
+    {file = "py_ecc-5.2.0.tar.gz", hash = "sha256:f0aabdc82813ecb2e75e0531e3850295ff1a96bedfba42f15b5bc7f39ced64ba"},
+]
+
+[package.dependencies]
+cached-property = ">=1.5.1,<2"
+eth-typing = ">=2.1.0,<3.0.0"
+eth-utils = ">=1.3.0,<2"
+mypy-extensions = ">=0.4.1"
+
+[package.extras]
+dev = ["bumpversion (>=0.5.3,<1)", "flake8 (==3.5.0)", "mypy (==0.641)", "mypy-extensions (>=0.4.1)", "pytest (==3.10.1)", "pytest-xdist (==1.26.0)", "twine"]
+lint = ["flake8 (==3.5.0)", "mypy (==0.641)", "mypy-extensions (>=0.4.1)"]
+test = ["pytest (==3.10.1)", "pytest-xdist (==1.26.0)"]
+
+[[package]]
+name = "py-evm"
+version = "0.5.0a3"
+description = "Python implementation of the Ethereum Virtual Machine"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "py-evm-0.5.0a3.tar.gz", hash = "sha256:7253dc14f5780d90eba7b236043ccacbfddee7c2a3b771584260f6f82e61486b"},
+    {file = "py_evm-0.5.0a3-py3-none-any.whl", hash = "sha256:dfea98874dcb35a4288a42ebdf52b37dc462f61fcaa3a274be276a1dd53a5e3f"},
+]
+
+[package.dependencies]
+cached-property = ">=1.5.1,<2"
+eth-bloom = ">=1.0.3,<2.0.0"
+eth-keys = ">=0.3.4,<0.4.0"
+eth-typing = ">=2.3.0,<3.0.0"
+eth-utils = ">=1.9.4,<2.0.0"
+lru-dict = ">=1.1.6"
+mypy-extensions = ">=0.4.1,<1.0.0"
+py-ecc = ">=1.4.7,<6.0.0"
+pyethash = ">=0.1.27,<1.0.0"
+rlp = ">=2,<3"
+trie = "2.0.0-alpha.5"
+
+[package.extras]
+benchmark = ["termcolor (>=1.1.0,<2.0.0)", "web3 (>=4.1.0,<5.0.0)"]
+dev = ["Sphinx (>=1.5.5,<1.8.0)", "bumpversion (>=0.5.3,<1)", "cached-property (>=1.5.1,<2)", "eth-bloom (>=1.0.3,<2.0.0)", "eth-keys (>=0.3.4,<0.4.0)", "eth-typing (>=2.3.0,<3.0.0)", "eth-utils (>=1.9.4,<2.0.0)", "factory-boy (==2.11.1)", "flake8 (==3.8.2)", "flake8-bugbear (==20.1.4)", "hypothesis (>=5,<6)", "idna (==2.7)", "lru-dict (>=1.1.6)", "mypy (==0.782)", "mypy-extensions (>=0.4.1,<1.0.0)", "pexpect (>=4.6,<5)", "py-ecc (>=1.4.7,<6.0.0)", "py-evm (>=0.2.0-alpha.14)", "pyethash (>=0.1.27,<1.0.0)", "pysha3 (>=1.0.0,<2.0.0)", "pytest (>=6.2.4,<7)", "pytest-asyncio (>=0.10.0,<0.11)", "pytest-cov (==2.5.1)", "pytest-timeout (>=1.4.2,<2)", "pytest-watch (>=4.1.0,<5)", "pytest-xdist (==2.3.0)", "requests (>=2.20,<3)", "rlp (>=2,<3)", "setuptools (>=36.2.0)", "sphinx-rtd-theme (>=0.1.9)", "sphinxcontrib-asyncio (>=0.2.0,<0.3)", "towncrier (>=19.2.0,<20)", "tox (==2.7.0)", "trie (==2.0.0-alpha.5)", "twine", "wheel"]
+doc = ["Sphinx (>=1.5.5,<1.8.0)", "py-evm (>=0.2.0-alpha.14)", "pysha3 (>=1.0.0,<2.0.0)", "sphinx-rtd-theme (>=0.1.9)", "sphinxcontrib-asyncio (>=0.2.0,<0.3)", "towncrier (>=19.2.0,<20)"]
+eth = ["cached-property (>=1.5.1,<2)", "eth-bloom (>=1.0.3,<2.0.0)", "eth-keys (>=0.3.4,<0.4.0)", "eth-typing (>=2.3.0,<3.0.0)", "eth-utils (>=1.9.4,<2.0.0)", "lru-dict (>=1.1.6)", "mypy-extensions (>=0.4.1,<1.0.0)", "py-ecc (>=1.4.7,<6.0.0)", "pyethash (>=0.1.27,<1.0.0)", "rlp (>=2,<3)", "trie (==2.0.0-alpha.5)"]
+eth-extra = ["blake2b-py (>=0.1.4,<0.2)", "coincurve (>=13.0.0,<14.0.0)", "eth-hash[pycryptodome]", "eth-hash[pysha3]", "plyvel (>=1.2.0,<2)"]
+lint = ["flake8 (==3.8.2)", "flake8-bugbear (==20.1.4)", "mypy (==0.782)"]
+test = ["factory-boy (==2.11.1)", "hypothesis (>=5,<6)", "pexpect (>=4.6,<5)", "pytest (>=6.2.4,<7)", "pytest-asyncio (>=0.10.0,<0.11)", "pytest-cov (==2.5.1)", "pytest-timeout (>=1.4.2,<2)", "pytest-watch (>=4.1.0,<5)", "pytest-xdist (==2.3.0)"]
+
+[[package]]
 name = "py-solc-ast"
 version = "1.2.9"
 description = "A tool for exploring the abstract syntax tree generated by solc."
@@ -1572,6 +1742,17 @@ files = [
     {file = "pycryptodome-3.15.0-pp36-pypy36_pp73-manylinux2010_x86_64.whl", hash = "sha256:d2a39a66057ab191e5c27211a7daf8f0737f23acbf6b3562b25a62df65ffcb7b"},
     {file = "pycryptodome-3.15.0-pp36-pypy36_pp73-win32.whl", hash = "sha256:9c772c485b27967514d0df1458b56875f4b6d025566bf27399d0c239ff1b369f"},
     {file = "pycryptodome-3.15.0.tar.gz", hash = "sha256:9135dddad504592bcc18b0d2d95ce86c3a5ea87ec6447ef25cfedea12d6018b8"},
+]
+
+[[package]]
+name = "pyethash"
+version = "0.1.27"
+description = "Python wrappers for ethash, the ethereum proof of workhashing function"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyethash-0.1.27.tar.gz", hash = "sha256:ff66319ce26b9d77df1f610942634dac9742e216f2c27b051c0a2c2dec9c2818"},
 ]
 
 [[package]]
@@ -1664,6 +1845,37 @@ files = [
     {file = "pyrsistent-0.18.1-cp39-cp39-win32.whl", hash = "sha256:1b34eedd6812bf4d33814fca1b66005805d3640ce53140ab8bbb1e2651b0d9bc"},
     {file = "pyrsistent-0.18.1-cp39-cp39-win_amd64.whl", hash = "sha256:e24a828f57e0c337c8d8bb9f6b12f09dfdf0273da25fda9e314f0b684b415a07"},
     {file = "pyrsistent-0.18.1.tar.gz", hash = "sha256:d4d61f8b993a7255ba714df3aca52700f8125289f84f704cf80916517c46eb96"},
+]
+
+[[package]]
+name = "pysha3"
+version = "1.0.2"
+description = "SHA-3 (Keccak) for Python 2.7 - 3.5"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pysha3-1.0.2-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:6e6a84efb7856f5d760ee55cd2b446972cb7b835676065f6c4f694913ea8f8d9"},
+    {file = "pysha3-1.0.2-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:f9046d59b3e72aa84f6dae83a040bd1184ebd7fef4e822d38186a8158c89e3cf"},
+    {file = "pysha3-1.0.2-cp27-cp27m-win32.whl", hash = "sha256:9fdd28884c5d0b4edfed269b12badfa07f1c89dbc5c9c66dd279833894a9896b"},
+    {file = "pysha3-1.0.2-cp27-cp27m-win_amd64.whl", hash = "sha256:41be70b06c8775a9e4d4eeb52f2f6a3f356f17539a54eac61f43a29e42fd453d"},
+    {file = "pysha3-1.0.2-cp27-cp27mu-manylinux1_i686.whl", hash = "sha256:68c3a60a39f9179b263d29e221c1bd6e01353178b14323c39cc70593c30f21c5"},
+    {file = "pysha3-1.0.2-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:59111c08b8f34495575d12e5f2ce3bafb98bea470bc81e70c8b6df99aef0dd2f"},
+    {file = "pysha3-1.0.2-cp33-cp33m-win32.whl", hash = "sha256:571a246308a7b63f15f5aa9651f99cf30f2a6acba18eddf28f1510935968b603"},
+    {file = "pysha3-1.0.2-cp33-cp33m-win_amd64.whl", hash = "sha256:93abd775dac570cb9951c4e423bcb2bc6303a9d1dc0dc2b7afa2dd401d195b24"},
+    {file = "pysha3-1.0.2-cp34-cp34m-manylinux1_i686.whl", hash = "sha256:11a2ba7a2e1d9669d0052fc8fb30f5661caed5512586ecbeeaf6bf9478ab5c48"},
+    {file = "pysha3-1.0.2-cp34-cp34m-manylinux1_x86_64.whl", hash = "sha256:5ec8da7c5c70a53b5fa99094af3ba8d343955b212bc346a0d25f6ff75853999f"},
+    {file = "pysha3-1.0.2-cp34-cp34m-win32.whl", hash = "sha256:9c778fa8b161dc9348dc5cc361e94d54aa5ff18413788f4641f6600d4893a608"},
+    {file = "pysha3-1.0.2-cp34-cp34m-win_amd64.whl", hash = "sha256:fd7e66999060d079e9c0e8893e78d8017dad4f59721f6fe0be6307cd32127a07"},
+    {file = "pysha3-1.0.2-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:827b308dc025efe9b6b7bae36c2e09ed0118a81f792d888548188e97b9bf9a3d"},
+    {file = "pysha3-1.0.2-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:4416f16b0f1605c25f627966f76873e432971824778b369bd9ce1bb63d6566d9"},
+    {file = "pysha3-1.0.2-cp35-cp35m-win32.whl", hash = "sha256:c93a2676e6588abcfaecb73eb14485c81c63b94fca2000a811a7b4fb5937b8e8"},
+    {file = "pysha3-1.0.2-cp35-cp35m-win_amd64.whl", hash = "sha256:684cb01d87ed6ff466c135f1c83e7e4042d0fc668fa20619f581e6add1d38d77"},
+    {file = "pysha3-1.0.2-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:386998ee83e313b6911327174e088021f9f2061cbfa1651b97629b761e9ef5c4"},
+    {file = "pysha3-1.0.2-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:c7c2adcc43836223680ebdf91f1d3373543dc32747c182c8ca2e02d1b69ce030"},
+    {file = "pysha3-1.0.2-cp36-cp36m-win32.whl", hash = "sha256:cd5c961b603bd2e6c2b5ef9976f3238a561c58569945d4165efb9b9383b050ef"},
+    {file = "pysha3-1.0.2-cp36-cp36m-win_amd64.whl", hash = "sha256:0060a66be16665d90c432f55a0ba1f6480590cfb7d2ad389e688a399183474f0"},
+    {file = "pysha3-1.0.2.tar.gz", hash = "sha256:fe988e73f2ce6d947220624f04d467faf05f1bbdbc64b0a201296bb3af92739e"},
 ]
 
 [[package]]
@@ -1885,6 +2097,28 @@ rust-backend = ["rusty-rlp (>=0.1.15,<0.2)"]
 test = ["hypothesis (==5.19.0)", "pytest (==5.4.3)", "tox (>=2.9.1,<3)"]
 
 [[package]]
+name = "safe-eth-py"
+version = "4.8.2"
+description = "Safe Ecosystem Foundation utilities for Ethereum projects"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "safe-eth-py-4.8.2.tar.gz", hash = "sha256:116103947190a22d7e59f9ae50066776b067d6eb5c25686df0f74e010c4eef44"},
+    {file = "safe_eth_py-4.8.2-py3-none-any.whl", hash = "sha256:c1a2e59c0a63b902126116ad9394e30c84c31731d7725bd0a0804d0e7902017c"},
+]
+
+[package.dependencies]
+packaging = "*"
+py-evm = "0.5.0a3"
+pysha3 = ">=1.0.0"
+requests = ">=2"
+web3 = ">=5.23.0"
+
+[package.extras]
+django = ["django (>=2)", "django-filter (>=2)", "djangorestframework (>=2)"]
+
+[[package]]
 name = "semantic-version"
 version = "2.10.0"
 description = "A library implementing the 'SemVer' scheme."
@@ -1902,14 +2136,14 @@ doc = ["Sphinx", "sphinx-rtd-theme"]
 
 [[package]]
 name = "setuptools"
-version = "66.0.0"
+version = "66.1.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "setuptools-66.0.0-py3-none-any.whl", hash = "sha256:a78d01d1e2c175c474884671dde039962c9d74c7223db7369771fcf6e29ceeab"},
-    {file = "setuptools-66.0.0.tar.gz", hash = "sha256:bd6eb2d6722568de6d14b87c44a96fac54b2a45ff5e940e639979a3d1792adb6"},
+    {file = "setuptools-66.1.0-py3-none-any.whl", hash = "sha256:fc19f9f62120a763300fd78e234b3cbd3417be098f08c156eaaf36420627e57b"},
+    {file = "setuptools-66.1.0.tar.gz", hash = "sha256:78a02bdea8a5cb66dec1c507598c443bcc75562817d2556c1a17f7a344615bb4"},
 ]
 
 [package.extras]
@@ -1997,6 +2231,74 @@ dev = ["py-make (>=0.1.0)", "twine", "wheel"]
 notebook = ["ipywidgets (>=6)"]
 slack = ["slack-sdk"]
 telegram = ["requests"]
+
+[[package]]
+name = "trezor"
+version = "0.13.0"
+description = "Python library for communicating with Trezor Hardware Wallet"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "trezor-0.13.0-py3-none-any.whl", hash = "sha256:8c79aab2ea30440a4c6a1380c0373a848f11730bcde43b3de5280a927a8e82cc"},
+    {file = "trezor-0.13.0.tar.gz", hash = "sha256:4571aa09dbfe88b31eb2f16c7c359b4809621b75a04b7b5bc9dbffe17046c99a"},
+]
+
+[package.dependencies]
+click = ">=7,<9"
+construct = ">=2.9"
+ecdsa = ">=0.9"
+libusb1 = ">=1.6.4"
+mnemonic = ">=0.20"
+requests = ">=2.4.0"
+setuptools = ">=19.0"
+typing-extensions = ">=3.10"
+
+[package.extras]
+ethereum = ["rlp (>=1.1.0)", "web3 (>=4.8)"]
+extra = ["Pillow"]
+full = ["Pillow", "PyQt5", "hidapi (>=0.7.99.post20)", "rlp (>=1.1.0)", "stellar-sdk (>=4.0.0,<6.0.0)", "web3 (>=4.8)"]
+hidapi = ["hidapi (>=0.7.99.post20)"]
+qt-widgets = ["PyQt5"]
+stellar = ["stellar-sdk (>=4.0.0,<6.0.0)"]
+
+[[package]]
+name = "trie"
+version = "2.0.0a5"
+description = "Python implementation of the Ethereum Trie structure"
+category = "main"
+optional = false
+python-versions = ">=3.6,<4"
+files = [
+    {file = "trie-2.0.0a5-py3-none-any.whl", hash = "sha256:a10a5065175b7f08f1e20b7c246b32716eedfcf29e599503af66592eae40cabc"},
+    {file = "trie-2.0.0a5.tar.gz", hash = "sha256:6385f54165a57e996e0ddbe3aee68778354be58cca1b3623e8a9a1a56680c45b"},
+]
+
+[package.dependencies]
+eth-hash = ">=0.1.0,<1.0.0"
+eth-utils = ">=1.6.1,<2.0.0"
+hexbytes = ">=0.2.0,<0.3.0"
+rlp = ">=1,<3"
+sortedcontainers = ">=2.1.0,<3"
+typing-extensions = ">=3.7.4,<4"
+
+[package.extras]
+dev = ["bumpversion (>=0.5.3,<1)", "eth-hash (>=0.1.0,<1.0.0)", "flake8 (==3.8.1)", "hypothesis (>=5.10.4,<6)", "pycryptodome", "pytest-xdist (>=1.31.0,<2)", "tox (>=2.6.0,<3)", "twine", "wheel"]
+lint = ["flake8 (==3.8.1)"]
+test = ["hypothesis (>=5.10.4,<6)", "pycryptodome", "pytest-xdist (>=1.31.0,<2)", "tox (>=2.6.0,<3)"]
+
+[[package]]
+name = "typing-extensions"
+version = "3.10.0.2"
+description = "Backported and Experimental Type Hints for Python 3.5+"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "typing_extensions-3.10.0.2-py2-none-any.whl", hash = "sha256:d8226d10bc02a29bcc81df19a26e56a9647f8b0a6d4a83924139f4a8b01f17b7"},
+    {file = "typing_extensions-3.10.0.2-py3-none-any.whl", hash = "sha256:f1d25edafde516b146ecd0613dabcc61409817af4766fbbcfb8d1ad4ec441a34"},
+    {file = "typing_extensions-3.10.0.2.tar.gz", hash = "sha256:49f75d16ff11f1cd258e1b988ccff82a3ca5570217d7ad8c5f48205dd99a677e"},
+]
 
 [[package]]
 name = "urllib3"
@@ -2321,4 +2623,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10.9,<3.11"
-content-hash = "b01d57656ea406d4d30a9a998ddd8eb424e1a547860de2b44c2634040dcb68b2"
+content-hash = "da8ba30146efcf07b5486e20c1b09711129a5801396c8645b8c2cca168aca9d6"

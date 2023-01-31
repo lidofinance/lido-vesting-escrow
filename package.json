@@ -1,0 +1,11 @@
+{
+  "//": "see also pyproject.toml",
+  "name": "lido-vesting-escrow",
+  "description": "Token vesting escrow with cliff, clawback and full clawback",
+  "authors": "Lido automation",
+  "license": "GPL-3.0-only",
+  "readme": "README.md",
+  "dependencies": {
+    "ganache-cli": "^6.12.2"
+  }
+}

@@ -1,3 +1,7 @@
+---
+networks:
+    default: mainnet-fork
+
 compiler:
     evm_version: berlin
     vyper:

@@ -46,10 +46,8 @@ def build(csv_filename: str, non_empty_for_prod=None):
     with log.block("Reading input file"):
         raw_params_list = _read_csv(csv_filename)
         params_list = tuple(VestingParams.from_tuple(p) for p in raw_params_list)
-        i = 1
-        for params in params_list:
-            _preview_vesting_params(i, params)
-            i += 1
+        for num, params in enumerate(params_list):
+            _preview_vesting_params(num + 1, params)
 
     safe = ApeSafe(config["SAFE_ADDRESS"])
     ldo = ERC20.at(LDO_ADDRESS)
@@ -63,7 +61,9 @@ def build(csv_filename: str, non_empty_for_prod=None):
     with log.block("Checking multisig balance"):
         starting_balance = _ldo_balance(safe.address)
         vestings_sum = sum(p.amount for p in params_list)
-        assert starting_balance >= vestings_sum, f"Not enough LDOs for vesting, need at least {vestings_sum / 10 ** 18}"
+        assert (
+            starting_balance >= vestings_sum
+        ), f"Not enough LDOs for vesting, need at least {(vestings_sum / 10 ** 18):,} LDO"
 
     with chain_snapshot():
         with log.block("Constructing multisend transaction"):
@@ -221,9 +221,11 @@ def _get_file_sha256(filename: str) -> str:
 def _preview_vesting_params(number: int, params: "VestingParams") -> None:
     log.info(f"Vesting {number} params:")
     log.info(f"  recipient: {params.recipient}")
-    log.info(f"  total amount: {params.amount // 10 ** 18} LDO")
+    log.info(f"  total amount: {(params.amount // 10 ** 18):,} LDO")
     log.info(f"  cliff date: {_unix_time_to_date(params.vesting_start + params.cliff_length)}")
-    log.info(f"  amount at cliff date: {params.amount / params.vesting_duration * params.cliff_length // 10 ** 18} LDO")
+    log.info(
+        f"  amount at cliff date: {(params.amount / params.vesting_duration * params.cliff_length // 10 ** 18):,} LDO"
+    )
     log.info(f"  vesting end: {_unix_time_to_date(params.vesting_start + params.vesting_duration)}")
     log.info(f"  is fully revokable: {params.is_fully_revokable}")
     if not log.prompt_yes_no(f"Are the vesting {number} params valid?"):

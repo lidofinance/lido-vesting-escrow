@@ -41,7 +41,7 @@ def deploy_factory():
     proceedPrompt()
 
     log.note(f"VestingEscrow deploy")
-    escrow = do_deploy_escrow({"from": deployer})
+    escrow = do_deploy_escrow({"from": deployer, "max_fee": "100 gwei", "priority_fee": "1 gwei"})
 
     voting_adapter_args = prepare_voting_adapter_deploy_args(
         voting_addr=deploy_args.aragon_voting,
@@ -56,7 +56,7 @@ def deploy_factory():
     proceedPrompt()
 
     log.note(f"VotingAdapter deploy")
-    voting_adapter = do_deploy_voting_adapter({"from": deployer}, voting_adapter_args)
+    voting_adapter = do_deploy_voting_adapter({"from": deployer, "max_fee": "100 gwei", "priority_fee": "1 gwei"}, voting_adapter_args)
 
     factory_args = prepare_factory_deploy_args(
         target=escrow.address,
@@ -71,7 +71,7 @@ def deploy_factory():
     proceedPrompt()
 
     log.note(f"VestingEscrowFactory deploy")
-    factory = do_deploy_factory({"from": deployer}, factory_args)
+    factory = do_deploy_factory({"from": deployer, "max_fee": "100 gwei", "priority_fee": "1 gwei"}, factory_args)
 
     if network.show_active() == "mainnet":
         proceed = log.prompt_yes_no("(Re)Try to publish source codes?")

@@ -20,6 +20,11 @@ A deeply modified version of [Yearn Vesting Escrow](https://github.com/banteg/ye
 - [`VestingEscrow`](contracts/VestingEscrow.vy): Simplified vesting contract that holds tokens for a single beneficiary
 - [`VotingAdapter`](contracts/VotingAdapter.vy): Middleware for voting with tokens under vesting
 
+## Audits
+
+Source code of the smart contracts was audited by:
+- [satemind.io](./audits/lido-trp-vesting-escrow.pdf)
+
 ## Setup
 
 ```shell

@@ -5,6 +5,8 @@ Usage:
 """
 import csv
 import os
+import sys
+from datetime import datetime
 from hashlib import sha256
 from typing import NamedTuple, Sequence, TypedDict
 
@@ -13,7 +15,6 @@ from brownie import ERC20  # type: ignore
 from brownie import VestingEscrow  # type: ignore
 from brownie import VestingEscrowFactory  # type: ignore
 from brownie import VotingAdapter  # type: ignore
-from datetime import datetime
 from brownie import chain, network
 from brownie.network.transaction import TransactionReceipt
 from gnosis.safe.signatures import signature_split, signature_to_bytes
@@ -41,7 +42,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
         _print_factory_params(config["FACTORY_ADDRESS"])
         if not log.prompt_yes_no("Are the factory params valid?"):
             log.warn("Script aborted")
-            exit(1)
+            sys.exit(1)
 
     with log.block("Reading input file"):
         raw_params_list = _read_csv(csv_filename)
@@ -80,7 +81,8 @@ def build(csv_filename: str, non_empty_for_prod=None):
                 )
             safe_tx = safe.multisend_from_receipts()
 
-        _preview_and_check_tx(safe, safe_tx, params_list, is_prod)
+    _preview_and_check_tx(safe, safe_tx, params_list)
+
     log.info(f"SafeTX hash: {safe_tx.safe_tx_hash.hex()}")
 
     if log.prompt_yes_no("Sign with frame?"):
@@ -99,8 +101,8 @@ def build(csv_filename: str, non_empty_for_prod=None):
         return
 
     if log.prompt_yes_no("Post transaction?"):
-        safe.post_transaction(safe_tx)
-        log.okay("Done")
+        with log.block("Posting transaction"):
+            safe.post_transaction(safe_tx)
 
     log.info("Visit multisig transactions queue page:")
     _print_safe_txs_queue_link(safe)
@@ -119,7 +121,7 @@ def check(safe_tx_hash: str, csv_filename: str) -> None:
 
     log.info("Retrieving transaction from Gnosis Safe")
     safe_tx = safe.get_safe_tx_by_safe_tx_hash(safe_tx_hash)
-    _preview_and_check_tx(safe, safe_tx, params_list, is_prod=True)
+    _preview_and_check_tx(safe, safe_tx, params_list)
 
 
 def fake_factory() -> None:
@@ -147,20 +149,20 @@ def fake_factory() -> None:
         adapter,
         {"from": "0x1111111111111111111111111111111111111111"},
     )
-    ldo.transfer(safe.address, 100_000 * 10**18, {"from": lido_treasury})
+    ldo.transfer(safe.address, 43 * 10**18, {"from": lido_treasury})
     history.clear()  # to avoid these transactions to occur in multisend
 
     log.info(f"{factory.address=}")
     input("Press ENTER to exit...")
 
 
-def _preview_and_check_tx(safe: ApeSafe, safe_tx: SafeTx, params_list: Sequence["VestingParams"], is_prod=False):
+def _preview_and_check_tx(safe: ApeSafe, safe_tx: SafeTx, params_list: Sequence["VestingParams"]):
     vestings_sum = sum(p.amount for p in params_list)
     starting_balance = _ldo_balance(safe.address)
 
     with log.block("Simulate transaction"):
         # do not reset chain in testing to keep the fake factory and other contracts intact
-        tx = safe.preview(safe_tx, reset=is_prod)
+        tx = safe.preview(safe_tx, reset=False)
 
     with log.block("Check LDO balance change after simulation"):
         ending_balance = _ldo_balance(safe.address)
@@ -169,7 +171,7 @@ def _preview_and_check_tx(safe: ApeSafe, safe_tx: SafeTx, params_list: Sequence[
     # give some time to inspect the output before to continue
     if not log.prompt_yes_no("Continue?"):
         log.warn("Script aborted")
-        exit(1)
+        sys.exit(1)
 
     with log.block("Check vestings"):
         _check_tx(tx, params_list)
@@ -202,7 +204,7 @@ def _read_csv(filename: str) -> list[tuple]:
     chksum = _get_file_sha256(filename)
     if not log.prompt_yes_no(f"File's checksum: {chksum}, is it correct?"):
         log.warn("Aborted!")
-        exit(1)
+        sys.exit(1)
 
     with open(filename, encoding="utf-8") as f:
         reader = csv.reader(f, delimiter=",")
@@ -221,16 +223,16 @@ def _get_file_sha256(filename: str) -> str:
 def _preview_vesting_params(number: int, params: "VestingParams") -> None:
     log.info(f"Vesting {number} params:")
     log.info(f"  recipient: {params.recipient}")
-    log.info(f"  total amount: {(params.amount // 10 ** 18):,} LDO")
+    log.info(f"  total amount: {(params.amount / 10 ** 18):,.2f} LDO")
     log.info(f"  cliff date: {_unix_time_to_date(params.vesting_start + params.cliff_length)}")
     log.info(
-        f"  amount at cliff date: {(params.amount / params.vesting_duration * params.cliff_length // 10 ** 18):,} LDO"
+        f"  amount at cliff date: {(params.amount / params.vesting_duration * params.cliff_length / 10 ** 18):,.2f} LDO"
     )
     log.info(f"  vesting end: {_unix_time_to_date(params.vesting_start + params.vesting_duration)}")
     log.info(f"  is fully revokable: {params.is_fully_revokable}")
     if not log.prompt_yes_no(f"Are the vesting {number} params valid?"):
         log.warn("Script aborted")
-        exit(1)
+        sys.exit(1)
 
 
 def _unix_time_to_date(unix_time: int) -> str:
@@ -267,7 +269,7 @@ def _assert_mainnet_fork():
     """Check that scripts is running on mainnet-fork network"""
     if network.show_active() != "mainnet-fork":
         log.error("Script requires mainnet-fork network")
-        exit(1)
+        sys.exit(1)
 
 
 def _print_factory_params(factory_address: str) -> None:
@@ -327,6 +329,7 @@ def _check_tx(tx: TransactionReceipt, params_list: Sequence[VestingParams]) -> N
             raise ValueError(f"Recipient {recipient} for {address=} was not found in source") from e
         log.info(f"Testing {recipient=} vesting at {address=}")
         _check_deployed_vesting(contract, params)
+        log.okay(f"Vesting at {address=} is valid")
 
 
 def _check_deployed_vesting(contract: VestingEscrow, params: VestingParams) -> None:

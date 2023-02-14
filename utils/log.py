@@ -77,6 +77,10 @@ def block(msg: str):
         print(header, end=" ")
         print(highlight("IN PROGRESS", color_yellow))
         yield
+    except SystemExit as e:
+        if e.args and e.args[0] != 0:
+            failed = True
+        raise e
     except Exception as e:
         failed = True
         raise e

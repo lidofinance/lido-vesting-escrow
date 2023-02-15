@@ -1,4 +1,5 @@
 import os
+import sys
 from contextlib import contextmanager
 
 from brownie import accounts, chain, network
@@ -29,7 +30,7 @@ def loadAccount(accountEnvName):
         account = accounts.load(accountId)
     except FileNotFoundError:
         log.error(f"Local account with id `{accountId}` not found!")
-        exit()
+        sys.exit()
 
     log.okay(f"`{accountId}` account loaded")
     return account
@@ -39,7 +40,7 @@ def proceedPrompt():
     proceed = log.prompt_yes_no("Proceed?")
     if not proceed:
         log.error("Script stopped!")
-        exit()
+        sys.exit()
 
 
 def pprint_map(data):
@@ -53,4 +54,7 @@ def chain_snapshot():
         chain.snapshot()
         yield
     finally:
+        if not chain._snapshot_id:  # e.g. reset during snapshot
+            log.warn("No snapshot to revert to")
+            return
         chain.revert()

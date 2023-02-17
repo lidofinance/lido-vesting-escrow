@@ -131,3 +131,41 @@ After script finishes, all deployed metadata will be saved to file `./deployed-{
 
 Deploy script is stateful, so it safe to start several times. To deploy from scratch, simply delete the `./deployed-{NETWORK}.json` before running it.
 
+## Multisig TX preparation for vestings deploy
+
+Compile the CSV list of vestings params with the [structure](input.csv.example)
+```
+amount,recipient,vesting_duration,vesting_start,cliff_length,is_fully_revokable
+42_000_000_000_000_000_000,0x0000000000000000000000000000000000000001,144,1672480800,24,1
+1_000_000_000_000_000_000,0x0000000000000000000000000000000000000002,144,1672308000,24,0
+```
+
+Add `FACTORY_ADDRESS` environment variable by running
+```
+export FACTORY_ADDRESS=%VestingEscrowFactory address%
+```
+
+Add `SAFE_ADDRESS` environment variable by running
+
+```bash
+export SAFE_ADDRESS=%TRP Safe Multisig address%
+```
+
+Make sure you have installed [frame.sh](http://frame.sh) wallet with configured Ledger hardware signer.
+
+Run command to build and send proposed transaction to Gnosis backend, replacing %input.csv% with the path to the given round CSV:
+
+```bash
+brownie run multisig_tx build %input.csv% prod!
+```
+
+Follow the script questions
+
+Get SafeTX hash from Gnosis UI or the previous step.
+
+
+Run the following command replacing `%safe-tx-hash%` and `%round-input.csv%` with actual values:
+
+```bash
+brownie run multisig_tx check %safe-tx-hash% %round-input.csv%
+```

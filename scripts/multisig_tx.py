@@ -111,7 +111,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
 def check(safe_tx_hash: str, csv_filename: str) -> None:
     """Check the given safeTxHash against the given CSV"""
     _assert_mainnet_fork()
-    config = _read_envs()
+    config = _read_envs(["SAFE_ADDRESS"])
 
     log.info("Reading input file")
     raw_params_list = _read_csv(csv_filename)
@@ -184,7 +184,7 @@ class Config(TypedDict):
     SAFE_ADDRESS: str
 
 
-def _read_envs() -> Config:
+def _read_envs(keys: list[str] = None) -> Config:
     """Read environment variables to Config object"""
     config = os.environ.copy()
 
@@ -192,7 +192,8 @@ def _read_envs() -> Config:
         if k not in Config.__annotations__:
             del config[k]
 
-    for k in Config.__required_keys__:  # type: ignore
+    keys = keys or list(Config.__annotations__.keys())
+    for k in keys:  # type: ignore
         if k not in config:
             raise RuntimeError(f"Required variable={k} not found")
 

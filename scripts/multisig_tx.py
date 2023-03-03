@@ -18,6 +18,7 @@ from brownie import VotingAdapter  # type: ignore
 from brownie import chain, network
 from brownie.network.transaction import TransactionReceipt
 from gnosis.safe.signatures import signature_split, signature_to_bytes
+from web3 import HTTPProvider
 from web3._utils.encoding import to_json
 
 from utils import log
@@ -36,6 +37,8 @@ def build(csv_filename: str, non_empty_for_prod=None):
             return
 
     _assert_mainnet_fork()
+    _check_frame_conn()
+
     config = _read_envs()
 
     with log.block("Validating factory parameters"):
@@ -271,6 +274,16 @@ def _assert_mainnet_fork():
     if network.show_active() != "mainnet-fork":
         log.error("Script requires mainnet-fork network")
         sys.exit(1)
+
+
+def _check_frame_conn():
+    """Check that frame connection is established"""
+    p = HTTPProvider("http://localhost:1248")
+    if not p.isConnected():
+        log.warn("Frame connection is not established")
+        if not log.prompt_yes_no("Do you want to continue?"):
+            log.warn("Script aborted")
+            sys.exit(1)
 
 
 def _print_factory_params(factory_address: str) -> None:

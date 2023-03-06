@@ -56,7 +56,9 @@ def deploy_factory():
     proceedPrompt()
 
     log.note(f"VotingAdapter deploy")
-    voting_adapter = do_deploy_voting_adapter({"from": deployer, "max_fee": "100 gwei", "priority_fee": "1 gwei"}, voting_adapter_args)
+    voting_adapter = do_deploy_voting_adapter(
+        {"from": deployer, "max_fee": "100 gwei", "priority_fee": "1 gwei"}, voting_adapter_args
+    )
 
     factory_args = prepare_factory_deploy_args(
         target=escrow.address,

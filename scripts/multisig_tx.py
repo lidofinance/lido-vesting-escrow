@@ -25,6 +25,7 @@ from utils import log
 from utils.helpers import chain_snapshot, pprint_map
 
 LDO_ADDRESS = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"
+NOV_FIRST = 1667260800
 
 
 def build(csv_filename: str, non_empty_for_prod=None):
@@ -116,9 +117,11 @@ def check(safe_tx_hash: str, csv_filename: str) -> None:
     _assert_mainnet_fork()
     config = _read_envs(["SAFE_ADDRESS"])
 
-    log.info("Reading input file")
-    raw_params_list = _read_csv(csv_filename)
-    params_list = [VestingParams.from_tuple(p) for p in raw_params_list]
+    with log.block("Reading input file"):
+        raw_params_list = _read_csv(csv_filename)
+        params_list = tuple(VestingParams.from_tuple(p) for p in raw_params_list)
+        for num, params in enumerate(params_list):
+            _preview_vesting_params(num + 1, params)
 
     safe = ApeSafe(config["SAFE_ADDRESS"])
 
@@ -226,14 +229,21 @@ def _get_file_sha256(filename: str) -> str:
 
 def _preview_vesting_params(number: int, params: "VestingParams") -> None:
     log.info(f"Vesting {number} params:")
-    log.info(f"  recipient: {params.recipient}")
-    log.info(f"  total amount: {(params.amount / 10 ** 18):,.2f} LDO")
-    log.info(f"  cliff date: {_unix_time_to_date(params.vesting_start + params.cliff_length)}")
-    log.info(
-        f"  amount at cliff date: {(params.amount / params.vesting_duration * params.cliff_length / 10 ** 18):,.2f} LDO"
-    )
-    log.info(f"  vesting end: {_unix_time_to_date(params.vesting_start + params.vesting_duration)}")
-    log.info(f"  is fully revokable: {params.is_fully_revokable}")
+    log.info(f"  Recipient: {params.recipient}")
+    total = params.amount / 10**18
+    if params.vesting_start <= NOV_FIRST:
+        debt = (params.amount / params.vesting_duration * (NOV_FIRST - params.vesting_start)) / 10**18
+    else:
+        debt = 0
+    log.info(f"  Amount new: {(total - debt):,.2f} LDO")
+    log.info(f"  Amount debt: {(debt):,.2f} LDO")
+    log.info(f"  Amount Total: {(total):,.2f} LDO")
+    if params.vesting_start + params.cliff_length >= NOV_FIRST:
+        log.info(f"  Cliff end: {_unix_time_to_date(params.vesting_start + params.cliff_length)}")
+    else:
+        log.info(f"  Cliff end: {_unix_time_to_date(NOV_FIRST)} (synthetic, actual cliff is before Nov 1st)")
+    log.info(f"  Fully revocable: {params.is_fully_revokable}")
+    log.info(f"  Vesting end: {_unix_time_to_date(params.vesting_start + params.vesting_duration)}")
     if not log.prompt_yes_no(f"Are the vesting {number} params valid?"):
         log.warn("Script aborted")
         sys.exit(1)

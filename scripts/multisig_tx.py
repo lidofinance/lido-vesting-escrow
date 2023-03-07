@@ -238,12 +238,13 @@ def _preview_vesting_params(number: int, params: "VestingParams") -> None:
     log.info(f"  Amount new: {(total - debt):,.2f} LDO")
     log.info(f"  Amount debt: {(debt):,.2f} LDO")
     log.info(f"  Amount Total: {(total):,.2f} LDO")
+    log.info(f"  Vesting start: {_unix_time_to_date(params.vesting_start)}")
     if params.vesting_start + params.cliff_length >= NOV_FIRST:
         log.info(f"  Cliff end: {_unix_time_to_date(params.vesting_start + params.cliff_length)}")
     else:
         log.info(f"  Cliff end: {_unix_time_to_date(NOV_FIRST)} (synthetic, actual cliff is before Nov 1st)")
-    log.info(f"  Fully revocable: {params.is_fully_revokable}")
     log.info(f"  Vesting end: {_unix_time_to_date(params.vesting_start + params.vesting_duration)}")
+    log.info(f"  Fully revocable: {params.is_fully_revokable}")
     if not log.prompt_yes_no(f"Are the vesting {number} params valid?"):
         log.warn("Script aborted")
         sys.exit(1)

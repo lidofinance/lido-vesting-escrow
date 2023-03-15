@@ -1,0 +1,2 @@
+amount,recipient,vesting_duration,vesting_start,cliff_length,is_fully_revokable
+1046225820000000000000000,0x07fc0F8632AC66dB5bE29487090DcBeB3BF3ca1A,126238114,1667253086,0,1

@@ -231,12 +231,6 @@ def _preview_vesting_params(number: int, params: "VestingParams") -> None:
     log.info(f"Vesting {number} params:")
     log.info(f"  Recipient: {params.recipient}")
     total = params.amount / 10**18
-    if params.vesting_start <= NOV_FIRST:
-        debt = (params.amount / params.vesting_duration * (NOV_FIRST - params.vesting_start)) / 10**18
-    else:
-        debt = 0
-    log.info(f"  Amount new: {(total - debt):,.2f} LDO")
-    log.info(f"  Amount debt: {(debt):,.2f} LDO")
     log.info(f"  Amount Total: {(total):,.2f} LDO")
     log.info(f"  Vesting start: {_unix_time_to_date(params.vesting_start)}")
     if params.vesting_start + params.cliff_length >= NOV_FIRST:

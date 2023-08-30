@@ -27,6 +27,8 @@ from utils.helpers import chain_snapshot, pprint_map
 LDO_ADDRESS = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"
 NOV_FIRST = 1667260800
 
+FRAME_RPC = "http://127.0.0.1:1248"
+
 
 def build(csv_filename: str, non_empty_for_prod=None):
     """Build vesting contracts deployment tx by parameters defined in CSV file"""
@@ -90,7 +92,7 @@ def build(csv_filename: str, non_empty_for_prod=None):
     log.info(f"SafeTX hash: {safe_tx.safe_tx_hash.hex()}")
 
     if log.prompt_yes_no("Sign with frame?"):
-        safe.sign_with_frame(safe_tx)
+        safe.sign_with_frame(safe_tx, frame_rpc=FRAME_RPC)
     elif log.prompt_yes_no("Sign manually?"):
         _sign_safe_tx_manually(safe_tx)
     elif is_prod:
@@ -283,7 +285,7 @@ def _assert_mainnet_fork():
 
 def _check_frame_conn():
     """Check that frame connection is established"""
-    p = HTTPProvider("http://localhost:1248")
+    p = HTTPProvider(FRAME_RPC)
     if not p.isConnected():
         log.warn("Frame connection is not established")
         if not log.prompt_yes_no("Do you want to continue?"):

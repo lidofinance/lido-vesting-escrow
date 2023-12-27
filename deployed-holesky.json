@@ -1,0 +1,24 @@
+{
+    "vestingEscrowDeployer": "0x36c648351274bb4455ba6aAabF3F976824a93aF4",
+    "vestingEscrowDeployTx": "0x25f933b323e6296f93995b8a7eb68e70113ef6fe526514c24b5dcf7f4db227fe",
+    "vestingEscrowAddress": "0x1548b3200bcb6a3422b45faf1208d9904e4e69d6",
+    "votingAdapterDeployer": "0x36c648351274bb4455ba6aAabF3F976824a93aF4",
+    "votingAdapterDeployTx": "0xb43e7665e30a342e0ff6863d003d0d27cdd86cb66a602a06a2bacc742fbe9e2a",
+    "votingAdapterAddress": "0x5E390b7D8283Bf2674Ef1a6FE04AE466EF176AF6",
+    "votingAdapterDeployConstructorArgs": {
+        "voting_addr": "0xdA7d2573Df555002503F29aA4003e398d28cc00f",
+        "snapshot_delegate_addr": "0x0000000000000000000000000000000000000001",
+        "delegation_addr": "0x0000000000000000000000000000000000000000",
+        "owner": "0xE92329EC7ddB11D25e25b3c21eeBf11f15eB325d"
+    },
+    "factoryDeployer": "0x36c648351274bb4455ba6aAabF3F976824a93aF4",
+    "factoryDeployTx": "0xf9ea19d98b4a5f3e7cb227408e0ce895311ccd4a76fba53534c0d408da8ab3e1",
+    "factoryAddress": "0x586F0b51d46aC8aC6058702d99CD066aE514E96B",
+    "factoryDeployConstructorArgs": {
+        "target": "0x1548B3200BCb6A3422b45faF1208D9904e4e69D6",
+        "token": "0x14ae7daeecdf57034f3E9db8564e46Dba8D97344",
+        "owner": "0xE92329EC7ddB11D25e25b3c21eeBf11f15eB325d",
+        "manager": "0x96d2Ff1C4D30f592B91fd731E218247689a76915",
+        "voting_adapter": "0x5E390b7D8283Bf2674Ef1a6FE04AE466EF176AF6"
+    }
+}

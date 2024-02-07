@@ -4,12 +4,12 @@ A deeply modified version of [Yearn Vesting Escrow](https://github.com/banteg/ye
 - `rug_pull` method is renamed to `revoke_unvested`
 - `admin` role is renamed to `manager`
 - Added new role `owner`
-- Added new escrow method `revoke_all` method that allows `owner` to revoke ALL tokens form escrow. This is required for legal optimization (in terms of legal token ownership) 
+- Added new escrow method `revoke_all` method that allows `owner` to revoke ALL tokens form escrow. This is required for legal optimization (in terms of legal token ownership)
 - Added methods:
     - `aragon_vote` method for Aragon voting participation
     - `snapshot_set_delegate` method for Snapshot voting delegation,
-    - `delegate` method for further voting power delegation 
-    
+    - `delegate` method for further voting power delegation
+
 - Voting methods operate over upgradable middleware to encounter possible changes in voting interfaces
 - Added `recover_erc20` and `recover_ether` methods
 - Existing methods and events refined
@@ -100,7 +100,7 @@ networks:
                 - 0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX # manager
                 - 0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX # owner
 ```
- 
+
 Run tests on the `mainnet-fork` forked after deploy
 
 ```shell
@@ -157,6 +157,12 @@ Run command to build and send proposed transaction to Gnosis backend, replacing 
 
 ```bash
 brownie run multisig_tx build %input.csv% prod!
+```
+
+If you want to use a different nonce, e.g. for replacing a transaction, provide it as the last argument:
+
+```bash
+brownie run multisig_tx build %input.csv% prod! 42
 ```
 
 Follow the script questions

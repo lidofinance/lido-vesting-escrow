@@ -13,6 +13,10 @@ event CastVote:
     supports: bool
     stake: uint256
 
+event DelegateSet:
+    voter: indexed(address)
+    previousDelegate: indexed(address)
+    newDelegate: indexed(address)
 
 token: public(ERC20)
 
@@ -29,3 +33,11 @@ def vote(
     sender_balance: uint256 = self.token.balanceOf(msg.sender)
     assert sender_balance > 0, "insufficient balance"
     log CastVote(_voteId, msg.sender, _supports, sender_balance)
+
+@external
+def setDelegate(delegate: address):
+    log DelegateSet(msg.sender, ZERO_ADDRESS, delegate)
+
+@external
+def removeDelegate():
+    log DelegateSet(msg.sender, ZERO_ADDRESS, ZERO_ADDRESS)

@@ -23,6 +23,10 @@ interface IVoting:
         _supports: bool,
         _executesIfDecided_deprecated: bool,
     ): nonpayable
+    def setDelegate(
+        _delegate: address,
+    ): nonpayable
+    def removeDelegate(): nonpayable
 
 
 event ERC20Recovered:
@@ -134,7 +138,12 @@ def delegate(abi_encoded_params: Bytes[1000]):
     @notice Delegate voting power of all available tokens
     @param abi_encoded_params Abi encoded data for call. Can be obtained from encode_delegate_calldata
     """
-    assert False, "not implemented"
+    delegate: address = empty(address)
+    delegate = _abi_decode (abi_encoded_params, (address))
+    if delegate == ZERO_ADDRESS:
+        IVoting(VOTING_CONTRACT_ADDR).removeDelegate()
+    else:
+        IVoting(VOTING_CONTRACT_ADDR).setDelegate(delegate)
 
 
 @external

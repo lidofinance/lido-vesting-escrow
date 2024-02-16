@@ -3,8 +3,10 @@ import brownie
 
 def test_delegate(deployed_vesting, recipient, voting_adapter):
     data = voting_adapter.encode_delegate_calldata(recipient)
-    with brownie.reverts("not implemented"):
-        deployed_vesting.delegate(data, {"from": recipient})
+    tx = deployed_vesting.delegate(data, {"from": recipient})
+    assert len(tx.events) == 1
+    assert tx.events[0]["voter"] == deployed_vesting.address
+    assert tx.events[0]["newDelegate"] == recipient
 
 
 def test_vote_after_upgrade(
@@ -12,8 +14,10 @@ def test_vote_after_upgrade(
 ):
     vesting_factory.update_voting_adapter(voting_adapter_for_update, {"from": owner})
     data = voting_adapter.encode_delegate_calldata(recipient)
-    with brownie.reverts("not implemented"):
-        deployed_vesting.delegate(data, {"from": recipient})
+    tx = deployed_vesting.delegate(data, {"from": recipient})
+    assert len(tx.events) == 1
+    assert tx.events[0]["voter"] == deployed_vesting.address
+    assert tx.events[0]["newDelegate"] == recipient
 
 
 def test_delegate_from_not_recipient_fail(deployed_vesting, not_recipient, voting_adapter):

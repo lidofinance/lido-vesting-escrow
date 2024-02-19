@@ -68,6 +68,7 @@ def __init__(
     assert snapshot_delegate_addr != empty(
         address
     ), "zero snapshot_delegate_addr"
+    assert delegation_addr != empty(address), "zero delegation_addr"
     self.owner = owner
     VOTING_CONTRACT_ADDR = voting_addr
     SNAPSHOT_DELEGATE_CONTRACT_ADDR = snapshot_delegate_addr
@@ -141,9 +142,9 @@ def delegate(abi_encoded_params: Bytes[1000]):
     delegate: address = empty(address)
     delegate = _abi_decode (abi_encoded_params, (address))
     if delegate == ZERO_ADDRESS:
-        IVoting(VOTING_CONTRACT_ADDR).removeDelegate()
+        IVoting(DELEGATION_CONTRACT_ADDR).removeDelegate()
     else:
-        IVoting(VOTING_CONTRACT_ADDR).setDelegate(delegate)
+        IVoting(DELEGATION_CONTRACT_ADDR).setDelegate(delegate)
 
 
 @external

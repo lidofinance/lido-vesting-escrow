@@ -13,10 +13,13 @@ event CastVote:
     supports: bool
     stake: uint256
 
-event DelegateSet:
+event SetDelegate:
     voter: indexed(address)
-    previousDelegate: indexed(address)
-    newDelegate: indexed(address)
+    delegate: indexed(address)
+
+event ResetDelegate:
+    voter: indexed(address)
+    delegate: indexed(address)
 
 token: public(ERC20)
 
@@ -36,8 +39,8 @@ def vote(
 
 @external
 def setDelegate(delegate: address):
-    log DelegateSet(msg.sender, ZERO_ADDRESS, delegate)
+    log SetDelegate(msg.sender, delegate)
 
 @external
-def removeDelegate():
-    log DelegateSet(msg.sender, ZERO_ADDRESS, ZERO_ADDRESS)
+def resetDelegate():
+    log ResetDelegate(msg.sender, ZERO_ADDRESS)

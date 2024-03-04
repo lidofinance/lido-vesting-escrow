@@ -6,7 +6,7 @@ def test_delegate(deployed_vesting, recipient, voting_adapter):
     tx = deployed_vesting.delegate(data, {"from": recipient})
     assert len(tx.events) == 1
     assert tx.events[0]["voter"] == deployed_vesting.address
-    assert tx.events[0]["newDelegate"] == recipient
+    assert tx.events[0]["delegate"] == recipient
 
 
 def test_vote_after_upgrade(
@@ -17,7 +17,6 @@ def test_vote_after_upgrade(
     tx = deployed_vesting.delegate(data, {"from": recipient})
     assert len(tx.events) == 1
     assert tx.events[0]["voter"] == deployed_vesting.address
-    assert tx.events[0]["newDelegate"] == recipient
 
 
 def test_delegate_from_not_recipient_fail(deployed_vesting, not_recipient, voting_adapter):

@@ -26,7 +26,7 @@ interface IVoting:
     def setDelegate(
         _delegate: address,
     ): nonpayable
-    def removeDelegate(): nonpayable
+    def resetDelegate(): nonpayable
 
 
 event ERC20Recovered:
@@ -142,7 +142,7 @@ def delegate(abi_encoded_params: Bytes[1000]):
     delegate: address = empty(address)
     delegate = _abi_decode (abi_encoded_params, (address))
     if delegate == ZERO_ADDRESS:
-        IVoting(DELEGATION_CONTRACT_ADDR).removeDelegate()
+        IVoting(DELEGATION_CONTRACT_ADDR).resetDelegate()
     else:
         IVoting(DELEGATION_CONTRACT_ADDR).setDelegate(delegate)
 

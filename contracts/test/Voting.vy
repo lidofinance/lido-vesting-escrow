@@ -22,6 +22,7 @@ event ResetDelegate:
     delegate: indexed(address)
 
 token: public(ERC20)
+delegates: HashMap[address, address]
 
 
 @external
@@ -39,8 +40,10 @@ def vote(
 
 @external
 def setDelegate(delegate: address):
+    self.delegates[msg.sender] = delegate
     log SetDelegate(msg.sender, delegate)
 
 @external
 def resetDelegate():
-    log ResetDelegate(msg.sender, ZERO_ADDRESS)
+    delegate: address = self.delegates[msg.sender]
+    log ResetDelegate(msg.sender, delegate)

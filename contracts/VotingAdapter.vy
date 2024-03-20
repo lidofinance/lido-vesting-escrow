@@ -23,6 +23,8 @@ interface IVoting:
         _supports: bool,
         _executesIfDecided_deprecated: bool,
     ): nonpayable
+
+interface IVotingDelegation:
     def setDelegate(
         _delegate: address,
     ): nonpayable
@@ -142,9 +144,9 @@ def delegate(abi_encoded_params: Bytes[1000]):
     delegate: address = empty(address)
     delegate = _abi_decode (abi_encoded_params, (address))
     if delegate == ZERO_ADDRESS:
-        IVoting(DELEGATION_CONTRACT_ADDR).resetDelegate()
+        IVotingDelegation(DELEGATION_CONTRACT_ADDR).resetDelegate()
     else:
-        IVoting(DELEGATION_CONTRACT_ADDR).setDelegate(delegate)
+        IVotingDelegation(DELEGATION_CONTRACT_ADDR).setDelegate(delegate)
 
 
 @external

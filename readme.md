@@ -23,7 +23,7 @@ A deeply modified version of [Yearn Vesting Escrow](https://github.com/banteg/ye
 ## Audits
 
 Source code of the smart contracts was audited by:
-- [satemind.io](./audits/lido-trp-vesting-escrow.pdf)
+- [statemind.io](./audits/lido-trp-vesting-escrow.pdf)
 
 ## Setup
 

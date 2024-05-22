@@ -25,10 +25,10 @@ interface IVoting:
     ): nonpayable
 
 interface IVotingDelegation:
-    def setDelegate(
+    def assignDelegate(
         _delegate: address,
     ): nonpayable
-    def resetDelegate(): nonpayable
+    def unassignDelegate(): nonpayable
 
 
 event ERC20Recovered:
@@ -144,9 +144,9 @@ def delegate(abi_encoded_params: Bytes[1000]):
     delegate: address = empty(address)
     delegate = _abi_decode(abi_encoded_params, (address))
     if delegate == ZERO_ADDRESS:
-        IVotingDelegation(DELEGATION_CONTRACT_ADDR).resetDelegate()
+        IVotingDelegation(DELEGATION_CONTRACT_ADDR).unassignDelegate()
     else:
-        IVotingDelegation(DELEGATION_CONTRACT_ADDR).setDelegate(delegate)
+        IVotingDelegation(DELEGATION_CONTRACT_ADDR).assignDelegate(delegate)
 
 
 @external

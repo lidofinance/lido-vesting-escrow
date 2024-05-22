@@ -13,13 +13,13 @@ event CastVote:
     supports: bool
     stake: uint256
 
-event SetDelegate:
+event AssignDelegate:
     voter: indexed(address)
-    delegate: indexed(address)
+    assignedDelegate: indexed(address)
 
-event ResetDelegate:
+event UnassignDelegate:
     voter: indexed(address)
-    delegate: indexed(address)
+    unassignedDelegate: indexed(address)
 
 token: public(ERC20)
 delegates: HashMap[address, address]
@@ -39,11 +39,11 @@ def vote(
     log CastVote(_voteId, msg.sender, _supports, sender_balance)
 
 @external
-def setDelegate(delegate: address):
+def assignDelegate(delegate: address):
     self.delegates[msg.sender] = delegate
-    log SetDelegate(msg.sender, delegate)
+    log AssignDelegate(msg.sender, delegate)
 
 @external
-def resetDelegate():
+def unassignDelegate():
     delegate: address = self.delegates[msg.sender]
-    log ResetDelegate(msg.sender, delegate)
+    log UnassignDelegate(msg.sender, delegate)

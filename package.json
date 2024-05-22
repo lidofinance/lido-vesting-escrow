@@ -6,6 +6,6 @@
   "license": "GPL-3.0-only",
   "readme": "README.md",
   "dependencies": {
-    "ganache-cli": "^6.12.2"
+    "ganache": "^7.9.2"
   }
 }

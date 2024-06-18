@@ -2,13 +2,13 @@
     "vestingEscrowDeployer": "0x36c648351274bb4455ba6aAabF3F976824a93aF4",
     "vestingEscrowDeployTx": "0x25f933b323e6296f93995b8a7eb68e70113ef6fe526514c24b5dcf7f4db227fe",
     "vestingEscrowAddress": "0x1548b3200bcb6a3422b45faf1208d9904e4e69d6",
-    "votingAdapterDeployer": "0x36c648351274bb4455ba6aAabF3F976824a93aF4",
-    "votingAdapterDeployTx": "0xb43e7665e30a342e0ff6863d003d0d27cdd86cb66a602a06a2bacc742fbe9e2a",
-    "votingAdapterAddress": "0x5E390b7D8283Bf2674Ef1a6FE04AE466EF176AF6",
+    "votingAdapterDeployer": "0xd4090CA1134F8dE1450B8246916F73d212efdEf6",
+    "votingAdapterDeployTx": "0x18f600ad4f918be58c646e7fced4401d700051ea2d82232425051feca631085b",
+    "votingAdapterAddress": "0x1dF997832b44b7ED00597f103165920537c980D4",
     "votingAdapterDeployConstructorArgs": {
         "voting_addr": "0xdA7d2573Df555002503F29aA4003e398d28cc00f",
         "snapshot_delegate_addr": "0x0000000000000000000000000000000000000001",
-        "delegation_addr": "0x0000000000000000000000000000000000000000",
+        "delegation_addr": "0xdA7d2573Df555002503F29aA4003e398d28cc00f",
         "owner": "0xE92329EC7ddB11D25e25b3c21eeBf11f15eB325d"
     },
     "factoryDeployer": "0x36c648351274bb4455ba6aAabF3F976824a93aF4",

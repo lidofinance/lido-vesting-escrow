@@ -24,6 +24,12 @@ interface IVoting:
         _executesIfDecided_deprecated: bool,
     ): nonpayable
 
+interface IVotingDelegation:
+    def assignDelegate(
+        _delegate: address,
+    ): nonpayable
+    def unassignDelegate(): nonpayable
+
 
 event ERC20Recovered:
     token: address
@@ -64,6 +70,7 @@ def __init__(
     assert snapshot_delegate_addr != empty(
         address
     ), "zero snapshot_delegate_addr"
+    assert delegation_addr != empty(address), "zero delegation_addr"
     self.owner = owner
     VOTING_CONTRACT_ADDR = voting_addr
     SNAPSHOT_DELEGATE_CONTRACT_ADDR = snapshot_delegate_addr
@@ -74,7 +81,7 @@ def __init__(
 @view
 def encode_aragon_vote_calldata(voteId: uint256, supports: bool) -> Bytes[1000]:
     """
-    @notice Encode calldata for use in VestingEscrow. Returns type is Bytes[1000] to be compatible with up to 30 agrs
+    @notice Encode calldata for use in VestingEscrow. Returns type is Bytes[1000] to be compatible with up to 30 args
     @param voteId Id of the vote
     @param supports Support flag true - yea, false - nay
     """
@@ -89,7 +96,7 @@ def aragon_vote(abi_encoded_params: Bytes[1000]):
     """
     vote_id: uint256 = empty(uint256)
     supports: bool = empty(bool)
-    vote_id, supports = _abi_decode (abi_encoded_params, (uint256, bool))
+    vote_id, supports = _abi_decode(abi_encoded_params, (uint256, bool))
     IVoting(VOTING_CONTRACT_ADDR).vote(
         vote_id, supports, False
     )  # dev: third arg is deprecated
@@ -99,7 +106,7 @@ def aragon_vote(abi_encoded_params: Bytes[1000]):
 @view
 def encode_snapshot_set_delegate_calldata(delegate: address) -> Bytes[1000]:
     """
-    @notice Encode calldata for use in VestingEscrow. Returns type is Bytes[1000] to be compatible with up to 30 agrs
+    @notice Encode calldata for use in VestingEscrow. Returns type is Bytes[1000] to be compatible with up to 30 args
     @param delegate Address of the delegate
     """
     return _abi_encode(delegate)
@@ -112,7 +119,7 @@ def snapshot_set_delegate(abi_encoded_params: Bytes[1000]):
     @param abi_encoded_params Abi encoded data for call. Can be obtained from encode_snapshot_set_delegate_calldata
     """
     delegate: address = empty(address)
-    delegate = _abi_decode (abi_encoded_params, (address))
+    delegate = _abi_decode(abi_encoded_params, (address))
     IDelegation(SNAPSHOT_DELEGATE_CONTRACT_ADDR).setDelegate(
         empty(bytes32), delegate
     )  # dev: null id allows voting at any snapshot space
@@ -122,7 +129,7 @@ def snapshot_set_delegate(abi_encoded_params: Bytes[1000]):
 @view
 def encode_delegate_calldata(delegate: address) -> Bytes[1000]:
     """
-    @notice Encode calldata for use in VestingEscrow. Returns type is Bytes[1000] to be compatible with up to 30 agrs
+    @notice Encode calldata for use in VestingEscrow. Returns type is Bytes[1000] to be compatible with up to 30 args
     @param delegate Address of the delegate
     """
     return _abi_encode(delegate)
@@ -134,7 +141,12 @@ def delegate(abi_encoded_params: Bytes[1000]):
     @notice Delegate voting power of all available tokens
     @param abi_encoded_params Abi encoded data for call. Can be obtained from encode_delegate_calldata
     """
-    assert False, "not implemented"
+    delegate: address = empty(address)
+    delegate = _abi_decode(abi_encoded_params, (address))
+    if delegate == ZERO_ADDRESS:
+        IVotingDelegation(DELEGATION_CONTRACT_ADDR).unassignDelegate()
+    else:
+        IVotingDelegation(DELEGATION_CONTRACT_ADDR).assignDelegate(delegate)
 
 
 @external

@@ -16,7 +16,7 @@ def check_env():
         log.error("`WEB3_INFURA_PROJECT_ID` env not found!")
         exit()
 
-    if not ETHERSCAN_TOKEN:
+    if network.show_active() == "mainnet" and not ETHERSCAN_TOKEN:
         log.error("`ETHERSCAN_TOKEN` env not found!")
         exit()
 
@@ -91,6 +91,7 @@ def deploy_factory():
 
 def deploy_vestings():
     log.error("use brownie run multisig_tx build instead")
+
 
 def deploy_voting_adapter():
     log.info("-= VotingAdapter deploy =-")

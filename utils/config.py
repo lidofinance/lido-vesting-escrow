@@ -1,6 +1,13 @@
 from dotmap import DotMap
+from brownie import network
+from brownie.utils import color
 
-from vesting_initial_params import ARAGON_VOTING, DELEGATION, MANAGER, OWNER, SNAPSHOT_DELEGATION, TOKEN
+if network.show_active() == "holesky":
+    print(f'Using {color("cyan")}vesting_initial_params_holesky.py{color} addresses')
+    from vesting_initial_params_holesky import *
+else:
+    print(f'Using {color("magenta")}vesting_initial_params.py{color} addresses')
+    from vesting_initial_params import *
 
 
 def get_common_deploy_args():

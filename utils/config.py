@@ -26,14 +26,12 @@ def get_common_deploy_args():
 def prepare_voting_adapter_deploy_args(
     voting_addr,
     snapshot_delegate_addr,
-    delegation_addr,
     owner,
 ):
     return DotMap(
         {
             "voting_addr": voting_addr,
             "snapshot_delegate_addr": snapshot_delegate_addr,
-            "delegation_addr": delegation_addr,
             "owner": owner,
         }
     )

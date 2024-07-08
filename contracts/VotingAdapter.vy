@@ -23,13 +23,10 @@ interface IVoting:
         _supports: bool,
         _executesIfDecided_deprecated: bool,
     ): nonpayable
-
-interface IVotingDelegation:
     def assignDelegate(
         _delegate: address,
     ): nonpayable
     def unassignDelegate(): nonpayable
-
 
 event ERC20Recovered:
     token: address
@@ -46,7 +43,6 @@ event OwnerChanged:
 
 VOTING_CONTRACT_ADDR: immutable(address)
 SNAPSHOT_DELEGATE_CONTRACT_ADDR: immutable(address)
-DELEGATION_CONTRACT_ADDR: immutable(address)
 
 owner: public(address)
 
@@ -55,14 +51,12 @@ owner: public(address)
 def __init__(
     voting_addr: address,
     snapshot_delegate_addr: address,
-    delegation_addr: address,
     owner: address,
 ):
     """
     @notice Initialize source contract implementation.
     @param voting_addr Address of the Voting contract
     @param snapshot_delegate_addr Address of the Shapshot Delegate contract
-    @param delegation_addr Address of the voting power delegation contract
     @param owner Address to recover tokens and ether to
     """
     assert owner != empty(address), "zero owner"
@@ -70,11 +64,9 @@ def __init__(
     assert snapshot_delegate_addr != empty(
         address
     ), "zero snapshot_delegate_addr"
-    assert delegation_addr != empty(address), "zero delegation_addr"
     self.owner = owner
     VOTING_CONTRACT_ADDR = voting_addr
     SNAPSHOT_DELEGATE_CONTRACT_ADDR = snapshot_delegate_addr
-    DELEGATION_CONTRACT_ADDR = delegation_addr
 
 
 @external
@@ -143,10 +135,10 @@ def delegate(abi_encoded_params: Bytes[1000]):
     """
     delegate: address = empty(address)
     delegate = _abi_decode(abi_encoded_params, (address))
-    if delegate == ZERO_ADDRESS:
-        IVotingDelegation(DELEGATION_CONTRACT_ADDR).unassignDelegate()
+    if delegate == empty(address):
+        IVoting(VOTING_CONTRACT_ADDR).unassignDelegate()
     else:
-        IVotingDelegation(DELEGATION_CONTRACT_ADDR).assignDelegate(delegate)
+        IVoting(VOTING_CONTRACT_ADDR).assignDelegate(delegate)
 
 
 @external
@@ -159,12 +151,6 @@ def voting_contract_addr() -> address:
 @view
 def snapshot_delegate_contract_addr() -> address:
     return SNAPSHOT_DELEGATE_CONTRACT_ADDR
-
-
-@external
-@view
-def delegation_contract_addr() -> address:
-    return DELEGATION_CONTRACT_ADDR
 
 
 @external

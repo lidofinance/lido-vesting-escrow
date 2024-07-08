@@ -40,7 +40,6 @@ def do_deploy_voting_adapter(tx_params, deploy_args):
     voting_adapter = VotingAdapter.deploy(
         deploy_args.voting_addr,
         deploy_args.snapshot_delegate_addr,
-        deploy_args.delegation_addr,
         deploy_args.owner,
         tx_params,
     )
@@ -68,7 +67,6 @@ def check_deployed_voting_adapter(voting_adapter, deploy_args):
     assert (
         voting_adapter.snapshot_delegate_contract_addr() == deploy_args.snapshot_delegate_addr
     ), "Invalid snapshot delegation address"
-    assert voting_adapter.delegation_contract_addr() == deploy_args.delegation_addr, "Invalid aragon delegation address"
 
 
 def do_deploy_factory(tx_params, deploy_args):

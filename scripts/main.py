@@ -46,7 +46,6 @@ def deploy_factory():
     voting_adapter_args = prepare_voting_adapter_deploy_args(
         voting_addr=deploy_args.aragon_voting,
         snapshot_delegate_addr=deploy_args.snapshot_delegation,
-        delegation_addr=deploy_args.delegation,
         owner=deploy_args.owner,
     )
 
@@ -108,7 +107,6 @@ def deploy_voting_adapter():
     voting_adapter_args = prepare_voting_adapter_deploy_args(
         voting_addr=deploy_args.aragon_voting,
         snapshot_delegate_addr=deploy_args.snapshot_delegation,
-        delegation_addr=deploy_args.delegation,
         owner=deploy_args.owner,
     )
 

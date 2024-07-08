@@ -3,6 +3,7 @@ Usage:
     brownie run multisig_tx build input.csv [prod!] [nonce]
     brownie run multisig_tx check 0xsafeTxHash input.csv
 """
+
 import csv
 import os
 import sys
@@ -157,7 +158,6 @@ def fake_factory() -> None:
     lido_treasury = "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c"  # some address with LDOs
     vesting = VestingEscrow.deploy({"from": safe.address})
     adapter = VotingAdapter.deploy(
-        "0xffffffffffffffffffffffffffffffffffffffff",
         "0xffffffffffffffffffffffffffffffffffffffff",
         "0xffffffffffffffffffffffffffffffffffffffff",
         "0xffffffffffffffffffffffffffffffffffffffff",

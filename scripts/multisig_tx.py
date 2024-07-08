@@ -1,6 +1,6 @@
 """
 Usage:
-    brownie run multisig_tx build input.csv [prod!]
+    brownie run multisig_tx build input.csv [prod!] [nonce]
     brownie run multisig_tx check 0xsafeTxHash input.csv
 """
 import csv
@@ -30,14 +30,18 @@ NOV_FIRST = 1667260800
 FRAME_RPC = "http://127.0.0.1:1248"
 
 
-def build(csv_filename: str, non_empty_for_prod=None):
+def build(csv_filename: str, non_empty_for_prod=None, nonce=None):
     """Build vesting contracts deployment tx by parameters defined in CSV file"""
     is_prod = bool(non_empty_for_prod)
     if is_prod:
-        log.warn("SCRIPT RUNNED IN PRODUCTION ENV")
+        log.warn("SCRIPT RAN IN PRODUCTION ENV")
         if not log.prompt_yes_no("ARE YOU SURE YOU WANT TO CONTINUE?"):
             log.warn("Script aborted")
             return
+
+    nonce = int(nonce) if nonce else None
+    if nonce:
+        log.warn(f"Using nonce={nonce}")
 
     _assert_mainnet_fork()
     _check_frame_conn()
@@ -85,7 +89,17 @@ def build(csv_filename: str, non_empty_for_prod=None):
                     params.is_fully_revokable,
                     {"from": safe.address},
                 )
-            safe_tx = safe.multisend_from_receipts()
+
+            pending_nonce = safe.pending_nonce()
+            nonce = nonce or pending_nonce
+
+            if nonce != pending_nonce:
+                log.warn(f"Nonce mismatch: pending={pending_nonce}, used={nonce}")
+                if not log.prompt_yes_no("Continue?"):
+                    log.warn("Script aborted")
+                    return
+
+            safe_tx = safe.multisend_from_receipts(safe_nonce=nonce)
 
     _preview_and_check_tx(safe, safe_tx, params_list)
 

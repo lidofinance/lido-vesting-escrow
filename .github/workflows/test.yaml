@@ -21,11 +21,11 @@ jobs:
           node-version: "16"
 
       - name: Install NodeJS dependencies
-        run: npm ci && echo $GITHUB_WORKSPACE/node_modules/.bin >> $GITHUB_PATH
+        run: npm ci && echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
 
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.9.16"
 
       - name: Install poetry requirements
         run: >
@@ -49,11 +49,11 @@ jobs:
           node-version: "16"
 
       - name: Install NodeJS dependencies
-        run: npm ci && echo $GITHUB_WORKSPACE/node_modules/.bin >> $GITHUB_PATH
+        run: npm ci && echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
 
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.9.16"
 
       - name: Install poetry requirements
         run: >

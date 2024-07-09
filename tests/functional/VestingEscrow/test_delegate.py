@@ -1,14 +1,35 @@
 import brownie
 from brownie import ZERO_ADDRESS
+from eth_abi import encode
 
 
-def test_delegate(deployed_vesting, recipient, voting_adapter):
+def test_delegate(deployed_vesting, voting_adapter, random_guy, recipient):
+    # Can assign delegate
+    data = voting_adapter.encode_delegate_calldata(random_guy)
+    tx = deployed_vesting.delegate(data, {"from": recipient})
+    assert len(tx.events) == 1
+    assert tx.events["AssignDelegate"]["voter"] == deployed_vesting.address
+    assert tx.events["AssignDelegate"]["assignedDelegate"] == random_guy.address
+
+    # Can change delegate
     data = voting_adapter.encode_delegate_calldata(recipient)
     tx = deployed_vesting.delegate(data, {"from": recipient})
     assert len(tx.events) == 1
     assert tx.events["AssignDelegate"]["voter"] == deployed_vesting.address
     assert tx.events["AssignDelegate"]["assignedDelegate"] == recipient.address
 
+    # Encoding invalid parameters will fail
+    data = encode(["address", "address"], [random_guy.address, random_guy.address])
+    with brownie.reverts(""):
+        deployed_vesting.delegate(data, {"from": recipient})
+    data = encode(["string"], [""])
+    with brownie.reverts(""):
+        deployed_vesting.delegate(data, {"from": recipient})
+    data = encode(["string"], ["0xdeadbeef"])
+    with brownie.reverts(""):
+        deployed_vesting.delegate(data, {"from": recipient})
+
+    # Can unassign delegate
     reset_data = voting_adapter.encode_delegate_calldata(ZERO_ADDRESS)
     tx_reset = deployed_vesting.delegate(reset_data, {"from": recipient})
     assert len(tx_reset.events) == 1

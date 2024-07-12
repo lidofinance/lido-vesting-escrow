@@ -3,7 +3,7 @@ name = "lido-vesting-escrow"
 version = "0.1.0"
 description = "Vesting escrow contracts"
 authors = ["Lido dev team"]
-license = "MIT"
+license = "GPL-3.0-only"
 readme = "readme.md"
 
 [tool.poetry.dependencies]

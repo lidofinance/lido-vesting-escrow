@@ -3,12 +3,11 @@
     "vestingEscrowDeployTx": "0x7e8fe2fb17239508b0e5627a7f75a2e68d814d36a4922fc674cc77f15afeb85a",
     "vestingEscrowAddress": "0x484FD04c598A095360DF89bF85AB34c37127AA39",
     "votingAdapterDeployer": "0x64C0fF5C25925aCB33D68F79AD728Fd63361ffce",
-    "votingAdapterDeployTx": "0xa0a382f65a748b57f6e0b128010f5a96488707a4f46c3c46b45847277399f298",
-    "votingAdapterAddress": "0x5Ea73d6AE9B2E57eF865A3059bdC5C06b8e46072",
+    "votingAdapterDeployTx": "0xd8c5d398a503de4ae3ab7d3740d828cecb90743f84ef5b5dc7a4ed58af44299b",
+    "votingAdapterAddress": "0x4b2AB543FA389Ca8528656282bF0011257071BED",
     "votingAdapterDeployConstructorArgs": {
         "voting_addr": "0x2e59A20f205bB85a89C53f1936454680651E618e",
         "snapshot_delegate_addr": "0x469788fE6E9E9681C6ebF3bF78e7Fd26Fc015446",
-        "delegation_addr": "0x2e59A20f205bB85a89C53f1936454680651E618e",
         "owner": "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c"
     },
     "factoryDeployer": "0xEd1DF67C79d37573C63FFe097f8bEC46bb700c92",

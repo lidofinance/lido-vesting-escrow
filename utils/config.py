@@ -18,7 +18,6 @@ def get_common_deploy_args():
             "manager": MANAGER,
             "aragon_voting": ARAGON_VOTING,
             "snapshot_delegation": SNAPSHOT_DELEGATION,
-            "delegation": DELEGATION,
         }
     )
 

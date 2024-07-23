@@ -36,35 +36,28 @@ def check_deployed_vesting_simple(escrow_simple):
 
 
 def do_deploy_voting_adapter(tx_params, deploy_args):
-    deployedState = read_or_update_state()
+    log.info("Deploying VotingAdapter...")
+    voting_adapter = VotingAdapter.deploy(
+        deploy_args.voting_addr,
+        deploy_args.snapshot_delegate_addr,
+        deploy_args.owner,
+        tx_params,
+    )
+    log.info("> txHash:", voting_adapter.tx.txid)
 
-    if deployedState.votingAdapterAddress:
-        voting_adapter = VotingAdapter.at(deployedState.votingAdapterAddress)
-        log.warn("VotingAdapter already deployed at", deployedState.votingAdapterAddress)
-    else:
-        log.info("Deploying VotingAdapter...")
-        voting_adapter = VotingAdapter.deploy(
-            deploy_args.voting_addr,
-            deploy_args.snapshot_delegate_addr,
-            deploy_args.delegation_addr,
-            deploy_args.owner,
-            tx_params,
-        )
-        log.info("> txHash:", voting_adapter.tx.txid)
+    read_or_update_state(
+        {
+            "votingAdapterDeployer": tx_params["from"].address,
+            "votingAdapterDeployTx": voting_adapter.tx.txid,
+            "votingAdapterAddress": voting_adapter.address,
+            "votingAdapterDeployConstructorArgs": deploy_args.toDict(),
+        }
+    )
+    log.okay("VotingAdapter deployed at", voting_adapter.address)
 
-        deployedState = read_or_update_state(
-            {
-                "votingAdapterDeployer": tx_params["from"].address,
-                "votingAdapterDeployTx": voting_adapter.tx.txid,
-                "votingAdapterAddress": voting_adapter.address,
-                "votingAdapterDeployConstructorArgs": deploy_args.toDict(),
-            }
-        )
-        log.okay("VotingAdapter deployed at", voting_adapter.address)
-
-        log.info("Checking deployed VotingAdapter...")
-        check_deployed_voting_adapter(voting_adapter, deploy_args)
-        log.okay("VotingAdapter check pass")
+    log.info("Checking deployed VotingAdapter...")
+    check_deployed_voting_adapter(voting_adapter, deploy_args)
+    log.okay("VotingAdapter check pass")
 
     return voting_adapter
 
@@ -74,7 +67,6 @@ def check_deployed_voting_adapter(voting_adapter, deploy_args):
     assert (
         voting_adapter.snapshot_delegate_contract_addr() == deploy_args.snapshot_delegate_addr
     ), "Invalid snapshot delegation address"
-    assert voting_adapter.delegation_contract_addr() == deploy_args.delegation_addr, "Invalid aragon delegation address"
 
 
 def do_deploy_factory(tx_params, deploy_args):

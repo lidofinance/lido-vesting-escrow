@@ -119,12 +119,12 @@ def voting_adapter(
 ):
     if deployed:
         return VotingAdapter.at(deployed["votingAdapterAddress"])
-    return VotingAdapter.deploy(voting, snapshot_delegate, ZERO_ADDRESS, owner, {"from": owner})
+    return VotingAdapter.deploy(voting, snapshot_delegate, owner, {"from": owner})
 
 
 @pytest.fixture(scope="module")
 def voting_adapter_for_update(VotingAdapter, owner, voting, snapshot_delegate):
-    return VotingAdapter.deploy(voting, snapshot_delegate, ZERO_ADDRESS, owner, {"from": owner})
+    return VotingAdapter.deploy(voting, snapshot_delegate, owner, {"from": owner})
 
 
 @pytest.fixture(scope="module")

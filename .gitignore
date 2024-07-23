@@ -9,3 +9,4 @@ deployed-development.json
 venv
 node_modules/
 **.DS_store
+.python-version

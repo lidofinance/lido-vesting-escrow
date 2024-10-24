@@ -1,6 +1,13 @@
 from dotmap import DotMap
+from brownie import network
+from brownie.utils import color
 
-from vesting_initial_params import ARAGON_VOTING, DELEGATION, MANAGER, OWNER, SNAPSHOT_DELEGATION, TOKEN
+if network.show_active() == "holesky":
+    print(f'Using {color("cyan")}vesting_initial_params_holesky.py{color} addresses')
+    from vesting_initial_params_holesky import *
+else:
+    print(f'Using {color("magenta")}vesting_initial_params.py{color} addresses')
+    from vesting_initial_params import *
 
 
 def get_common_deploy_args():
@@ -11,7 +18,6 @@ def get_common_deploy_args():
             "manager": MANAGER,
             "aragon_voting": ARAGON_VOTING,
             "snapshot_delegation": SNAPSHOT_DELEGATION,
-            "delegation": DELEGATION,
         }
     )
 
@@ -19,14 +25,12 @@ def get_common_deploy_args():
 def prepare_voting_adapter_deploy_args(
     voting_addr,
     snapshot_delegate_addr,
-    delegation_addr,
     owner,
 ):
     return DotMap(
         {
             "voting_addr": voting_addr,
             "snapshot_delegate_addr": snapshot_delegate_addr,
-            "delegation_addr": delegation_addr,
             "owner": owner,
         }
     )

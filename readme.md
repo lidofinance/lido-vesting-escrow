@@ -1,14 +1,16 @@
 # Lido Vesting Escrow
 
 A deeply modified version of [Yearn Vesting Escrow](https://github.com/banteg/yearn-vesting-escrow) contracts with added functionality:
+
 - `rug_pull` method is renamed to `revoke_unvested`
 - `admin` role is renamed to `manager`
 - Added new role `owner`
 - Added new escrow method `revoke_all` method that allows `owner` to revoke ALL tokens form escrow. This is required for legal optimization (in terms of legal token ownership)
 - Added methods:
-    - `aragon_vote` method for Aragon voting participation
-    - `snapshot_set_delegate` method for Snapshot voting delegation,
-    - `delegate` method for further voting power delegation
+
+  - `aragon_vote` method for Aragon voting participation
+  - `snapshot_set_delegate` method for Snapshot voting delegation,
+  - `delegate` method for further voting power delegation
 
 - Voting methods operate over upgradable middleware to encounter possible changes in voting interfaces
 - Added `recover_erc20` and `recover_ether` methods
@@ -23,6 +25,7 @@ A deeply modified version of [Yearn Vesting Escrow](https://github.com/banteg/ye
 ## Audits
 
 Source code of the smart contracts was audited by:
+
 - [statemind.io](./audits/lido-trp-vesting-escrow.pdf)
 
 ## Setup
@@ -50,8 +53,6 @@ The default deployment parameters are set in [`vesting_initial_params.py`]. The 
 
 - `SNAPSHOT_DELEGATION` address of the snapshot voting contract
 
-- `DELEGATION` address of the voting delegation contract. Not implemented ATM we recommend using `0x0000000000000000000000000000000000000000` now
-
 Example content of `vesting_initial_params.py`:
 
 ```py
@@ -69,9 +70,6 @@ ARAGON_VOTING = "0x2e59A20f205bB85a89C53f1936454680651E618e"
 
 # Snapshot delegating contract
 SNAPSHOT_DELEGATION = "0x469788fE6E9E9681C6ebF3bF78e7Fd26Fc015446"
-
-# Voting delegation contract address. ZERO for now
-DELEGATION = "0x0000000000000000000000000000000000000000"
 ```
 
 ## Run tests
@@ -94,11 +92,11 @@ Add `owner` and `manager` accounts to the `brownie-config.yaml`
 
 ```yaml
 networks:
-    mainnet-fork:
-        cmd_settings:
-            unlock: # accounts order is crucial!
-                - 0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX # manager
-                - 0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX # owner
+  mainnet-fork:
+    cmd_settings:
+      unlock: # accounts order is crucial!
+        - 0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX # manager
+        - 0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX # owner
 ```
 
 Run tests on the `mainnet-fork` forked after deploy
@@ -134,6 +132,7 @@ Deploy script is stateful, so it safe to start several times. To deploy from scr
 ## Multisig TX preparation for vestings deploy
 
 Compile the CSV list of vestings params with the [structure](input.csv.example)
+
 ```
 amount,recipient,vesting_duration,vesting_start,cliff_length,is_fully_revokable
 42_000_000_000_000_000_000,0x0000000000000000000000000000000000000001,144,1672480800,24,1
@@ -141,6 +140,7 @@ amount,recipient,vesting_duration,vesting_start,cliff_length,is_fully_revokable
 ```
 
 Add `FACTORY_ADDRESS` environment variable by running
+
 ```
 export FACTORY_ADDRESS=%VestingEscrowFactory address%
 ```
@@ -168,7 +168,6 @@ brownie run multisig_tx build %input.csv% prod! 42
 Follow the script questions
 
 Get SafeTX hash from Gnosis UI or the previous step.
-
 
 Run the following command replacing `%safe-tx-hash%` and `%round-input.csv%` with actual values:
 

@@ -86,10 +86,11 @@ def build(csv_filename: str, non_empty_for_prod=None, nonce=None):
                 log.warn("Script aborted")
                 sys.exit(1)
 
+    if not enough_ldo_on_safe:
+        ldo.transfer(safe.address, vestings_sum, {"from": LDO_WHALE})
+
     with chain_snapshot():
         with log.block("Constructing multisend transaction"):
-            if not enough_ldo_on_safe:
-                ldo.transfer(safe.address, vestings_sum, {"from": LDO_WHALE})
 
             ldo.approve(factory, vestings_sum, {"from": safe.address})
             for params in params_list:

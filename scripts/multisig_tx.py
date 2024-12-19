@@ -9,7 +9,7 @@ import os
 import sys
 from datetime import datetime
 from hashlib import sha256
-from typing import NamedTuple, Sequence, TypedDict
+from typing import NamedTuple, Sequence, TypedDict, Optional
 
 from ape_safe import ApeSafe, SafeTx
 from brownie import ERC20  # type: ignore
@@ -26,6 +26,7 @@ from utils import log
 from utils.helpers import chain_snapshot, pprint_map
 
 LDO_ADDRESS = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"
+LDO_WHALE = "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c"
 NOV_FIRST = 1667260800
 
 FRAME_RPC = "http://127.0.0.1:1248"
@@ -47,7 +48,7 @@ def build(csv_filename: str, non_empty_for_prod=None, nonce=None):
     _assert_mainnet_fork()
     _check_frame_conn()
 
-    config = _read_envs()
+    config = _read_envs(["SAFE_ADDRESS", "FACTORY_ADDRESS"])
 
     with log.block("Validating factory parameters"):
         _print_factory_params(config["FACTORY_ADDRESS"])
@@ -73,12 +74,25 @@ def build(csv_filename: str, non_empty_for_prod=None, nonce=None):
     with log.block("Checking multisig balance"):
         starting_balance = _ldo_balance(safe.address)
         vestings_sum = sum(p.amount for p in params_list)
-        assert (
-            starting_balance >= vestings_sum
-        ), f"Not enough LDOs for vesting, need at least {(vestings_sum / 10 ** 18):,} LDO"
+        enough_ldo_on_safe = starting_balance >= vestings_sum
+        if not enough_ldo_on_safe:
+            msg = f"Not enough LDOs for vesting, need at least {(vestings_sum / 10 ** 18):,} LDO"
+
+            if "SKIP_LDO_CHECK" not in config:
+                log.error(msg)
+                sys.exit(1)
+
+            log.warn(msg)
+            if not log.prompt_yes_no("ARE YOU SURE YOU WANT TO CONTINUE?"):
+                log.warn("Script aborted")
+                sys.exit(1)
+
+    if not enough_ldo_on_safe:
+        ldo.transfer(safe.address, vestings_sum, {"from": LDO_WHALE})
 
     with chain_snapshot():
         with log.block("Constructing multisend transaction"):
+
             ldo.approve(factory, vestings_sum, {"from": safe.address})
             for params in params_list:
                 factory.deploy_vesting_contract(
@@ -155,7 +169,6 @@ def fake_factory() -> None:
     safe = ApeSafe(config["SAFE_ADDRESS"])
     ldo = ERC20.at(LDO_ADDRESS)
 
-    lido_treasury = "0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c"  # some address with LDOs
     vesting = VestingEscrow.deploy({"from": safe.address})
     adapter = VotingAdapter.deploy(
         "0xffffffffffffffffffffffffffffffffffffffff",
@@ -171,7 +184,7 @@ def fake_factory() -> None:
         adapter,
         {"from": "0x1111111111111111111111111111111111111111"},
     )
-    ldo.transfer(safe.address, 43 * 10**18, {"from": lido_treasury})
+    ldo.transfer(safe.address, 43 * 10**18, {"from": LDO_WHALE})
     history.clear()  # to avoid these transactions to occur in multisend
 
     log.info(f"{factory.address=}")
@@ -204,9 +217,10 @@ class Config(TypedDict):
 
     FACTORY_ADDRESS: str
     SAFE_ADDRESS: str
+    SKIP_LDO_CHECK: str
 
 
-def _read_envs(keys: list[str] = None) -> Config:
+def _read_envs(keys: Optional[list[str]] = None) -> Config:
     """Read environment variables to Config object"""
     config = os.environ.copy()
 

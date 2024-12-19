@@ -4,9 +4,11 @@ networks:
 
   mainnet-fork:
     cmd_settings:
+      fork: https://eth.drpc.org
       unlock: # accounts order is crucial!
         - 0x834560F580764Bc2e0B16925F8bF229bb00cB759 # manager
         - 0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c # owner
+      chain_id: 1
   holesky-fork:
     cmd_settings:
       unlock: # accounts order is crucial!

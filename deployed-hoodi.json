@@ -1,23 +1,23 @@
 {
     "vestingEscrowDeployer": "0x2B975fbfB5141D4192338f923d5A4451876C2A3E",
-    "vestingEscrowDeployTx": "0xa8ca271db78a058128e9ab5066889ece0573f79cec824ca58c1263b7cc62aded",
-    "vestingEscrowAddress": "0xCD2c79d7273d2aaFF14D09fd41cE2A71311aD42C",
+    "vestingEscrowDeployTx": "0x7cfd9174268d2bc3757fc7604306ff82628fa53eee131f18ef56c52b7820140d",
+    "vestingEscrowAddress": "0x0FA696120cCa23d221fB2B76C5051297d57d53F8",
     "votingAdapterDeployer": "0x2B975fbfB5141D4192338f923d5A4451876C2A3E",
-    "votingAdapterDeployTx": "0x97e406613e1f82d07d8a099903e6a1d9ca624e8de82e155f17fab0fddb3388c0",
-    "votingAdapterAddress": "0x60B0c8E5cf59846584B296C32386E9D5488a4160",
+    "votingAdapterDeployTx": "0xef6669436d7b2cc09f0d402f328cdc4605c88e71a9ede1942488b698141890af",
+    "votingAdapterAddress": "0x7C7E56be72f36EAfa2e04CCc01a6494706d8294A",
     "votingAdapterDeployConstructorArgs": {
         "voting_addr": "0x49B3512c44891bef83F8967d075121Bd1b07a01B",
         "snapshot_delegate_addr": "0x2230be05E8083C11761AE9F98ee309118951b96d",
         "owner": "0x0534aA41907c9631fae990960bCC72d75fA7cfeD"
     },
     "factoryDeployer": "0x2B975fbfB5141D4192338f923d5A4451876C2A3E",
-    "factoryDeployTx": "0x3d027522c4a58016264e798a416173209358470b32803a07d0c7df208d743d76",
-    "factoryAddress": "0xaAea4cF0A7a967B91842B7670443ef3Aff541ffC",
+    "factoryDeployTx": "0x8caac906523045ca28a369235f0d97f1072d10afae4e11db4aec0ff0ed59c463",
+    "factoryAddress": "0x0E7741C2A243C5120cC97178FEa5Ed0a2347871E",
     "factoryDeployConstructorArgs": {
-        "target": "0xCD2c79d7273d2aaFF14D09fd41cE2A71311aD42C",
-        "token": "0xEf2573966D009CcEA0Fc74451dee2193564198dc",
+        "target": "0x0FA696120cCa23d221fB2B76C5051297d57d53F8",
+        "token": "0xB8799DAc7A87a3580D6984c8f4cC596520dCf2F2",
         "owner": "0x0534aA41907c9631fae990960bCC72d75fA7cfeD",
         "manager": "0x418B816A7c3ecA151A31d98e30aa7DAa33aBf83A",
-        "voting_adapter": "0x60B0c8E5cf59846584B296C32386E9D5488a4160"
+        "voting_adapter": "0x7C7E56be72f36EAfa2e04CCc01a6494706d8294A"
     }
 }

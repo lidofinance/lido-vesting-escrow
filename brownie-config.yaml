@@ -18,7 +18,7 @@ networks:
     cmd_settings:
       unlock: # accounts order is crucial!
         - 0x418B816A7c3ecA151A31d98e30aa7DAa33aBf83A # manager
-        - 0x0534aA41907c9631fae990960bCC72d75fA7cfeD # owner
+        - 0x38180473a2119b073436D6399de82fF223264806 # owner
 compiler:
   evm_version: berlin
   vyper:

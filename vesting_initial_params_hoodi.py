@@ -1,4 +1,4 @@
-# LDO
+# This is a separate TLDO address for UI testing. Actual TLDO on Hoodi: 0xEf2573966D009CcEA0Fc74451dee2193564198dc
 TOKEN = "0xB8799DAc7A87a3580D6984c8f4cC596520dCf2F2"
 
 # Lido Agent

@@ -1,23 +1,23 @@
 {
     "vestingEscrowDeployer": "0x2B975fbfB5141D4192338f923d5A4451876C2A3E",
-    "vestingEscrowDeployTx": "0x7cfd9174268d2bc3757fc7604306ff82628fa53eee131f18ef56c52b7820140d",
-    "vestingEscrowAddress": "0x0FA696120cCa23d221fB2B76C5051297d57d53F8",
+    "vestingEscrowDeployTx": "0x30d873b4932fdd83e8251a7013f0ce5575ec1615da4a17ef2be6fc88809792ea",
+    "vestingEscrowAddress": "0x89482C672f5f2342D6b19DE2284955ECEa5C64e9",
     "votingAdapterDeployer": "0x2B975fbfB5141D4192338f923d5A4451876C2A3E",
-    "votingAdapterDeployTx": "0xef6669436d7b2cc09f0d402f328cdc4605c88e71a9ede1942488b698141890af",
-    "votingAdapterAddress": "0x7C7E56be72f36EAfa2e04CCc01a6494706d8294A",
+    "votingAdapterDeployTx": "0x504a0334f058be17186d129c0103ce0d6cf272b97e129568d453103092404140",
+    "votingAdapterAddress": "0x992CEaf299A077F52Dbb101e94CfA12120250e63",
     "votingAdapterDeployConstructorArgs": {
-        "voting_addr": "0x49B3512c44891bef83F8967d075121Bd1b07a01B",
+        "voting_addr": "0x15379d72Ec5Ff5635F5148d6e0F4a4Dcf8756636",
         "snapshot_delegate_addr": "0x2230be05E8083C11761AE9F98ee309118951b96d",
-        "owner": "0x0534aA41907c9631fae990960bCC72d75fA7cfeD"
+        "owner": "0x38180473a2119b073436D6399de82fF223264806"
     },
     "factoryDeployer": "0x2B975fbfB5141D4192338f923d5A4451876C2A3E",
-    "factoryDeployTx": "0x8caac906523045ca28a369235f0d97f1072d10afae4e11db4aec0ff0ed59c463",
-    "factoryAddress": "0x0E7741C2A243C5120cC97178FEa5Ed0a2347871E",
+    "factoryDeployTx": "0xf77e271fc77675d245b050ce609eff8b6508dca479037a900a3db97ac5f06d97",
+    "factoryAddress": "0xB50880Fe9aC6f8875de551D4C621024Bd7587259",
     "factoryDeployConstructorArgs": {
-        "target": "0x0FA696120cCa23d221fB2B76C5051297d57d53F8",
+        "target": "0x89482C672f5f2342D6b19DE2284955ECEa5C64e9",
         "token": "0xB8799DAc7A87a3580D6984c8f4cC596520dCf2F2",
-        "owner": "0x0534aA41907c9631fae990960bCC72d75fA7cfeD",
+        "owner": "0x38180473a2119b073436D6399de82fF223264806",
         "manager": "0x418B816A7c3ecA151A31d98e30aa7DAa33aBf83A",
-        "voting_adapter": "0x7C7E56be72f36EAfa2e04CCc01a6494706d8294A"
+        "voting_adapter": "0x992CEaf299A077F52Dbb101e94CfA12120250e63"
     }
 }

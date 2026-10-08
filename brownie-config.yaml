@@ -14,7 +14,11 @@ networks:
       unlock: # accounts order is crucial!
         - 0x96d2Ff1C4D30f592B91fd731E218247689a76915 # manager
         - 0xE92329EC7ddB11D25e25b3c21eeBf11f15eB325d # owner
-
+  hoodi-fork:
+    cmd_settings:
+      unlock: # accounts order is crucial!
+        - 0x418B816A7c3ecA151A31d98e30aa7DAa33aBf83A # manager
+        - 0x38180473a2119b073436D6399de82fF223264806 # owner
 compiler:
   evm_version: berlin
   vyper:

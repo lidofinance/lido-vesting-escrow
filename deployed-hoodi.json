@@ -1,0 +1,23 @@
+{
+    "vestingEscrowDeployer": "0x2B975fbfB5141D4192338f923d5A4451876C2A3E",
+    "vestingEscrowDeployTx": "0x30d873b4932fdd83e8251a7013f0ce5575ec1615da4a17ef2be6fc88809792ea",
+    "vestingEscrowAddress": "0x89482C672f5f2342D6b19DE2284955ECEa5C64e9",
+    "votingAdapterDeployer": "0x2B975fbfB5141D4192338f923d5A4451876C2A3E",
+    "votingAdapterDeployTx": "0x504a0334f058be17186d129c0103ce0d6cf272b97e129568d453103092404140",
+    "votingAdapterAddress": "0x992CEaf299A077F52Dbb101e94CfA12120250e63",
+    "votingAdapterDeployConstructorArgs": {
+        "voting_addr": "0x15379d72Ec5Ff5635F5148d6e0F4a4Dcf8756636",
+        "snapshot_delegate_addr": "0x2230be05E8083C11761AE9F98ee309118951b96d",
+        "owner": "0x38180473a2119b073436D6399de82fF223264806"
+    },
+    "factoryDeployer": "0x2B975fbfB5141D4192338f923d5A4451876C2A3E",
+    "factoryDeployTx": "0xf77e271fc77675d245b050ce609eff8b6508dca479037a900a3db97ac5f06d97",
+    "factoryAddress": "0xB50880Fe9aC6f8875de551D4C621024Bd7587259",
+    "factoryDeployConstructorArgs": {
+        "target": "0x89482C672f5f2342D6b19DE2284955ECEa5C64e9",
+        "token": "0xB8799DAc7A87a3580D6984c8f4cC596520dCf2F2",
+        "owner": "0x38180473a2119b073436D6399de82fF223264806",
+        "manager": "0x418B816A7c3ecA151A31d98e30aa7DAa33aBf83A",
+        "voting_adapter": "0x992CEaf299A077F52Dbb101e94CfA12120250e63"
+    }
+}
